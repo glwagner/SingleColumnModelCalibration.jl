@@ -1,0 +1,7 @@
+[deps]
+DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+OceanTurbulenceParameterEstimation = "eca81dc5-87a6-4430-aec8-c76695404a43"
+Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
