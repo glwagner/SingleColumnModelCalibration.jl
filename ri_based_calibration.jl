@@ -20,9 +20,8 @@ cases = ["free_convection",
          "strong_wind",
          "strong_wind_no_rotation"]
 
-datapaths = [@datadep_str("two_day_suite_1m/$(case)_instantaneous_statistics.jld2") for case in cases]
-
-times = [2hours, 12hours, 36hours]
+paths = [@datadep_str("two_day_suite_1m/$(case)_instantaneous_statistics.jld2") for case in cases]
+times = [2hours, 12hours, 44hours]
 field_names = (:b, :u, :v)
 transformation = ZScore()
 
@@ -49,8 +48,7 @@ z = [-256.0,
 
 regrid = RectilinearGrid(size=length(z)-1; z, topology=(Flat, Flat, Bounded))
 
-observations = [SyntheticObservations(path; field_names, times, transformation, regrid)
-                for path in datapaths]
+observations = [SyntheticObservations(paths[i]; field_names, times, transformation, regrid) for i=1:5]
 
 colorcycle = [:black, :red, :darkblue, :orange, :pink1, :seagreen, :magenta2]
 markercycle = [:rect, :utriangle, :star5, :circle, :cross, :+, :pentagon]
@@ -84,7 +82,7 @@ end
 ri_based_closure = RiBasedVerticalDiffusivity()
 
 simulation = ensemble_column_model_simulation(observations;
-                                              Nensemble = 100,
+                                              Nensemble = 10000,
                                               architecture = CPU(),
                                               tracers = (:b, :e),
                                               closure = ri_based_closure)
@@ -93,7 +91,7 @@ Qᵘ = simulation.model.velocities.u.boundary_conditions.top.condition
 Qᵇ = simulation.model.tracers.b.boundary_conditions.top.condition
 N² = simulation.model.tracers.b.boundary_conditions.bottom.condition
 
-simulation.Δt = 10minutes
+simulation.Δt = 20minutes
 
 for (i, obs) in enumerate(observations)
     view(Qᵘ, :, i) .= obs.metadata.parameters.momentum_flux
@@ -101,8 +99,8 @@ for (i, obs) in enumerate(observations)
     view(N², :, i) .= obs.metadata.parameters.N²_deep
 end
 
-priors = (ν₀   = lognormal(mean=0.1, std=0.1),
-          κ₀   = lognormal(mean=0.1, std=0.1),
+priors = (ν₀   = ScaledLogitNormal(bounds=(0, 1)),
+          κ₀   = ScaledLogitNormal(bounds=(0, 1)),
           Ri₀ν = Normal(-0.5, 1.0),
           Ri₀κ = Normal(-0.5, 1.0),
           Riᵟν = lognormal(mean=1.0,  std=1.0),
@@ -146,7 +144,7 @@ end
 #####
 
 while true
-    try
+    #try
         iterate!(eki, iterations=4)
         latest_summary = eki.iteration_summaries[end]
         @show latest_summary
@@ -166,10 +164,10 @@ while true
         save("multi_case_model_observation_comparison_iteration_$Niter.png", fig)
         display(fig)
 
-    catch err
-        err isa InterruptException && break
-        throw(err)
-    end
+    # catch err
+    #     err isa InterruptException && break
+    #     throw(err)
+    # end
 end
 
 #=
