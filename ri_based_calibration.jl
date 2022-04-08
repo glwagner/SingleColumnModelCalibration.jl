@@ -8,6 +8,11 @@ using Distributions
 
 using Oceananigans.TurbulenceClosures: RiBasedVerticalDiffusivity
 
+using Oceananigans.TurbulenceClosures:
+    PiecewiseLinearRiDependentTapering,
+    ExponentialRiDependentTapering,
+    HyperbolicTangentRiDependentTapering
+
 include("utils.jl")
 
 #####
@@ -79,10 +84,11 @@ end
 ##### Calibration
 #####
 
-ri_based_closure = RiBasedVerticalDiffusivity()
+tapering = ExponentialRiDependentTapering()
+ri_based_closure = RiBasedVerticalDiffusivity(Ri_dependent_tapering=tapering)
 
 simulation = ensemble_column_model_simulation(observations;
-                                              Nensemble = 10000,
+                                              Nensemble = 4000,
                                               architecture = CPU(),
                                               tracers = (:b, :e),
                                               closure = ri_based_closure)
@@ -91,7 +97,7 @@ Qᵘ = simulation.model.velocities.u.boundary_conditions.top.condition
 Qᵇ = simulation.model.tracers.b.boundary_conditions.top.condition
 N² = simulation.model.tracers.b.boundary_conditions.bottom.condition
 
-simulation.Δt = 20minutes
+simulation.Δt = 10minutes
 
 for (i, obs) in enumerate(observations)
     view(Qᵘ, :, i) .= obs.metadata.parameters.momentum_flux
