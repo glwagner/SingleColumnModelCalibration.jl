@@ -1,10 +1,11 @@
 using Oceananigans
 using Oceananigans.Units
-using OceanTurbulenceParameterEstimation
-using OceanTurbulenceParameterEstimation: Transformation
-using LinearAlgebra, CairoMakie, DataDeps, Distributions
-
-using ElectronDisplay
+using ParameterEstimocean
+using ParameterEstimocean: Transformation
+using LinearAlgebra
+using DataDeps
+using Distributions
+using CairoMakie
 
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
     CATKEVerticalDiffusivity,
@@ -15,52 +16,64 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
 ##### Compile LESbrary
 #####
 
-case_path(case) = @datadep_str("four_day_suite_1m/$(case)_instantaneous_statistics.jld2")
+cases = ["free_convection",
+         "strong_wind_weak_cooling",
+         "med_wind_med_cooling",
+         "weak_wind_strong_cooling",
+         "strong_wind",
+         "strong_wind_no_rotation"]
 
-Δz = 8
-times = [96hours - 20minutes, 96hours]
-#times = [12hours, 96hours]
+suite = "two_day_suite"
+case_path(case) = joinpath("data", suite, case * "_instantaneous_statistics.jld2")
+
+times = [12hours, 24hours, 48hours]
 field_names = (:b, :e, :u, :v)
-regrid_size = (1, 1, Int(256/Δz))
 
-k₁ = floor(Int, 120 / Δz)
-k₂ = ceil(Int, 150 / Δz)
-space = SpaceIndices(z=k₁:k₂)
-mult = length(space.z) / regrid_size[3]
+z = [-256.0,
+     -238.3,
+     -207.2,
+     -182.3,
+     -162.5,
+     -146.5,
+     -133.0,
+     -121.3,
+     -110.5,
+     -100.2,
+     - 90.0,
+     - 80.0,
+     - 70.0,
+     - 60.0,
+     - 50.0,
+     - 40.0,
+     - 30.0,
+     - 20.0,
+     - 10.0,
+        0.0]
 
-transformation = (
-                  b = Transformation(; normalization=ZScore()),
-                  u = Transformation(; normalization=ZScore()),
-                  v = Transformation(; normalization=ZScore()),
-                  e = Transformation(; space, normalization=RescaledZScore(mult)),
-                 )
+regrid = RectilinearGrid(size=length(z)-1; z, topology=(Flat, Flat, Bounded))
+
+transformation = (b = ZScore(),
+                  u = ZScore(),
+                  v = ZScore(),
+                  e = RescaledZScore(0.01))
 
 observation_library = Dict()
 
 # Don't optimize u, v for free_convection
 observation_library["free_convection"] =
-    SyntheticObservations(case_path("free_convection"); transformation, times, regrid_size,
+    SyntheticObservations(case_path("free_convection"); transformation, times, regrid,
                           field_names = (:b, :e))
                                                                 
 # Don't optimize v for non-rotating cases
 observation_library["strong_wind_no_rotation"] =
-    SyntheticObservations(case_path("strong_wind_no_rotation"); transformation, times, regrid_size,
+    SyntheticObservations(case_path("strong_wind_no_rotation"); transformation, times, regrid,
                           field_names = (:b, :e, :u))
 
 # The rest are standard
-for case in ["strong_wind", "strong_wind_weak_cooling", "weak_wind_strong_cooling"]
-    observation_library[case] = SyntheticObservations(case_path(case); field_names, transformation, times, regrid_size)
+for case in ["strong_wind", "med_wind_med_cooling", "strong_wind_weak_cooling", "weak_wind_strong_cooling"]
+    observation_library[case] = SyntheticObservations(case_path(case); field_names,
+                                                      transformation, times, regrid)
 end
-
-@show znodes(Center, observation_library["free_convection"].grid)[space.z]
-
-cases = [
-         "free_convection",
-         "weak_wind_strong_cooling",
-         "strong_wind_weak_cooling",
-         "strong_wind",
-         "strong_wind_no_rotation",
-        ]
 
 observations = [observation_library[case] for case in cases]
      
@@ -68,70 +81,55 @@ observations = [observation_library[case] for case in cases]
 ##### Simulation
 #####
 
-# Constant Ri, no convection
-mixing_length = MixingLength(Cᴬu   = 0.0,
-                             Cᴬc   = 0.0,
-                             Cᴬe   = 0.0,
-                             #Cᵇ    = 0.0,
-                             Cᴸᵇ    = 0.0,
-                             Cᴷu⁻  = 0.101,
-                             Cᴷc⁻  = 0.0574,
-                             Cᴷe⁻  = 3.32,
-                             Cᵟu   = 0.5,
-                             Cᵟc   = 0.5,
-                             Cᵟe   = 0.5,
-                             CᴷRiᶜ = 2.0,
-                             Cᴷuʳ  = 0.0,
-                             Cᴷcʳ  = 0.0,
-                             Cᴷeʳ  = 0.0)
-
-surface_TKE_flux = SurfaceTKEFlux(CᵂwΔ=4.74, Cᵂu★=2.76)
-catke = CATKEVerticalDiffusivity(; Cᴰ=1.78, mixing_length)
-
 #####
 ##### Calibration
 #####
 
-mass = 0.6
+bounds_library = Dict()
+
+# Turbulent kinetic energy parameters
+bounds_library[:CᵂwΔ]  = ( 4.0,  10.0)
+bounds_library[:Cᵂu★]  = ( 4.0,  10.0)
+bounds_library[:Cᴰ]    = ( 0.0,   2.0)
+
+# Mixing length parameters
+#
+#   Recall σ = σ⁻ (1 + σʳ * step(x, c, w))
+#
+bounds_library[:Cᴷu⁻]  = ( 0.0,   0.1)
+bounds_library[:Cᴷc⁻]  = ( 0.0,   1.0)
+bounds_library[:Cᴷe⁻]  = ( 0.0,   3.0)
+bounds_library[:Cᴷuʳ]  = (-1.0,   0.0)
+bounds_library[:Cᴷcʳ]  = (-1.0,   0.0)
+bounds_library[:Cᴷeʳ]  = (-1.0,   0.0)
+bounds_library[:CᴷRiᶜ] = ( 0.0,  10.0)
+bounds_library[:CᴷRiʷ] = ( 0.0,   0.5)
+bounds_library[:Cᵇu]   = ( 0.0,   1.0)
+bounds_library[:Cᵇc]   = ( 0.0,   1.0)
+bounds_library[:Cᵇe]   = ( 0.0,   1.0)
+bounds_library[:Cˢu]   = ( 0.0,   1.0)
+bounds_library[:Cˢc]   = ( 0.0,   1.0)
+bounds_library[:Cˢe]   = ( 0.0,   1.0)
+
+# Extras
+bounds_library[:Cᵇ]    = ( 0.0,   0.5)
+bounds_library[:Cᴸᵇ]   = ( 0.0,   0.5)
+bounds_library[:Cˢ]    = ( 0.0,   1.0)
+bounds_library[:Cᴬˢu]  = ( 0.0,   0.1)
+bounds_library[:Cᴬˢc]  = ( 0.0,   2.0)
+bounds_library[:Cᴬˢe]  = ( 0.0,   0.1)
+bounds_library[:Cᴬu]   = ( 0.0,   0.1)
+bounds_library[:Cᴬc]   = ( 0.0,   2.0)
+bounds_library[:Cᴬe]   = ( 0.0,   0.1)
+bounds_library[:Cᵟu]   = ( 0.0,  10.0)
+bounds_library[:Cᵟc]   = ( 0.0,  10.0)
+bounds_library[:Cᵟe]   = ( 0.0,  10.0)
+
 prior_library = Dict()
-prior_library[:CᵂwΔ]  = ScaledLogitNormal(; bounds=(4, 10)) #, interval=(2, 5), mass)
-prior_library[:Cᵂu★]  = ScaledLogitNormal(; bounds=(2, 10)) #, interval=(3, 5), mass)
-prior_library[:Cᴰ]    = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.5, 2), mass)
 
-prior_library[:Cᵇ]   = ScaledLogitNormal(; bounds=(0, 0.5)) #, interval=(0.1, 2), mass)
-prior_library[:Cᴸᵇ]   = ScaledLogitNormal(; bounds=(0, 0.5)) #, interval=(0.1, 2), mass)
-prior_library[:Cˢ]   = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.1, 2), mass)
-
-prior_library[:Cᵇu]   = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.1, 2), mass)
-prior_library[:Cᵇc]   = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.1, 2), mass)
-prior_library[:Cᵇe]   = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.1, 2), mass)
-
-prior_library[:Cˢu]   = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.1, 2), mass)
-prior_library[:Cˢc]   = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.1, 2), mass)
-prior_library[:Cˢe]   = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.1, 2), mass)
-
-prior_library[:Cᴷu⁻]  = ScaledLogitNormal(; bounds=(0, 0.1)) #, interval=(0.01, 0.1), mass)
-prior_library[:Cᴷc⁻]  = ScaledLogitNormal(; bounds=(0, 1)) #, interval=(0.5, 1.0), mass)
-prior_library[:Cᴷe⁻]  = ScaledLogitNormal(; bounds=(0, 3)) #, interval=(1.5, 3), mass)
-
-prior_library[:Cᴷuʳ]  = ScaledLogitNormal(; bounds=(-1, 1))
-prior_library[:Cᴷcʳ]  = ScaledLogitNormal(; bounds=(-1, 1))
-prior_library[:Cᴷeʳ]  = ScaledLogitNormal(; bounds=(-1, 1))
-
-prior_library[:CᴷRiᶜ] = ScaledLogitNormal(; bounds=(1, 3))
-prior_library[:CᴷRiʷ] = ScaledLogitNormal(; bounds=(0, 0.5))
-
-prior_library[:Cᴬu]   = ScaledLogitNormal(; bounds=(0, 0.1))
-prior_library[:Cᴬc]   = ScaledLogitNormal(; bounds=(0, 2))
-prior_library[:Cᴬe]   = ScaledLogitNormal(; bounds=(0, 0.1)) #, interval=(1, 3), mass)
-
-prior_library[:Cᴬˢu]   = ScaledLogitNormal(; bounds=(0, 0.1))
-prior_library[:Cᴬˢc]   = ScaledLogitNormal(; bounds=(0, 2))
-prior_library[:Cᴬˢe]   = ScaledLogitNormal(; bounds=(0, 0.1)) #, interval=(1, 3), mass)
-
-prior_library[:Cᵟu]  = ScaledLogitNormal(; bounds=(0, 10))
-prior_library[:Cᵟc]  = ScaledLogitNormal(; bounds=(0, 10))
-prior_library[:Cᵟe]  = ScaledLogitNormal(; bounds=(0, 10))
+for p in keys(bounds_library)
+    prior_library[p] = ScaledLogitNormal(; bounds=bounds_library[p])
+end
 
 # No convective adjustment:
 constant_Ri_parameters = (:Cᴰ, :CᵂwΔ, :Cᵂu★, :Cᴸᵇ, :Cᴷu⁻, :Cᴷc⁻, :Cᴷe⁻, :Cᵟu, :Cᵟc, :Cᵟe)
@@ -140,24 +138,23 @@ convective_adjustment_parameters = (:Cᴬc, :Cᴬe) # Cᴬu
 
 # :Cᴸˢ
 parameter_names = (:CᵂwΔ,  :Cᵂu★, :Cᴰ,
-                   #:Cˢ, #:Cˢc,   :Cˢu,  :Cˢe,
-                   :Cᴸᵇ, #:Cᵇc,   :Cᵇu,  :Cᵇe,
+                   :Cˢc,   :Cˢu,  :Cˢe,
+                   :Cᵇc,   :Cᵇu,  :Cᵇe,
                    :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
-                   #:Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
-                   #:CᴷRiᶜ, :CᴷRiʷ,
-                  )#:Cᴬc,  :Cᴬˢc)
+                   :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
+                   :CᴷRiᶜ, :CᴷRiʷ)
 
 free_parameters = FreeParameters(prior_library, names=parameter_names)
 
-Nensemble = 4000
-Δt = 1.0
+Nensemble = 1000
+Δt = 20minutes
+closure = CATKEVerticalDiffusivity()
+@show closure
 
 function build_simulation()
-    simulation = ensemble_column_model_simulation(observations;
-                                                  Nensemble,
-                                                  architecture = GPU(),
-                                                  tracers = (:b, :e),
-                                                  closure = catke)
+    simulation = ensemble_column_model_simulation(observations; closure, Nensemble,
+                                                  architecture = CPU(),
+                                                  tracers = (:b, :e))
 
     simulation.Δt = Δt    
 
@@ -179,7 +176,7 @@ end
 simulation = build_simulation()
 calibration = InverseProblem(observations, simulation, free_parameters)
 resampler = Resampler(resample_failure_fraction=0.5, acceptable_failure_fraction=1.0)
-eki = EnsembleKalmanInversion(calibration; resampler, convergence_rate=0.8)
+eki = EnsembleKalmanInversion(calibration; resampler, pseudo_stepping = ConstantConvergence(0.8))
 
 #####
 ##### Plot utils
@@ -206,6 +203,7 @@ colorcycle =  [:black, :royalblue1, :darkgreen, :lightsalmon, :seagreen, :magent
 
 markercycle = [:rect, :utriangle, :star5, :circle, :cross, :+, :pentagon, :ltriangle, :airplane, :diamond, :star4]
 markercycle = repeat(markercycle, inner=2)
+colorcycle = repeat(colorcycle, inner=2)
 
 function make_axes(fig, row=1, label=nothing)
     ax_b = Axis(fig[row, 1], xlabel = "Buoyancy \n[cm s⁻²]", ylabel = "z [m]")
@@ -352,7 +350,7 @@ end
 #####
 
 fig = Figure(resolution=(1200, 1200))
-linestyles = [:solid, :dash, :dot, :dashdot, :dashdotdot]
+linestyles = [:solid, :dash, :dot, :dashdot, :dashdotdot, :solid]
 all_axs = []
 
 for (o, observation) in enumerate(observations)

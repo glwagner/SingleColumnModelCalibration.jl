@@ -21,7 +21,7 @@ cases = ["free_convection",
          "strong_wind_no_rotation"]
 
 paths = [@datadep_str("two_day_suite_1m/$(case)_instantaneous_statistics.jld2") for case in cases]
-times = [2hours, 12hours, 44hours]
+times = [2hours, 12hours, 24hours] # 44hours
 field_names = (:b, :u, :v)
 transformation = ZScore()
 
@@ -82,7 +82,7 @@ end
 ri_based_closure = RiBasedVerticalDiffusivity()
 
 simulation = ensemble_column_model_simulation(observations;
-                                              Nensemble = 10000,
+                                              Nensemble = 2000,
                                               architecture = CPU(),
                                               tracers = (:b, :e),
                                               closure = ri_based_closure)
