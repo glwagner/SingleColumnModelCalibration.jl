@@ -6,28 +6,19 @@ using LinearAlgebra
 using DataDeps
 using Distributions
 using CairoMakie
+using ElectronDisplay
 
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
-    CATKEVerticalDiffusivity,
-    SurfaceTKEFlux,
-    MixingLength
+using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity
 
 #####
 ##### Compile LESbrary
 #####
 
-cases = ["free_convection",
-         "strong_wind_weak_cooling",
-         "med_wind_med_cooling",
-         "weak_wind_strong_cooling",
-         "strong_wind",
-         "strong_wind_no_rotation"]
-
-suite = "two_day_suite"
-case_path(case) = joinpath("data", suite, case * "_instantaneous_statistics.jld2")
-
-times = [12hours, 24hours, 48hours]
+times = [4hours, 24hours, 48hours]
 field_names = (:b, :e, :u, :v)
+Nensemble = 1000
+Δt = 20minutes
+closure = CATKEVerticalDiffusivity()
 
 z = [-256.0,
      -238.3,
@@ -55,7 +46,17 @@ regrid = RectilinearGrid(size=length(z)-1; z, topology=(Flat, Flat, Bounded))
 transformation = (b = ZScore(),
                   u = ZScore(),
                   v = ZScore(),
-                  e = RescaledZScore(0.01))
+                  e = RescaledZScore(1.0))
+
+cases = ["free_convection",
+         "strong_wind_weak_cooling",
+         "med_wind_med_cooling",
+         "weak_wind_strong_cooling",
+         "strong_wind",
+         "strong_wind_no_rotation"]
+
+suite = "two_day_suite"
+case_path(case) = joinpath("data", suite, case * "_instantaneous_statistics.jld2")
 
 observation_library = Dict()
 
@@ -78,49 +79,49 @@ end
 observations = [observation_library[case] for case in cases]
      
 #####
-##### Simulation
-#####
-
-#####
 ##### Calibration
 #####
 
 bounds_library = Dict()
 
 # Turbulent kinetic energy parameters
-bounds_library[:CᵂwΔ]  = ( 4.0,  10.0)
-bounds_library[:Cᵂu★]  = ( 4.0,  10.0)
-bounds_library[:Cᴰ]    = ( 0.0,   2.0)
+bounds_library[:CᵂwΔ]  = ( 2.0,  20.0)
+bounds_library[:Cᵂu★]  = ( 2.0,  20.0)
+bounds_library[:Cᴰ⁻]   = ( 0.0,   1.0)
+bounds_library[:Cᴰʳ]   = (-1.0,  10.0)
+bounds_library[:CᴰRiᶜ] = (-4.0,   4.0)
+bounds_library[:CᴰRiʷ] = ( 0.0,   2.0)
 
 # Mixing length parameters
 #
 #   Recall σ = σ⁻ (1 + σʳ * step(x, c, w))
 #
-bounds_library[:Cᴷu⁻]  = ( 0.0,   0.1)
-bounds_library[:Cᴷc⁻]  = ( 0.0,   1.0)
-bounds_library[:Cᴷe⁻]  = ( 0.0,   3.0)
-bounds_library[:Cᴷuʳ]  = (-1.0,   0.0)
-bounds_library[:Cᴷcʳ]  = (-1.0,   0.0)
-bounds_library[:Cᴷeʳ]  = (-1.0,   0.0)
-bounds_library[:CᴷRiᶜ] = ( 0.0,  10.0)
-bounds_library[:CᴷRiʷ] = ( 0.0,   0.5)
-bounds_library[:Cᵇu]   = ( 0.0,   1.0)
-bounds_library[:Cᵇc]   = ( 0.0,   1.0)
-bounds_library[:Cᵇe]   = ( 0.0,   1.0)
-bounds_library[:Cˢu]   = ( 0.0,   1.0)
-bounds_library[:Cˢc]   = ( 0.0,   1.0)
-bounds_library[:Cˢe]   = ( 0.0,   1.0)
+bounds_library[:Cᴷu⁻]  = ( 0.0,  10.0)
+bounds_library[:Cᴷc⁻]  = ( 0.0,  10.0)
+bounds_library[:Cᴷe⁻]  = ( 0.0,  10.0)
+bounds_library[:Cᴷuʳ]  = (-1.0,   0.1)
+bounds_library[:Cᴷcʳ]  = (-1.0,   0.1)
+bounds_library[:Cᴷeʳ]  = (-1.0,   0.1)
+bounds_library[:CᴷRiᶜ] = (-4.0,   4.0)
+bounds_library[:CᴷRiʷ] = ( 0.0,   2.0)
+bounds_library[:Cᵇu]   = ( 0.0,   4.0)
+bounds_library[:Cᵇc]   = ( 0.0,   4.0)
+bounds_library[:Cᵇe]   = ( 0.0,   4.0)
+bounds_library[:Cˢu]   = ( 0.0,   4.0)
+bounds_library[:Cˢc]   = ( 0.0,   4.0)
+bounds_library[:Cˢe]   = ( 0.0,   4.0)
+
+bounds_library[:Cᴬˢu]  = ( 0.0,   2.0)
+bounds_library[:Cᴬˢc]  = ( 0.0,   2.0)
+bounds_library[:Cᴬˢe]  = ( 0.0,   2.0)
+bounds_library[:Cᴬu]   = ( 0.0,  10.0)
+bounds_library[:Cᴬc]   = ( 0.0,  10.0)
+bounds_library[:Cᴬe]   = ( 0.0,  10.0)
 
 # Extras
-bounds_library[:Cᵇ]    = ( 0.0,   0.5)
-bounds_library[:Cᴸᵇ]   = ( 0.0,   0.5)
-bounds_library[:Cˢ]    = ( 0.0,   1.0)
-bounds_library[:Cᴬˢu]  = ( 0.0,   0.1)
-bounds_library[:Cᴬˢc]  = ( 0.0,   2.0)
-bounds_library[:Cᴬˢe]  = ( 0.0,   0.1)
-bounds_library[:Cᴬu]   = ( 0.0,   0.1)
-bounds_library[:Cᴬc]   = ( 0.0,   2.0)
-bounds_library[:Cᴬe]   = ( 0.0,   0.1)
+bounds_library[:Cᵇ]    = ( 0.0,   4.0)
+bounds_library[:Cˢ]    = ( 0.0,   4.0)
+bounds_library[:Cᴰ]    = ( 0.0,   2.0)
 bounds_library[:Cᵟu]   = ( 0.0,  10.0)
 bounds_library[:Cᵟc]   = ( 0.0,  10.0)
 bounds_library[:Cᵟe]   = ( 0.0,  10.0)
@@ -137,19 +138,15 @@ variable_Ri_parameters = (:Cᴷuʳ, :Cᴷcʳ, :Cᴷeʳ, :CᴷRiʷ, :CᴷRiᶜ, :
 convective_adjustment_parameters = (:Cᴬc, :Cᴬe) # Cᴬu
 
 # :Cᴸˢ
-parameter_names = (:CᵂwΔ,  :Cᵂu★, :Cᴰ,
+parameter_names = (:CᵂwΔ,  :Cᵂu★, :Cᴰ⁻, :Cᴰʳ,
                    :Cˢc,   :Cˢu,  :Cˢe,
                    :Cᵇc,   :Cᵇu,  :Cᵇe,
                    :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
                    :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
+                   #:Cᴬc,  :Cᴬu, :Cᴬe, :Cᴬˢc, :Cᴬˢu, :Cᴬˢe,
                    :CᴷRiᶜ, :CᴷRiʷ)
 
 free_parameters = FreeParameters(prior_library, names=parameter_names)
-
-Nensemble = 1000
-Δt = 20minutes
-closure = CATKEVerticalDiffusivity()
-@show closure
 
 function build_simulation()
     simulation = ensemble_column_model_simulation(observations; closure, Nensemble,
@@ -176,7 +173,7 @@ end
 simulation = build_simulation()
 calibration = InverseProblem(observations, simulation, free_parameters)
 resampler = Resampler(resample_failure_fraction=0.5, acceptable_failure_fraction=1.0)
-eki = EnsembleKalmanInversion(calibration; resampler, pseudo_stepping = ConstantConvergence(0.8))
+eki = EnsembleKalmanInversion(calibration; resampler, pseudo_stepping = ConstantConvergence(0.6))
 
 #####
 ##### Plot utils
@@ -201,7 +198,7 @@ end
 colorcycle =  [:black, :royalblue1, :darkgreen, :lightsalmon, :seagreen, :magenta2, :red4, :khaki1,   :darkgreen, :bisque4,
                :silver, :lightsalmon, :lightseagreen, :teal, :royalblue1, :darkorchid4]
 
-markercycle = [:rect, :utriangle, :star5, :circle, :cross, :+, :pentagon, :ltriangle, :airplane, :diamond, :star4]
+markercycle = [:rect, :utriangle, :star5, :circle, :cross, :+, :pentagon, :ltriangle, :diamond, :star4]
 markercycle = repeat(markercycle, inner=2)
 colorcycle = repeat(colorcycle, inner=2)
 
@@ -374,6 +371,7 @@ display(fig)
 
 # Initial state after 0 iterations
 plot_latest(eki)
+@show eki.iteration_summaries[end]
 
 # Continuously update
 for i = 1:20
