@@ -14,11 +14,13 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalD
 ##### Compile LESbrary
 #####
 
-times = [4hours, 24hours, 48hours]
+#times = [6hours, 48hours]
+times = [36hours, 48hours]
 field_names = (:b, :e, :u, :v)
-Nensemble = 1000
-Δt = 20minutes
+Nensemble = 8000
+Δt = 10minutes
 closure = CATKEVerticalDiffusivity()
+convergence_ratio = 0.7
 
 z = [-256.0,
      -238.3,
@@ -46,7 +48,7 @@ regrid = RectilinearGrid(size=length(z)-1; z, topology=(Flat, Flat, Bounded))
 transformation = (b = ZScore(),
                   u = ZScore(),
                   v = ZScore(),
-                  e = RescaledZScore(1.0))
+                  e = RescaledZScore(0.5))
 
 cases = ["free_convection",
          "strong_wind_weak_cooling",
@@ -85,25 +87,25 @@ observations = [observation_library[case] for case in cases]
 bounds_library = Dict()
 
 # Turbulent kinetic energy parameters
-bounds_library[:CᵂwΔ]  = ( 2.0,  20.0)
-bounds_library[:Cᵂu★]  = ( 2.0,  20.0)
-bounds_library[:Cᴰ⁻]   = ( 0.0,   1.0)
+bounds_library[:CᵂwΔ]  = ( 4.0,  12.0)
+bounds_library[:Cᵂu★]  = ( 4.0,  12.0)
+bounds_library[:Cᴰ⁻]   = ( 0.0,   4.0)
 bounds_library[:Cᴰʳ]   = (-1.0,  10.0)
-bounds_library[:CᴰRiᶜ] = (-4.0,   4.0)
-bounds_library[:CᴰRiʷ] = ( 0.0,   2.0)
+bounds_library[:CᴰRiᶜ] = (-2.0,   2.0)
+bounds_library[:CᴰRiʷ] = ( 0.0,   4.0)
 
 # Mixing length parameters
 #
 #   Recall σ = σ⁻ (1 + σʳ * step(x, c, w))
 #
-bounds_library[:Cᴷu⁻]  = ( 0.0,  10.0)
+bounds_library[:Cᴷu⁻]  = ( 0.0,   2.0)
 bounds_library[:Cᴷc⁻]  = ( 0.0,  10.0)
-bounds_library[:Cᴷe⁻]  = ( 0.0,  10.0)
-bounds_library[:Cᴷuʳ]  = (-1.0,   0.1)
-bounds_library[:Cᴷcʳ]  = (-1.0,   0.1)
-bounds_library[:Cᴷeʳ]  = (-1.0,   0.1)
+bounds_library[:Cᴷe⁻]  = ( 0.0,  20.0)
+bounds_library[:Cᴷuʳ]  = (-1.0,   2.0)
+bounds_library[:Cᴷcʳ]  = (-1.0,   2.0)
+bounds_library[:Cᴷeʳ]  = (-1.0,   3.0)
 bounds_library[:CᴷRiᶜ] = (-4.0,   4.0)
-bounds_library[:CᴷRiʷ] = ( 0.0,   2.0)
+bounds_library[:CᴷRiʷ] = ( 0.0,   6.0)
 bounds_library[:Cᵇu]   = ( 0.0,   4.0)
 bounds_library[:Cᵇc]   = ( 0.0,   4.0)
 bounds_library[:Cᵇe]   = ( 0.0,   4.0)
@@ -111,12 +113,12 @@ bounds_library[:Cˢu]   = ( 0.0,   4.0)
 bounds_library[:Cˢc]   = ( 0.0,   4.0)
 bounds_library[:Cˢe]   = ( 0.0,   4.0)
 
-bounds_library[:Cᴬˢu]  = ( 0.0,   2.0)
-bounds_library[:Cᴬˢc]  = ( 0.0,   2.0)
-bounds_library[:Cᴬˢe]  = ( 0.0,   2.0)
-bounds_library[:Cᴬu]   = ( 0.0,  10.0)
-bounds_library[:Cᴬc]   = ( 0.0,  10.0)
-bounds_library[:Cᴬe]   = ( 0.0,  10.0)
+bounds_library[:Cᴬˢu]  = ( 0.0,  2.0)
+bounds_library[:Cᴬˢc]  = ( 0.0,  2.0)
+bounds_library[:Cᴬˢe]  = ( 0.0,  2.0)
+bounds_library[:Cᴬu]   = ( 0.0,  0.01)
+bounds_library[:Cᴬc]   = (1e-3,  0.1)
+bounds_library[:Cᴬe]   = ( 0.0,  0.01)
 
 # Extras
 bounds_library[:Cᵇ]    = ( 0.0,   4.0)
@@ -143,14 +145,17 @@ parameter_names = (:CᵂwΔ,  :Cᵂu★, :Cᴰ⁻, :Cᴰʳ,
                    :Cᵇc,   :Cᵇu,  :Cᵇe,
                    :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
                    :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
+                   #:Cᴬc,   :Cᴬe,
                    #:Cᴬc,  :Cᴬu, :Cᴬe, :Cᴬˢc, :Cᴬˢu, :Cᴬˢe,
+                   #:Cᴬc,  :Cᴬˢc,
+                   :CᴰRiᶜ, :CᴰRiʷ,
                    :CᴷRiᶜ, :CᴷRiʷ)
 
 free_parameters = FreeParameters(prior_library, names=parameter_names)
 
 function build_simulation()
     simulation = ensemble_column_model_simulation(observations; closure, Nensemble,
-                                                  architecture = CPU(),
+                                                  architecture = GPU(),
                                                   tracers = (:b, :e))
 
     simulation.Δt = Δt    
@@ -172,8 +177,8 @@ end
 
 simulation = build_simulation()
 calibration = InverseProblem(observations, simulation, free_parameters)
-resampler = Resampler(resample_failure_fraction=0.5, acceptable_failure_fraction=1.0)
-eki = EnsembleKalmanInversion(calibration; resampler, pseudo_stepping = ConstantConvergence(0.6))
+resampler = Resampler(resample_failure_fraction=0.0, acceptable_failure_fraction=1.0)
+eki = EnsembleKalmanInversion(calibration; resampler, pseudo_stepping = ConstantConvergence(convergence_ratio))
 
 #####
 ##### Plot utils
@@ -199,8 +204,8 @@ colorcycle =  [:black, :royalblue1, :darkgreen, :lightsalmon, :seagreen, :magent
                :silver, :lightsalmon, :lightseagreen, :teal, :royalblue1, :darkorchid4]
 
 markercycle = [:rect, :utriangle, :star5, :circle, :cross, :+, :pentagon, :ltriangle, :diamond, :star4]
-markercycle = repeat(markercycle, inner=2)
-colorcycle = repeat(colorcycle, inner=2)
+markercycle = repeat(markercycle, inner=4)
+colorcycle = repeat(colorcycle, inner=4)
 
 function make_axes(fig, row=1, label=nothing)
     ax_b = Axis(fig[row, 1], xlabel = "Buoyancy \n[cm s⁻²]", ylabel = "z [m]")
@@ -332,7 +337,7 @@ function plot_latest(eki)
                           
         plot_fields!(axs, "observed at t = " * prettytime(times[end]), (:gray23, 0.6), observed...; linewidth=4)
         plot_fields!(axs, "min", :navy, min_error_data...)
-        plot_fields!(axs, "max", :orangered3, max_error_data...)
+        #plot_fields!(axs, "max", :orangered3, max_error_data...)
 
         fig[1, 6] = Legend(fig, axs[1]) 
     end
