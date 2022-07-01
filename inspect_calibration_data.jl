@@ -9,10 +9,10 @@ cases = ["free_convection",
          "strong_wind",
          "strong_wind_no_rotation"]
 
-suite = "two_day_suite"
-case_path(case) = joinpath("data", suite, case * "_instantaneous_statistics.jld2")
+suite = "one_day_suite"
+case_path(case) = joinpath("data", suite, "256x256x256", case * "_instantaneous_statistics.jld2")
 
-fontsize_theme = Theme(fontsize = 28, linewidth=4)
+fontsize_theme = Theme(fontsize=28, linewidth=4)
 set_theme!(fontsize_theme)
 
 field_names = (:u, :v, :b, :e)
@@ -86,5 +86,5 @@ Legend(fig[1, 2], blines, labels,
 
 display(fig)
 
-save("two_day_suite.png", fig)
+save(suite * ".png", fig)
 

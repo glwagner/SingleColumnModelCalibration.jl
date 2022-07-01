@@ -2,11 +2,11 @@ using Oceananigans
 using Oceananigans.Units
 using ParameterEstimocean
 using ParameterEstimocean: Transformation
+using ParameterEstimocean.InverseProblems: BatchedInverseProblem
 using LinearAlgebra
 using DataDeps
 using Distributions
-using CairoMakie
-using ElectronDisplay
+#using GLMakie
 
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity
 
@@ -15,11 +15,86 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalD
 #####
 
 times = [6hours, 12hours, 24hours, 36hours, 48hours]
-#times = [4hours, 24hours, 48hours]
 field_names = (:b, :e, :u, :v)
 Nensemble = 1000
 Δt = 10minutes
 closure = CATKEVerticalDiffusivity()
+
+include("prior_library.jl")
+
+parameter_names = (:CᵂwΔ,  :Cᵂu★, :Cᴰ⁻, :Cᴰʳ,
+                   :Cˢc,   :Cˢu,  :Cˢe,
+                   :Cᵇc,   :Cᵇu,  :Cᵇe,
+                   :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
+                   :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
+                   #:Cᴬc,   :Cᴬe,
+                   #:Cᴬc,  :Cᴬu, :Cᴬe, :Cᴬˢc, :Cᴬˢu, :Cᴬˢe,
+                   #:Cᴬc,  :Cᴬˢc,
+                   :CᴰRiᶜ, :CᴰRiʷ,
+                   :CᴷRiᶜ, :CᴷRiʷ)
+
+free_parameters = FreeParameters(prior_library, names=parameter_names)
+
+cases = ["free_convection",
+         "strong_wind_weak_cooling",
+         "med_wind_med_cooling",
+         "weak_wind_strong_cooling",
+         "strong_wind",
+         "strong_wind_no_rotation"]
+
+suite = "two_day_suite"
+case_path(case) = joinpath("data", suite, case * "_instantaneous_statistics.jld2")
+
+transformation = (b = ZScore(),
+                  u = ZScore(),
+                  v = ZScore(),
+                  e = RescaledZScore(0.05))
+
+function build_inverse_problem(regrid)
+
+    observation_library = Dict()
+
+    # Don't optimize u, v for free_convection
+    observation_library["free_convection"] =
+        SyntheticObservations(case_path("free_convection"); transformation, times, regrid,
+                              field_names = (:b, :e))
+                                                                    
+    # Don't optimize v for non-rotating cases
+    observation_library["strong_wind_no_rotation"] =
+        SyntheticObservations(case_path("strong_wind_no_rotation"); transformation, times, regrid,
+                              field_names = (:b, :e, :u))
+
+    # The rest are standard
+    for case in ["strong_wind", "med_wind_med_cooling", "strong_wind_weak_cooling", "weak_wind_strong_cooling"]
+        observation_library[case] = SyntheticObservations(case_path(case); field_names,
+                                                          transformation, times, regrid)
+    end
+
+    observations = [observation_library[case] for case in cases]
+
+    simulation = ensemble_column_model_simulation(observations; closure, Nensemble,
+                                                  architecture = CPU(),
+                                                  tracers = (:b, :e))
+
+    simulation.Δt = Δt    
+
+    Qᵘ = simulation.model.velocities.u.boundary_conditions.top.condition
+    Qᵇ = simulation.model.tracers.b.boundary_conditions.top.condition
+    N² = simulation.model.tracers.b.boundary_conditions.bottom.condition
+    
+    for (case, obs) in enumerate(observations)
+        f = obs.metadata.parameters.coriolis_parameter
+        view(Qᵘ, :, case) .= obs.metadata.parameters.momentum_flux
+        view(Qᵇ, :, case) .= obs.metadata.parameters.buoyancy_flux
+        view(N², :, case) .= obs.metadata.parameters.N²_deep
+        view(simulation.model.coriolis, :, case) .= Ref(FPlane(f=f))
+    end
+
+    batched_observations = BatchedSyntheticObservations(observations)
+    ip = InverseProblem(batched_observations, simulation, free_parameters)
+
+    return ip
+end
 
 z = [-256.0,
      -238.3,
@@ -42,143 +117,18 @@ z = [-256.0,
      - 10.0,
         0.0]
 
-regrid = RectilinearGrid(size=length(z)-1; z, topology=(Flat, Flat, Bounded))
+coarse_regrid = RectilinearGrid(size=length(z)-1; z, topology=(Flat, Flat, Bounded))
+fine_regrid = RectilinearGrid(size=128; z=(-256, 0), topology=(Flat, Flat, Bounded))
 
-transformation = (b = ZScore(),
-                  u = ZScore(),
-                  v = ZScore(),
-                  e = RescaledZScore(0.05))
+coarse_ip = build_inverse_problem(coarse_regrid)
+fine_ip = build_inverse_problem(fine_regrid)
 
-cases = ["free_convection",
-         "strong_wind_weak_cooling",
-         "med_wind_med_cooling",
-         "weak_wind_strong_cooling",
-         "strong_wind",
-         "strong_wind_no_rotation"]
+calibration = BatchedInverseProblem(coarse_ip, fine_ip)
 
-suite = "two_day_suite"
-case_path(case) = joinpath("data", suite, case * "_instantaneous_statistics.jld2")
-
-observation_library = Dict()
-
-# Don't optimize u, v for free_convection
-observation_library["free_convection"] =
-    SyntheticObservations(case_path("free_convection"); transformation, times, regrid,
-                          field_names = (:b, :e))
-                                                                
-# Don't optimize v for non-rotating cases
-observation_library["strong_wind_no_rotation"] =
-    SyntheticObservations(case_path("strong_wind_no_rotation"); transformation, times, regrid,
-                          field_names = (:b, :e, :u))
-
-# The rest are standard
-for case in ["strong_wind", "med_wind_med_cooling", "strong_wind_weak_cooling", "weak_wind_strong_cooling"]
-    observation_library[case] = SyntheticObservations(case_path(case); field_names,
-                                                      transformation, times, regrid)
-end
-
-observations = [observation_library[case] for case in cases]
-     
-#####
-##### Calibration
-#####
-
-bounds_library = Dict()
-
-# Turbulent kinetic energy parameters
-bounds_library[:CᵂwΔ]  = ( 2.0,  20.0)
-bounds_library[:Cᵂu★]  = ( 2.0,  20.0)
-bounds_library[:Cᴰ⁻]   = ( 0.0,   2.0)
-bounds_library[:Cᴰʳ]   = (-1.0,  10.0)
-bounds_library[:CᴰRiᶜ] = (-4.0,   4.0)
-bounds_library[:CᴰRiʷ] = ( 0.0,   4.0)
-
-# Mixing length parameters
-#
-#   Recall σ = σ⁻ (1 + σʳ * step(x, c, w))
-#
-bounds_library[:Cᴷu⁻]  = ( 0.0,  10.0)
-bounds_library[:Cᴷc⁻]  = ( 0.0,  10.0)
-bounds_library[:Cᴷe⁻]  = ( 0.0,  10.0)
-bounds_library[:Cᴷuʳ]  = (-1.0,   2.0)
-bounds_library[:Cᴷcʳ]  = (-1.0,   2.0)
-bounds_library[:Cᴷeʳ]  = (-1.0,   2.0)
-bounds_library[:CᴷRiᶜ] = (-4.0,   4.0)
-bounds_library[:CᴷRiʷ] = ( 0.0,   4.0)
-bounds_library[:Cᵇu]   = ( 0.0,   4.0)
-bounds_library[:Cᵇc]   = ( 0.0,   4.0)
-bounds_library[:Cᵇe]   = ( 0.0,   4.0)
-bounds_library[:Cˢu]   = ( 0.0,   4.0)
-bounds_library[:Cˢc]   = ( 0.0,   4.0)
-bounds_library[:Cˢe]   = ( 0.0,   4.0)
-
-bounds_library[:Cᴬˢu]  = ( 0.0,  2.0)
-bounds_library[:Cᴬˢc]  = ( 0.0,  2.0)
-bounds_library[:Cᴬˢe]  = ( 0.0,  2.0)
-bounds_library[:Cᴬu]   = ( 0.0,  0.01)
-bounds_library[:Cᴬc]   = (1e-3,  0.1)
-bounds_library[:Cᴬe]   = ( 0.0,  0.01)
-
-# Extras
-bounds_library[:Cᵇ]    = ( 0.0,   4.0)
-bounds_library[:Cˢ]    = ( 0.0,   4.0)
-bounds_library[:Cᴰ]    = ( 0.0,   2.0)
-bounds_library[:Cᵟu]   = ( 0.0,  10.0)
-bounds_library[:Cᵟc]   = ( 0.0,  10.0)
-bounds_library[:Cᵟe]   = ( 0.0,  10.0)
-
-prior_library = Dict()
-
-for p in keys(bounds_library)
-    prior_library[p] = ScaledLogitNormal(; bounds=bounds_library[p])
-end
-
-# No convective adjustment:
-constant_Ri_parameters = (:Cᴰ, :CᵂwΔ, :Cᵂu★, :Cᴸᵇ, :Cᴷu⁻, :Cᴷc⁻, :Cᴷe⁻, :Cᵟu, :Cᵟc, :Cᵟe)
-variable_Ri_parameters = (:Cᴷuʳ, :Cᴷcʳ, :Cᴷeʳ, :CᴷRiʷ, :CᴷRiᶜ, :Cᴰ, :Cᴸᵇ, :CᵂwΔ, :Cᵂu★)
-convective_adjustment_parameters = (:Cᴬc, :Cᴬe) # Cᴬu
-
-# :Cᴸˢ
-parameter_names = (:CᵂwΔ,  :Cᵂu★, :Cᴰ⁻, :Cᴰʳ,
-                   :Cˢc,   :Cˢu,  :Cˢe,
-                   :Cᵇc,   :Cᵇu,  :Cᵇe,
-                   :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
-                   :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
-                   #:Cᴬc,   :Cᴬe,
-                   #:Cᴬc,  :Cᴬu, :Cᴬe, :Cᴬˢc, :Cᴬˢu, :Cᴬˢe,
-                   #:Cᴬc,  :Cᴬˢc,
-                   :CᴰRiᶜ, :CᴰRiʷ,
-                   :CᴷRiᶜ, :CᴷRiʷ)
-
-free_parameters = FreeParameters(prior_library, names=parameter_names)
-
-function build_simulation()
-    simulation = ensemble_column_model_simulation(observations; closure, Nensemble,
-                                                  architecture = CPU(),
-                                                  tracers = (:b, :e))
-
-    simulation.Δt = Δt    
-
-    Qᵘ = simulation.model.velocities.u.boundary_conditions.top.condition
-    Qᵇ = simulation.model.tracers.b.boundary_conditions.top.condition
-    N² = simulation.model.tracers.b.boundary_conditions.bottom.condition
-    
-    for (case, obs) in enumerate(observations)
-        f = obs.metadata.parameters.coriolis_parameter
-        view(Qᵘ, :, case) .= obs.metadata.parameters.momentum_flux
-        view(Qᵇ, :, case) .= obs.metadata.parameters.buoyancy_flux
-        view(N², :, case) .= obs.metadata.parameters.N²_deep
-        view(simulation.model.coriolis, :, case) .= Ref(FPlane(f=f))
-    end
-
-    return simulation
-end
-
-simulation = build_simulation()
-calibration = InverseProblem(observations, simulation, free_parameters)
 resampler = Resampler(resample_failure_fraction=0.0, acceptable_failure_fraction=1.0)
 eki = EnsembleKalmanInversion(calibration; resampler, pseudo_stepping = ConstantConvergence(0.9))
 
+#=
 #####
 ##### Plot utils
 #####
@@ -389,3 +339,4 @@ for i = 1:200
     plot_latest(eki)
 end
 
+=#
