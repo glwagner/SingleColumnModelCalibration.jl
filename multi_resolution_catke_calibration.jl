@@ -6,7 +6,8 @@ using ParameterEstimocean.InverseProblems: BatchedInverseProblem
 using LinearAlgebra
 using DataDeps
 using Distributions
-#using GLMakie
+using ParameterEstimocean.Observations: forward_map_names
+using GLMakie
 
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity
 
@@ -14,9 +15,9 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalD
 ##### Compile LESbrary
 #####
 
-times = [6hours, 12hours, 24hours, 36hours, 48hours]
+times = [44hours, 48hours] #6hours, 12hours, 24hours, 36hours, 48hours]
 field_names = (:b, :e, :u, :v)
-Nensemble = 1000
+Nensemble = 100
 Δt = 10minutes
 closure = CATKEVerticalDiffusivity()
 
@@ -27,11 +28,12 @@ parameter_names = (:CᵂwΔ,  :Cᵂu★, :Cᴰ⁻, :Cᴰʳ,
                    :Cᵇc,   :Cᵇu,  :Cᵇe,
                    :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
                    :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
-                   #:Cᴬc,   :Cᴬe,
-                   #:Cᴬc,  :Cᴬu, :Cᴬe, :Cᴬˢc, :Cᴬˢu, :Cᴬˢe,
-                   #:Cᴬc,  :Cᴬˢc,
                    :CᴰRiᶜ, :CᴰRiʷ,
                    :CᴷRiᶜ, :CᴷRiʷ)
+
+#:Cᴬc,   :Cᴬe,
+#:Cᴬc,  :Cᴬu, :Cᴬe, :Cᴬˢc, :Cᴬˢu, :Cᴬˢe,
+#:Cᴬc,  :Cᴬˢc,
 
 free_parameters = FreeParameters(prior_library, names=parameter_names)
 
@@ -126,35 +128,21 @@ fine_ip = build_inverse_problem(fine_regrid)
 calibration = BatchedInverseProblem(coarse_ip, fine_ip)
 
 resampler = Resampler(resample_failure_fraction=0.0, acceptable_failure_fraction=1.0)
+#eki = EnsembleKalmanInversion(coarse_ip; resampler, pseudo_stepping = ConstantConvergence(0.9))
 eki = EnsembleKalmanInversion(calibration; resampler, pseudo_stepping = ConstantConvergence(0.9))
 
-#=
 #####
 ##### Plot utils
 #####
 
-Nt = length(times)
-observed_data = []
-
-for observation in observations
-    time_serieses = observation.field_time_serieses
-    names = keys(time_serieses)
-    case_data = NamedTuple(n => interior(getproperty(time_serieses, n)[Nt])[1, 1, :] for n in names)
-    push!(observed_data, case_data)
+function finitefind(a, val, find)
+    b = deepcopy(a)
+    b[.!isfinite.(a)] .= val
+    return find(b)
 end
 
-function get_modeled_case(icase, name, k=1)
-    model_time_serieses = calibration.time_series_collector.field_time_serieses 
-    field = getproperty(model_time_serieses, name)[Nt]
-    return view(interior(field), k, icase, :)
-end
-
-colorcycle =  [:black, :royalblue1, :darkgreen, :lightsalmon, :seagreen, :magenta2, :red4, :khaki1,   :darkgreen, :bisque4,
-               :silver, :lightsalmon, :lightseagreen, :teal, :royalblue1, :darkorchid4]
-
-markercycle = [:rect, :utriangle, :star5, :circle, :cross, :+, :pentagon, :ltriangle, :diamond, :star4]
-markercycle = repeat(markercycle, inner=4)
-colorcycle = repeat(colorcycle, inner=4)
+finitefindmin(a) = finitefind(a, Inf, findmin)
+finitefindmax(a) = finitefind(a, -Inf, findmax)
 
 function make_axes(fig, row=1, label=nothing)
     ax_b = Axis(fig[row, 1], xlabel = "Buoyancy \n[cm s⁻²]", ylabel = "z [m]")
@@ -172,8 +160,13 @@ function make_axes(fig, row=1, label=nothing)
     return (ax_b, ax_u, ax_v, ax_e)
 end
 
-function plot_fields!(axs, label, color, b, e, u=zeros(size(b)), v=zeros(size(b)); linewidth=2, linestyle=:solid)
-    grid = first(values(observation_library)).grid
+function get_modeled_case(ip, c, name, k=1)
+    model_time_serieses = ip.time_series_collector.field_time_serieses 
+    field = getproperty(model_time_serieses, name)[Nt]
+    return interior(field, k, c, :)
+end
+
+function plot_fields!(axs, label, color, grid, b, e, u=zeros(size(b)), v=zeros(size(b)); linewidth=2, linestyle=:solid)
     z = znodes(Center, grid)
     b, u, v, e = Tuple(Array(f) for f in (b, u, v, e))
 
@@ -190,153 +183,60 @@ function plot_fields!(axs, label, color, b, e, u=zeros(size(b)), v=zeros(size(b)
     return nothing
 end
 
-function min_max_parameters(summary)
-    names = keys(summary.ensemble_mean)
-    Nens = length(summary.parameters)
-    parameter_matrix = [summary.parameters[k][name] for name in names, k = 1:Nens]
-    θ_min = minimum(parameter_matrix, dims=2)
-    θ_max = maximum(parameter_matrix, dims=2)
-    return θ_min, θ_max
-end
 
-function finitefind(a, val, find)
-    b = deepcopy(a)
-    b[.!isfinite.(a)] .= val
-    return find(b)
-end
+function make_fig(eki)
+    high_res_ip = eki.inverse_problem[2]
+    times = first(high_res_ip.observations).times
+    field_names = forward_map_names(high_res_ip.observations)
+    Nt = length(times)
 
-finitefindmin(a) = finitefind(a, Inf, findmin)
-finitefindmax(a) = finitefind(a, -Inf, findmax)
-
-function visualize_parameter_evolution(eki)
-    summaries = eki.iteration_summaries
-    Niters = length(summaries)
-    names = eki.inverse_problem.free_parameters.names
-    θ_mean = NamedTuple(name => map(s -> s.ensemble_mean[name], summaries) for name in names)
-
-    k_best(s) = finitefindmin(s.mean_square_errors)[2]
-    θ_best = NamedTuple(name => map(s -> s.parameters[k_best(s)][name], summaries) for name in names)
-
-    θ_min_max = [min_max_parameters(s) for s in summaries]
-    θ_min = [[θn[1][i] for θn in θ_min_max] for i in 1:length(names)]
-    θ_max = [[θn[2][i] for θn in θ_min_max] for i in 1:length(names)]
-
-    θᵢ = NamedTuple(name => first(θ_mean[name]) for name in names)
-    Δθ = NamedTuple(name => (θ_mean[name] .- θᵢ[name]) ./ θᵢ[name] for name in names)
-    iterations = 0:length(summaries)-1
-
-    fig = Figure(resolution=(1200, 1200))
-    ax1 = Axis(fig[1:3, 1], xlabel = "Iteration", ylabel = "Δθ")
-    for (i, name) in enumerate(names)
-        label = string(name)
-        marker = markercycle[i]
-        color = colorcycle[i]
-        scatterlines!(ax1, iterations, parent(Δθ[name]); marker, color=(color, 0.8), label, linewidth=4)
-    end
-
-    fig[1:3, 2] = Legend(fig, ax1)
-
-    Nparts = 3
-    Nθpart = floor(Int, length(names) / Nparts)
-
-    for p in 1:Nparts
-        axp = Axis(fig[p+3, 1], xlabel = "Iteration", ylabel = "θ")
-
-        if p == Nparts
-            np = UnitRange((p-1) * Nθpart + 1, length(names))
-        else
-            np = UnitRange((p-1) * Nθpart + 1, p * Nθpart)
-        end
-
-        partnames = names[np]
-
-        for (n, name) in enumerate(partnames)
-            i = (p - 1) * Nθpart + n
-            label = string(name)
-            marker = markercycle[i]
-            color = colorcycle[i]
-            scatterlines!(axp, iterations, parent(θ_mean[name]); marker, color=(color, 0.6), label, linewidth=4)
-            lines!(axp, iterations, parent(θ_best[name]); color, linewidth=2)
-            band!(axp, iterations, parent(θ_min[i]), parent(θ_max[i]), color=(color, 0.3))
-        end
-
-        fig[p+3, 2] = Legend(fig, axp)
-    end
-
-    display(fig)
-
-    return nothing
-end
-
-function plot_latest(eki)
     latest_summary = eki.iteration_summaries[end]
     min_error, k_min = finitefindmin(latest_summary.mean_square_errors)
-    max_error, k_max = finitefindmax(latest_summary.mean_square_errors)
+    # max_error, k_max = finitefindmax(latest_summary.mean_square_errors)
 
     fig = Figure(resolution=(1200, 1200))
 
+    # Plot case by case
     for (c, case) in enumerate(cases)
+        # Make axes
         label = replace(case, "_" => "\n")
         axs = make_axes(fig, c, label)
-        observed = observed_data[c]
-        obs = observations[c]
 
-        min_error_data = NamedTuple(n => get_modeled_case(c, n, k_min) for n in keys(obs.field_time_serieses))
-        max_error_data = NamedTuple(n => get_modeled_case(c, n, k_max) for n in keys(obs.field_time_serieses))
-                          
-        plot_fields!(axs, "observed at t = " * prettytime(times[end]), (:gray23, 0.6), observed...; linewidth=4)
-        plot_fields!(axs, "min", :navy, min_error_data...)
-        #plot_fields!(axs, "max", :orangered3, max_error_data...)
+        # Plot observed data for each field
+        case_obs = high_res_ip.observations[c]
+        case_dataset = case_obs.field_time_serieses
+        case_names = keys(case_dataset)
+        case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[Nt])[1, 1, :] for n in case_names)
+        plot_fields!(axs, "Observed at t = " * prettytime(times[Nt]), (:gray23, 0.6), case_field_data...; linewidth=4)
+
+        # Plot model case with minimum error
+        ip = eki.inverse_problem[1] # low res 
+        obs = ip.observations
+        grid = ip.observations.grid
+        min_error_data = NamedTuple(n => get_modeled_case(ip, c, n, k_min) for n in keys(obs.field_time_serieses))
+        plot_fields!(axs, "min (low res)", :navy, grid, min_error_data...)
+
+        ip = eki.inverse_problem[2] # high res 
+        obs = ip.observations
+        grid = ip.observations.grid
+        min_error_data = NamedTuple(n => get_modeled_case(ip, c, n, k_min) for n in keys(obs.field_time_serieses))
+        plot_fields!(axs, "min (hi res)", :orange, grid, min_error_data...)
 
         fig[1, 6] = Legend(fig, axs[1]) 
     end
 
-    display(fig)
-
-    return nothing
+    return fig
 end
-
-#####
-##### Visualize observations
-#####
-
-fig = Figure(resolution=(1200, 1200))
-linestyles = [:solid, :dash, :dot, :dashdot, :dashdotdot, :solid]
-all_axs = []
-
-for (o, observation) in enumerate(observations)
-    axs_label = replace(cases[o], "_" => "\n")
-    axs = make_axes(fig, o, axs_label)
-    append!(all_axs, axs)
-    for (n, t) in enumerate(times)
-        linestyle = linestyles[o]
-        label = "t = " * prettytime(t)
-        names = keys(observation.field_time_serieses)
-        data = map(name -> interior(observation.field_time_serieses[name][n])[1, 1, :], names)
-        plot_fields!(axs, label, colorcycle[n], data...)
-    end
-end
-
-display(fig)
 
 #####
 ##### Calibrate
 #####
 
-# Initial state after 0 iterations
-plot_latest(eki)
-@show eki.iteration_summaries[end]
+fig = make_fig(eki)
+display(fig)
 
-# Continuously update
-for i = 1:200
-    @info "Iterating..."
-    start_time = time_ns()
-    iterate!(eki)
-    elapsed = 1e-9 * (time_ns() - start_time)
-    @info string("   done. (", prettytime(elapsed), ")")
-    @show eki.iteration_summaries[end]
-    visualize_parameter_evolution(eki)
-    plot_latest(eki)
-end
+iterate!(eki, iterations=10)
 
-=#
+fig = make_fig(eki)
+display(fig)
+
