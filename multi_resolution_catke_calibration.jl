@@ -162,6 +162,8 @@ end
 
 function get_modeled_case(ip, c, name, k=1)
     model_time_serieses = ip.time_series_collector.field_time_serieses 
+    times = ip.time_series_collector.times
+    Nt = length(times)
     field = getproperty(model_time_serieses, name)[Nt]
     return interior(field, k, c, :)
 end
@@ -205,20 +207,21 @@ function make_fig(eki)
         # Plot observed data for each field
         case_obs = high_res_ip.observations[c]
         case_dataset = case_obs.field_time_serieses
+        grid = case_obs.grid
         case_names = keys(case_dataset)
         case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[Nt])[1, 1, :] for n in case_names)
-        plot_fields!(axs, "Observed at t = " * prettytime(times[Nt]), (:gray23, 0.6), case_field_data...; linewidth=4)
+        plot_fields!(axs, "Observed at t = " * prettytime(times[Nt]), (:gray23, 0.6), grid, case_field_data...; linewidth=4)
 
         # Plot model case with minimum error
         ip = eki.inverse_problem[1] # low res 
-        obs = ip.observations
-        grid = ip.observations.grid
+        obs = ip.observations[c]
+        grid = obs.grid
         min_error_data = NamedTuple(n => get_modeled_case(ip, c, n, k_min) for n in keys(obs.field_time_serieses))
         plot_fields!(axs, "min (low res)", :navy, grid, min_error_data...)
 
         ip = eki.inverse_problem[2] # high res 
-        obs = ip.observations
-        grid = ip.observations.grid
+        obs = ip.observations[c]
+        grid = obs.grid
         min_error_data = NamedTuple(n => get_modeled_case(ip, c, n, k_min) for n in keys(obs.field_time_serieses))
         plot_fields!(axs, "min (hi res)", :orange, grid, min_error_data...)
 
