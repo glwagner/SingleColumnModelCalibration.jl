@@ -14,10 +14,9 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalD
 ##### Compile LESbrary
 #####
 
-#times = [6hours, 48hours]
 times = [36hours, 48hours]
 field_names = (:b, :e, :u, :v)
-Nensemble = 8000
+Nensemble = 1000
 Δt = 10minutes
 closure = CATKEVerticalDiffusivity()
 convergence_ratio = 0.7
@@ -48,7 +47,7 @@ regrid = RectilinearGrid(size=length(z)-1; z, topology=(Flat, Flat, Bounded))
 transformation = (b = ZScore(),
                   u = ZScore(),
                   v = ZScore(),
-                  e = RescaledZScore(0.5))
+                  e = RescaledZScore(0.05))
 
 cases = ["free_convection",
          "strong_wind_weak_cooling",
@@ -87,11 +86,11 @@ observations = [observation_library[case] for case in cases]
 bounds_library = Dict()
 
 # Turbulent kinetic energy parameters
-bounds_library[:CᵂwΔ]  = ( 4.0,  12.0)
-bounds_library[:Cᵂu★]  = ( 4.0,  12.0)
-bounds_library[:Cᴰ⁻]   = ( 0.0,   4.0)
+bounds_library[:CᵂwΔ]  = ( 2.0,  20.0)
+bounds_library[:Cᵂu★]  = ( 2.0,  20.0)
+bounds_library[:Cᴰ⁻]   = ( 0.0,   2.0)
 bounds_library[:Cᴰʳ]   = (-1.0,  10.0)
-bounds_library[:CᴰRiᶜ] = (-2.0,   2.0)
+bounds_library[:CᴰRiᶜ] = (-4.0,   4.0)
 bounds_library[:CᴰRiʷ] = ( 0.0,   4.0)
 
 # Mixing length parameters
@@ -100,12 +99,12 @@ bounds_library[:CᴰRiʷ] = ( 0.0,   4.0)
 #
 bounds_library[:Cᴷu⁻]  = ( 0.0,   2.0)
 bounds_library[:Cᴷc⁻]  = ( 0.0,  10.0)
-bounds_library[:Cᴷe⁻]  = ( 0.0,  20.0)
+bounds_library[:Cᴷe⁻]  = ( 0.0,  10.0)
 bounds_library[:Cᴷuʳ]  = (-1.0,   2.0)
 bounds_library[:Cᴷcʳ]  = (-1.0,   2.0)
-bounds_library[:Cᴷeʳ]  = (-1.0,   3.0)
+bounds_library[:Cᴷeʳ]  = (-1.0,   2.0)
 bounds_library[:CᴷRiᶜ] = (-4.0,   4.0)
-bounds_library[:CᴷRiʷ] = ( 0.0,   6.0)
+bounds_library[:CᴷRiʷ] = ( 0.0,   4.0)
 bounds_library[:Cᵇu]   = ( 0.0,   4.0)
 bounds_library[:Cᵇc]   = ( 0.0,   4.0)
 bounds_library[:Cᵇe]   = ( 0.0,   4.0)
@@ -379,7 +378,7 @@ plot_latest(eki)
 @show eki.iteration_summaries[end]
 
 # Continuously update
-for i = 1:20
+for i = 1:200
     @info "Iterating..."
     start_time = time_ns()
     iterate!(eki)

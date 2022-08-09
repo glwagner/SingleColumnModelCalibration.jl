@@ -25,5 +25,5 @@ Manifest.toml
 
 *.png
 *.jld2
-*.txt
-
+*.swp
+*.DS_Store
