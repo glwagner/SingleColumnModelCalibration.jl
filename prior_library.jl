@@ -44,9 +44,9 @@ bounds_library[:Cᵟe]   = ( 0.0,  2.0)
 bounds_library[:Cᴬˢu]  = ( 0.0,  2.0)
 bounds_library[:Cᴬˢc]  = ( 0.0,  2.0)
 bounds_library[:Cᴬˢe]  = ( 0.0,  2.0)
-bounds_library[:Cᴬu]   = ( 0.0,  0.01)
-bounds_library[:Cᴬc]   = (1e-3,  0.1)
-bounds_library[:Cᴬe]   = ( 0.0,  0.01)
+bounds_library[:Cᴬu]   = ( 0.0,  2.0)
+bounds_library[:Cᴬc]   = ( 0.0,  2.0)
+bounds_library[:Cᴬe]   = ( 0.0,  2.0)
 
 # Extras
 bounds_library[:Cᵇ]    = ( 0.0,   4.0)
