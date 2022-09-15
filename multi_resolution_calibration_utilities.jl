@@ -14,8 +14,6 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
 
 include("prior_library.jl")
 
-free_parameters = FreeParameters(prior_library, names=parameter_names)
-
 cases = ["free_convection",
          "strong_wind_weak_cooling",
          "med_wind_med_cooling",
@@ -24,6 +22,7 @@ cases = ["free_convection",
          "strong_wind_no_rotation"]
     
 function lesbrary_inverse_problem(regrid;
+                                  free_parameters,
                                   times = [48hours - 10minutes, 48hours],
                                   Nensemble = 500,
                                   Δt = 10minutes,
