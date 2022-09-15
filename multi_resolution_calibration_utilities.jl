@@ -2,21 +2,17 @@ using DataDeps
 using Oceananigans
 using CairoMakie
 using ElectronDisplay
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity
+
 using ParameterEstimocean
 using ParameterEstimocean: Transformation
 using ParameterEstimocean.Observations: forward_map_names
 
-include("prior_library.jl")
+using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
+    CATKEVerticalDiffusivity,
+    MixingLength,
+    TurbulentKineticEnergyEquation
 
-parameter_names = (:CᵂwΔ,  :Cᵂu★,
-                   :Cᴰ⁻, :Cᴰʳ, :CᴰRiᶜ, :CᴰRiʷ,
-                   :Cˢc,   :Cˢu,  :Cˢe,
-                   :Cᵟc,   :Cᵟu,  :Cᵟe,
-                   :Cᵇc,   :Cᵇu,  :Cᵇe,
-                   :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
-                   :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ,
-                   :CᴷRiᶜ, :CᴷRiʷ)
+include("prior_library.jl")
 
 free_parameters = FreeParameters(prior_library, names=parameter_names)
 
@@ -32,6 +28,7 @@ function lesbrary_inverse_problem(regrid;
                                   Nensemble = 500,
                                   Δt = 10minutes,
                                   closure = CATKEVerticalDiffusivity(),
+                                  non_ensemble_closure = nothing,
                                   suite = "one_day_suite",
                                   tke_weight = 0.1,
                                   architecture = GPU())
@@ -72,8 +69,7 @@ function lesbrary_inverse_problem(regrid;
 
     observations = [observation_library[case] for case in cases]
 
-    simulation = ensemble_column_model_simulation(observations;
-                                                  closure, Nensemble, architecture,
+    simulation = ensemble_column_model_simulation(observations; closure, Nensemble, architecture,  non_ensemble_closure,
                                                   tracers = (:b, :e))
 
     simulation.Δt = Δt    
@@ -91,7 +87,7 @@ function lesbrary_inverse_problem(regrid;
     end
 
     weights = [1.0 for _ in observations]
-    weights[1] = 0.1 # downweight free convection case
+    #weights[1] = 0.1 # downweight free convection case
     batched_observations = BatchedSyntheticObservations(observations; weights)
 
     ip = InverseProblem(batched_observations, simulation, free_parameters)
