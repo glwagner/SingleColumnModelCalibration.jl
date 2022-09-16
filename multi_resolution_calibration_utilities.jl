@@ -14,6 +14,28 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
 
 include("prior_library.jl")
 
+# Coarse grid used by ECCO
+ecco_vertical_grid = [-256.0,
+                      -238.3,
+                      -207.2,
+                      -182.3,
+                      -162.5,
+                      -146.5,
+                      -133.0,
+                      -121.3,
+                      -110.5,
+                      -100.2,
+                      - 90.0,
+                      - 80.0,
+                      - 70.0,
+                      - 60.0,
+                      - 50.0,
+                      - 40.0,
+                      - 30.0,
+                      - 20.0,
+                      - 10.0,
+                         0.0]
+
 cases = ["free_convection",
          "strong_wind_weak_cooling",
          "med_wind_med_cooling",
