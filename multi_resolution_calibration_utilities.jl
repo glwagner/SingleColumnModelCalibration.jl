@@ -48,6 +48,7 @@ function lesbrary_inverse_problem(regrid;
                                   times = [48hours - 10minutes, 48hours],
                                   Nensemble = 500,
                                   Δt = 10minutes,
+                                  field_names = (:b, :e, :u, :v),
                                   closure = CATKEVerticalDiffusivity(),
                                   non_ensemble_closure = nothing,
                                   suite = "one_day_suite",
@@ -72,20 +73,20 @@ function lesbrary_inverse_problem(regrid;
     observation_library = Dict()
 
     # Don't optimize u, v for free_convection
+    free_convection_names = filter(n -> n == :u || n == :v, field_names)
     observation_library["free_convection"] =
         SyntheticObservations(case_path("free_convection"); transformation, times, regrid,
-                              field_names = (:b, :e))
+                              field_names = free_convection_names)
                                                                     
     # Don't optimize v for non-rotating cases
+    strong_wind_no_rotation_names = filter(n -> n == :v, field_names)
     observation_library["strong_wind_no_rotation"] =
         SyntheticObservations(case_path("strong_wind_no_rotation"); transformation, times, regrid,
-                              field_names = (:b, :e, :u))
+                              field_names = strong_wind_no_rotation_names)
 
     # The rest are standard
     for case in ["strong_wind", "med_wind_med_cooling", "strong_wind_weak_cooling", "weak_wind_strong_cooling"]
-        observation_library[case] = SyntheticObservations(case_path(case);
-                                                          transformation, times, regrid,
-                                                          field_names = (:b, :e, :u, :v))
+        observation_library[case] = SyntheticObservations(case_path(case); transformation, times, regrid, field_names)
     end
 
     observations = [observation_library[case] for case in cases]
