@@ -73,13 +73,13 @@ function lesbrary_inverse_problem(regrid;
     observation_library = Dict()
 
     # Don't optimize u, v for free_convection
-    free_convection_names = filter(n -> n == :u || n == :v, field_names)
+    free_convection_names = filter(n -> n ∈ (:b, :e), field_names)
     observation_library["free_convection"] =
         SyntheticObservations(case_path("free_convection"); transformation, times, regrid,
                               field_names = free_convection_names)
                                                                     
     # Don't optimize v for non-rotating cases
-    strong_wind_no_rotation_names = filter(n -> n == :v, field_names)
+    strong_wind_no_rotation_names = filter(n -> n ∈ (:b, :e, :u), field_names)
     observation_library["strong_wind_no_rotation"] =
         SyntheticObservations(case_path("strong_wind_no_rotation"); transformation, times, regrid,
                               field_names = strong_wind_no_rotation_names)
