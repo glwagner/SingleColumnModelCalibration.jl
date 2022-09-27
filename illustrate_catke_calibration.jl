@@ -67,12 +67,14 @@ coarse_regrid = RectilinearGrid(size=Nz_ecco, z=ecco_vertical_grid, topology=(Fl
 fine_regrid   = RectilinearGrid(size=48; z=(-256, 0), topology=(Flat, Flat, Bounded))
 
 # Batch the inverse problems
-times = [2hours, 24hours]
+times = collect(range(2hours, stop=24hours, length=4))
+weights = (2, 1)
 Nensemble = 3
 architecture = CPU()
 inverse_problem_kwargs = (; free_parameters, Nensemble, architecture, closure)
 coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, inverse_problem_kwargs...)
 fine_ip   = lesbrary_inverse_problem(fine_regrid; times, inverse_problem_kwargs...)
+batched_ip = BatchedInverseProblem(coarse_ip, fine_ip; weights)
 
 y = observation_map(fine_ip)
 summaries = load_summaries(calibration_filenames.full)
@@ -101,7 +103,9 @@ for (n, summary) in enumerate(summaries)
     pseudotimes[n] = summary.pseudotime
 end
 
-mean_iteration_ip = lesbrary_inverse_problem(fine_regrid; Nensemble=Niterations, times, free_parameters, architecture, closure)
+mean_iteration_coarse_ip = lesbrary_inverse_problem(coarse_regrid; Nensemble=Niterations, times, free_parameters, architecture, closure)
+mean_iteration_fine_ip   = lesbrary_inverse_problem(fine_regrid; Nensemble=Niterations, times, free_parameters, architecture, closure)
+mean_iteration_batched_ip = BatchedInverseProblem(mean_iteration_coarse_ip, mean_iteration_fine_ip; weights)
 θᵢ = [summaries[i-1].ensemble_mean for i = 1:Niterations]
 
 @info "Evaluating mean parameters from every iteration..."

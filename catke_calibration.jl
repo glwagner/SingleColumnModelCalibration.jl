@@ -11,6 +11,31 @@ using JLD2
 # Import "lesbrary_inverse_problem" + plotting utility "calibration_progress_figure"
 include("multi_resolution_calibration_utilities.jl")
 
+dir = "/home/greg/Projects/LocalOceanClosureCalibration/calibration_summaries"
+
+#=
+parameter_names = (
+    :CᵂwΔ,  :Cᵂu★,
+    :Cᴰ⁻,
+    :Cᴰʳ, :CᴰRiᶜ, :CᴰRiʷ, # Ri-dependent ϵ
+    :Cᵇ, :Cˢ,
+    :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
+    #:Ku_adjustment, :Kc_adjustment, :Ke_adjustment,
+)
+
+name = "shear_nemo_fancy_tke"
+=#
+
+#=
+parameter_names = (
+    :CᵂwΔ,  :Cᵂu★,
+    :Cᴰ⁻, :Cˢ, :Cᵇ,
+    :Cᴷc⁻,  :Cᴷu⁻, :Cᴷe⁻,
+)
+
+name = "too_simple_catke"
+=#
+
 parameter_names = (
     :CᵂwΔ,  :Cᵂu★,
     :Cᴰ⁻,
@@ -20,19 +45,25 @@ parameter_names = (
     :Ku_adjustment, :Kc_adjustment, :Ke_adjustment,
     #:Cᴬu, :Cᴬc, :Cᴬe,     # Convective-adjustment
     :Cᴰʳ, :CᴰRiᶜ, :CᴰRiʷ, # Ri-dependent ϵ
-    :Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ, # Ri-dependent K
-    :CᴷRiᶜ, :CᴷRiʷ,       # Ri-dependent K
-    :Cᵟc,   :Cᵟu,  :Cᵟe,  # Resolution-dependent ℓ
+    #:Cᴷcʳ,  :Cᴷuʳ, :Cᴷeʳ, # Ri-dependent K
+    #:CᴷRiᶜ, :CᴷRiʷ,       # Ri-dependent K
+    #:Cᵟc,   :Cᵟu,  :Cᵟe,  # Resolution-dependent ℓ
 )
 
-dir = "/home/greg/Projects/LocalOceanClosureCalibration/calibration_summaries"
-name = "full_catke_conv_adj"
+#name = "complex_catke_conv_adj"
+name = "goldilocks_catke_grid_conv_adj"
 
 neutral_default_mixing_length_parameters =
     Dict(
          :Cᵟc => 0.5,
          :Cᵟu => 0.5,
          :Cᵟe => 0.5,
+         :Cᵇu => Inf,
+         :Cᵇc => Inf,
+         :Cᵇe => Inf,
+         :Cˢu => Inf,
+         :Cˢc => Inf,
+         :Cˢe => Inf,
          :Cᴷcʳ => 0.0,
          :Cᴷuʳ => 0.0,
          :Cᴷeʳ => 0.0,
@@ -40,6 +71,9 @@ neutral_default_mixing_length_parameters =
 
 neutral_default_tke_parameters =
     Dict(
+         :CᵂwΔ => 0.0,
+         :Cᵂu★ => 0.0,
+         :Cᴰ⁻ => 0.0,
          :Cᴰʳ => 0.0,
          :CᴰRiᶜ => 0.0,
          :CᴰRiʷ => 0.0,
@@ -61,24 +95,26 @@ fine_regrid   = RectilinearGrid(size=48; z=(-256, 0), topology=(Flat, Flat, Boun
 
 # Batch the inverse problems
 times = [6hours, 12hours, 18hours, 24hours]
-Nensemble = 800
+Nensemble = 400
+tke_weight = 0.01
 architecture = GPU()
-ip = lesbrary_inverse_problem(fine_regrid; free_parameters, times, Nensemble, architecture, closure, non_ensemble_closure)
+inverse_problem_kwargs = (; free_parameters, Nensemble, architecture, closure, non_ensemble_closure)
+ip = lesbrary_inverse_problem(fine_regrid; times, inverse_problem_kwargs...)
 resampler = Resampler(resample_failure_fraction=0.0, acceptable_failure_fraction=1.0)
 
 @info "Performing some preliminary iterations with the coarse model..."
 pseudo_stepping = ConstantConvergence(0.8)
 preliminary_eki = EnsembleKalmanInversion(ip; resampler, pseudo_stepping)
-iterate!(preliminary_eki, iterations=10)
+iterate!(preliminary_eki, iterations=20)
 
 display(calibration_progress_figure(preliminary_eki))
 @show preliminary_eki.iteration_summaries[end]
 
 @info "Now for the main event..."
 times = [6hours, 12hours, 18hours, 24hours]
-weights = (2, 1)
-coarse_ip = lesbrary_inverse_problem(coarse_regrid; free_parameters, times, Nensemble, architecture, closure, non_ensemble_closure)
-fine_ip   = lesbrary_inverse_problem(fine_regrid;   free_parameters, times, Nensemble, architecture, closure, non_ensemble_closure)
+weights = (1, 1)
+coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, inverse_problem_kwargs...)
+fine_ip   = lesbrary_inverse_problem(fine_regrid;   times, inverse_problem_kwargs...)
 batched_ip = BatchedInverseProblem(coarse_ip, fine_ip; weights)
 
 pseudo_stepping = Kovachki2018InitialConvergenceRatio(initial_convergence_ratio=0.9)
@@ -91,11 +127,11 @@ display(calibration_progress_figure(eki))
 @show eki.iteration_summaries[end]
 
 # Hierarchical calibration, moving the start time back
-for start_time in [22hours, 18hours, 12hours, 6hours, 2hours]
+for start_time in [22hours, 12hours, 2hours]
     times .= range(start_time, stop=24hours, length=4)
     #times[1] = start_time
-    coarse_ip = lesbrary_inverse_problem(coarse_regrid; free_parameters, times, Nensemble, architecture, closure, non_ensemble_closure)
-    fine_ip   = lesbrary_inverse_problem(fine_regrid;   free_parameters, times, Nensemble, architecture, closure, non_ensemble_closure)
+    coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, inverse_problem_kwargs...)
+    fine_ip   = lesbrary_inverse_problem(fine_regrid;   times, inverse_problem_kwargs...)
     batched_ip = BatchedInverseProblem(coarse_ip, fine_ip; weights)
     eki.inverse_problem = batched_ip
 

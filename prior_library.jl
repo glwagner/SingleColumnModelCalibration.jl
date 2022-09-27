@@ -2,9 +2,9 @@ using Distributions
 
 bounds_library = Dict()
 
-bounds_library[:Ku_adjustment]  = (0.0, 1.0)
-bounds_library[:Kc_adjustment]  = (0.0, 1.0)
-bounds_library[:Ke_adjustment]  = (0.0, 1.0)
+bounds_library[:Ku_adjustment]  = (0.0, 2.0)
+bounds_library[:Kc_adjustment]  = (0.0, 2.0)
+bounds_library[:Ke_adjustment]  = (0.0, 2.0)
 
 # Turbulent kinetic energy parameters
 bounds_library[:CᵂwΔ]  = ( 2.0,  20.0)

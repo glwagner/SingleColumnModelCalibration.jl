@@ -63,7 +63,8 @@ function lesbrary_inverse_problem(regrid;
     # Retain only the upper half
     Nz = regrid.Nz
     Nh = floor(Int, Nz/3)
-    space = SpaceIndices(z=Nh:Nz)
+    #space = SpaceIndices(z=Nh:Nz)
+    space = SpaceIndices(z=1:Nz)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
