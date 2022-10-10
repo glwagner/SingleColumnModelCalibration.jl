@@ -42,6 +42,16 @@ cases = ["free_convection",
          "weak_wind_strong_cooling",
          "strong_wind",
          "strong_wind_no_rotation"]
+
+# Weight by number of fields (excluding TKE)
+observation_weights = Dict(
+    "free_convection"          => 1.0,
+    "strong_wind_weak_cooling" => 1/3,
+    "med_wind_med_cooling"     => 1/3,
+    "weak_wind_strong_cooling" => 1/3,
+    "strong_wind"              => 1/3,
+    "strong_wind_no_rotation"  => 1/2,
+)
     
 function lesbrary_inverse_problem(regrid;
                                   free_parameters,
@@ -91,6 +101,8 @@ function lesbrary_inverse_problem(regrid;
     end
 
     observations = [observation_library[case] for case in cases]
+    weights = [observation_weights[name] for name in cases]
+    batched_observations = BatchedSyntheticObservations(observations; weights)
 
     simulation = ensemble_column_model_simulation(observations; closure, Nensemble, architecture,  non_ensemble_closure,
                                                   tracers = (:b, :e))
@@ -108,10 +120,6 @@ function lesbrary_inverse_problem(regrid;
         view(N², :, case) .= obs.metadata.parameters.N²_deep
         view(simulation.model.coriolis, :, case) .= Ref(FPlane(f=f))
     end
-
-    weights = [1.0 for _ in observations]
-    #weights[1] = 0.1 # downweight free convection case
-    batched_observations = BatchedSyntheticObservations(observations; weights)
 
     ip = InverseProblem(batched_observations, simulation, free_parameters)
 
