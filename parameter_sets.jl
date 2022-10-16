@@ -1,12 +1,14 @@
 parameter_sets = Dict(
-    "goldilocks" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴰ⁻, :Cᴰʳ, :CᴰRiᶜ, :CᴰRiʷ, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
+    #"goldilocks" => (:Cʷ★, :Cʷℓ, :CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
+    #"nemo_like"  => (:Cʷ★, :Cʷℓ, :CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc),
+    "goldilocks" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
     "nemo_like"  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc),
 )
 
-parameter_sets["complex"] = tuple(parameter_sets["goldilocks"]..., :CᴷRiᶜ, :CᴷRiʷ)
+parameter_sets["complex"] = tuple(parameter_sets["goldilocks"]..., :Cᴰ⁺, :CᴰRiᶜ, :CᴰRiʷ)
 parameter_sets["shear_nemo_like"] = tuple(parameter_sets["nemo_like"]..., :Cˢc)
 
-conv_adj_names = (:Cᴬc, :Cᴬu, :Cᴬe)
+conv_adj_names = (:Cᴬc, :Cᴬu, :Cᴬe, :Cʰˢ)
 grid_length_names = (:Cᵟc, :Cᵟu, :Cᵟe)
 
 for (set, names) in parameter_sets
@@ -25,10 +27,22 @@ end
 
 Cᵇ(θ) = θ.Cᵇc
 Cˢ(θ) = θ.Cˢc
+Cᴷu⁺(θ) = θ.Cᴷu⁻
+Cᴷc⁺(θ) = θ.Cᴷc⁻
+Cᴷe⁺(θ) = θ.Cᴷe⁻
+Cᴰ⁺(θ) = θ.Cᴰ⁻
 
-dependent_parameter_sets["nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ) 
-dependent_parameter_sets["nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ) 
-dependent_parameter_sets["nemo_like_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ) 
+dependent_parameter_sets["nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+dependent_parameter_sets["nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+dependent_parameter_sets["nemo_like_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+
+dependent_parameter_sets["goldilocks"]             = (; Cᴷu⁺, Cᴷc⁺, Cᴷe⁺) 
+dependent_parameter_sets["goldilocks_conv_adj"]    = (; Cᴷu⁺, Cᴷc⁺, Cᴷe⁺) 
+dependent_parameter_sets["goldilocks_grid_length"] = (; Cᴷu⁺, Cᴷc⁺, Cᴷe⁺) 
+
+dependent_parameter_sets["goldilocks2"]             = (; Cᴰ⁺) 
+dependent_parameter_sets["goldilocks2_conv_adj"]    = (; Cᴰ⁺) 
+dependent_parameter_sets["goldilocks2_grid_length"] = (; Cᴰ⁺) 
 
 # Some defaults
 neutral_default_mixing_length_parameters = Dict(
@@ -41,21 +55,16 @@ neutral_default_mixing_length_parameters = Dict(
     :Cˢu => Inf,
     :Cˢc => Inf,
     :Cˢe => Inf,
-    :Cᴷcʳ => 0.0,
-    :Cᴷuʳ => 0.0,
-    :Cᴷeʳ => 0.0,
+    :CᴷRiᶜ => Inf,
+    :CᴷRiʷ => 0.0,
 )
 
 neutral_default_tke_parameters = Dict(
     :CᵂwΔ => 0.0,
     :Cᵂu★ => 0.0,
     :Cᴰ⁻ => 0.0,
-    :Cᴰʳ => 0.0,
-    :CᴰRiᶜ => 0.0,
+    :Cᴰ⁺ => 0.0,
+    :CᴰRiᶜ => Inf,
     :CᴰRiʷ => 0.0,
 )
-
-mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
-turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
-closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
 
