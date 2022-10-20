@@ -59,7 +59,8 @@ best_θₙ = get_best_parameters(summaries[end])
 @show summaries[end]
 
 savename = string("catke_", name, "_parameters.jld2")
-@save savename mean=mean_θₙ best=best_θₙ
+savepath = joinpath("parameters", savename)
+@save savepath mean=mean_θₙ best=best_θₙ
 
 mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
 turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
