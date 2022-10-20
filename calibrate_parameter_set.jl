@@ -26,6 +26,13 @@ function iterate_until!(eki, pseudotime_limit, max_iterations=1000)
     return nothing
 end
 
+mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
+turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
+neutral_default_catke = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
+
+get_free_parameters(name) = FreeParameters(prior_library, names = parameter_sets[name],
+                                           dependent_parameters = dependent_parameter_sets[name])
+
 function calibrate_parameter_set(name;
                                  dir = "/home/greg/Projects/LocalOceanClosureCalibration/calibration_summaries",
                                  Nensemble = 200,
@@ -36,24 +43,16 @@ function calibrate_parameter_set(name;
                                  resample_failure_fraction = 0.2,
                                  acceptable_failure_fraction = 1.0,
                                  initial_convergence_ratio = 0.7,
+                                 preliminary_combined_calibration = true,
                                  fine_Nz = 32,
+                                 closure = neutral_default_catke,
+                                 free_parameters = get_free_parameters(name),
                                  fine_Δt = 10minutes,
                                  architecture = GPU())
 
     savename = @sprintf("%s_Nens%d_%s_fine_Nz%d", name, Nensemble, suite, fine_Nz)
 
-    #####
-    ##### Build closure and free parameters
-    #####
-
-    mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
-    turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
-    closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
-
-    free_parameters = FreeParameters(prior_library,
-                                     names = parameter_sets[name],
-                                     dependent_parameters = dependent_parameter_sets[name])
-
+    @info "Saving data to $savename" * ".jld2"
     @info "Calibrating free parameters $free_parameters..."
 
     #####
@@ -110,8 +109,10 @@ function calibrate_parameter_set(name;
     fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
     preliminary_eki = EnsembleKalmanInversion(fine_ip; resampler, pseudo_stepping, noise_covariance=fine_Γ)
 
-    @info "Performing a preliminary calibration of $name to the fine grid..."
-    iterate_until!(preliminary_eki, pseudotime_limit / 4, max_iterations)
+    if preliminary_combined_calibration
+        @info "Performing a preliminary calibration of $name to the fine grid..."
+        iterate_until!(preliminary_eki, pseudotime_limit / 4, max_iterations)
+    end
 
     final_pseudotime = preliminary_eki.pseudotime + pseudotime_limit
     times = collect(range(2hours, stop=24hours, length=4))

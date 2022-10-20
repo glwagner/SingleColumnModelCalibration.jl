@@ -3,12 +3,14 @@ parameter_sets = Dict(
     #"nemo_like"  => (:Cʷ★, :Cʷℓ, :CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc),
     "goldilocks" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
     "nemo_like"  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc),
+    "basic"  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :CᴷRiᶜ, :CᴷRiʷ, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc, :Cˢc),
 )
 
 parameter_sets["complex"] = tuple(parameter_sets["goldilocks"]..., :Cᴰ⁺, :CᴰRiᶜ, :CᴰRiʷ)
 parameter_sets["shear_nemo_like"] = tuple(parameter_sets["nemo_like"]..., :Cˢc)
 
-conv_adj_names = (:Cᴬc, :Cᴬu, :Cᴬe, :Cʰˢ)
+#conv_adj_names = (:Cᴬc, :Cᴬu, :Cᴬe, :Cʰˢ)
+conv_adj_names = (:Cᴬc, :Cᴬe, :Cʰˢ)
 grid_length_names = (:Cᵟc, :Cᵟu, :Cᵟe)
 
 for (set, names) in parameter_sets
@@ -32,9 +34,17 @@ Cᴷc⁺(θ) = θ.Cᴷc⁻
 Cᴷe⁺(θ) = θ.Cᴷe⁻
 Cᴰ⁺(θ) = θ.Cᴰ⁻
 
-dependent_parameter_sets["nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
-dependent_parameter_sets["nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
-dependent_parameter_sets["nemo_like_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+dependent_parameter_sets["basic"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
+dependent_parameter_sets["basic_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
+dependent_parameter_sets["basic_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
+
+dependent_parameter_sets["nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+dependent_parameter_sets["nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+dependent_parameter_sets["nemo_like_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+
+dependent_parameter_sets["shear_nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+dependent_parameter_sets["shear_nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+dependent_parameter_sets["shear_nemo_like_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
 
 dependent_parameter_sets["goldilocks"]             = (; Cᴷu⁺, Cᴷc⁺, Cᴷe⁺) 
 dependent_parameter_sets["goldilocks_conv_adj"]    = (; Cᴷu⁺, Cᴷc⁺, Cᴷe⁺) 
