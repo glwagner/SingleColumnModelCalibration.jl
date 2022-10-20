@@ -3,7 +3,7 @@ include("calibrate_parameter_set.jl")
 using Oceananigans.TurbulenceClosures: RiBasedVerticalDiffusivity
 
 start_time = time_ns()
-calibrate_parameter_set("shear_nemo_like_conv_adj")
+calibrate_parameter_set("shear_nemo_like_conv_adj", Nensemble=300)
 elapsed = 1e-9 * (time_ns() - start_time)
 @info "Calibration took "* prettytime(elapsed)
 

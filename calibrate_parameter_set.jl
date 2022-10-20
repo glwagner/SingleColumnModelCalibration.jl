@@ -43,16 +43,17 @@ function calibrate_parameter_set(name;
                                  resample_failure_fraction = 0.2,
                                  acceptable_failure_fraction = 1.0,
                                  initial_convergence_ratio = 0.7,
-                                 preliminary_combined_calibration = true,
+                                 coarse_calibration = true,
+                                 fine_calibration = true,
+                                 preliminary_combined_calibration = false,
                                  fine_Nz = 32,
                                  closure = neutral_default_catke,
                                  free_parameters = get_free_parameters(name),
                                  fine_Δt = 10minutes,
                                  architecture = GPU())
 
-    savename = @sprintf("%s_Nens%d_%s_fine_Nz%d", name, Nensemble, suite, fine_Nz)
+    prefix = @sprintf("%s_Nens%d_%s", name, Nensemble, suite)
 
-    @info "Saving data to $savename" * ".jld2"
     @info "Calibrating free parameters $free_parameters..."
 
     #####
@@ -80,26 +81,29 @@ function calibrate_parameter_set(name;
     times = [2hours, 12hours, 18hours, 24hours]
     inverse_problem_kwargs = (; suite, free_parameters, Nensemble, architecture, closure)
     resampler = Resampler(; resample_failure_fraction, acceptable_failure_fraction)
-
-    fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
-    coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
-
     pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
-    #pseudo_stepping = ConstantConvergence(initial_convergence_ratio)
-    fine_eki = EnsembleKalmanInversion(fine_ip; resampler, pseudo_stepping, noise_covariance=fine_Γ)
-    coarse_eki = EnsembleKalmanInversion(coarse_ip; resampler, pseudo_stepping, noise_covariance=coarse_Γ)
 
-    @info "Calibrating $name parameters to the fine grid..."
-    iterate_until!(fine_eki, pseudotime_limit, max_iterations)
+    if fine_calibration
+        @info "Calibrating $name parameters to the fine grid..."
+        fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
+        fine_eki = EnsembleKalmanInversion(fine_ip; resampler, pseudo_stepping, noise_covariance=fine_Γ)
+        iterate_until!(fine_eki, pseudotime_limit, max_iterations)
 
-    datapath = joinpath(dir, "$(savename)_fine_calibration.jld2")
-    @save datapath iteration_summaries=fine_eki.iteration_summaries
+        name = string(prefix, "_Nz", fine_regrid.Nz, "_calibration.jld2")
+        datapath = joinpath(dir, name)
+        @save datapath iteration_summaries=fine_eki.iteration_summaries
+    end
 
-    @info "Calibrating $name parameters to the coarse grid..."
-    iterate_until!(coarse_eki, pseudotime_limit, max_iterations)
+    if coarse_calibration
+        @info "Calibrating $name parameters to the coarse grid..."
+        coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
+        coarse_eki = EnsembleKalmanInversion(coarse_ip; resampler, pseudo_stepping, noise_covariance=coarse_Γ)
+        iterate_until!(coarse_eki, pseudotime_limit, max_iterations)
 
-    datapath = joinpath(dir, "$(savename)_coarse_calibration.jld2")
-    @save datapath iteration_summaries=coarse_eki.iteration_summaries
+        name = string(prefix, "_Nz", coarse_regrid.Nz, "_calibration.jld2")
+        datapath = joinpath(dir, finename)
+        @save datapath iteration_summaries=coarse_eki.iteration_summaries
+    end
 
     #####
     ##### "Combined" calibration to multiple resolutions
@@ -148,7 +152,8 @@ function calibrate_parameter_set(name;
     display(calibration_progress_figure(eki))
     @show eki.iteration_summaries[end]
 
-    datapath = joinpath(dir, "$(savename)_combined_calibration.jld2")
+    name = string(prefix, "_combined_Nz", coarse_regrid.Nz, "_Nz", fine_regrid.Nz, "_calibration.jld2")
+    datapath = joinpath(dir, finename)
     @save datapath iteration_summaries=eki.iteration_summaries
 
     return nothing
