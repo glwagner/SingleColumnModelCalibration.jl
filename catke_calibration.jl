@@ -83,9 +83,6 @@ mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
 turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
 closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
 
-convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz=0.0)
-non_ensemble_closure = nothing # convective_adjustment
-
 free_parameters = FreeParameters(prior_library, names=parameter_names)
 
 # Two grids: "coarse" with ECCO vertical resolution to z=-256 m, and a fine grid with 4m resolution
