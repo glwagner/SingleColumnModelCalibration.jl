@@ -2,6 +2,8 @@ using DataDeps
 using Oceananigans
 using CairoMakie
 using ElectronDisplay
+using BlockDiagonals
+using LinearAlgebra
 
 using ParameterEstimocean
 using ParameterEstimocean: Transformation
@@ -42,18 +44,23 @@ cases = ["free_convection",
          "weak_wind_strong_cooling",
          "strong_wind",
          "strong_wind_no_rotation"]
-    
-function lesbrary_inverse_problem(regrid;
-                                  free_parameters,
-                                  times = [48hours - 10minutes, 48hours],
-                                  Nensemble = 500,
-                                  Δt = 10minutes,
-                                  field_names = (:b, :e, :u, :v),
-                                  closure = CATKEVerticalDiffusivity(),
-                                  non_ensemble_closure = nothing,
-                                  suite = "one_day_suite",
-                                  tke_weight = 0.1,
-                                  architecture = GPU())
+
+# Weight by number of fields (excluding TKE)
+observation_weights = Dict(
+    "free_convection"          => 1.0,
+    "strong_wind_weak_cooling" => 1/3,
+    "med_wind_med_cooling"     => 1/3,
+    "weak_wind_strong_cooling" => 1/3,
+    "strong_wind"              => 1/3,
+    "strong_wind_no_rotation"  => 1/2,
+)
+
+function batched_lesbrary_observations(regrid;
+                                       times = [48hours - 10minutes, 48hours],
+                                       resolution = "1m",
+                                       field_names = (:b, :e, :u, :v),
+                                       suite = "one_day_suite",
+                                       tke_weight = 0.1)
 
     normalizations = (b = ZScore(),
                       u = ZScore(),
@@ -62,14 +69,14 @@ function lesbrary_inverse_problem(regrid;
 
     # Retain only the upper half
     Nz = regrid.Nz
-    Nh = floor(Int, Nz/3)
+    Nh = floor(Int, 3Nz/8)
     #space = SpaceIndices(z=Nh:Nz)
     space = SpaceIndices(z=1:Nz)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
 
-    case_path(case) = joinpath("data", suite, case * "_instantaneous_statistics.jld2")
+    case_path(case) = joinpath("data", suite, resolution, case * "_instantaneous_statistics.jld2")
 
     observation_library = Dict()
 
@@ -91,8 +98,46 @@ function lesbrary_inverse_problem(regrid;
     end
 
     observations = [observation_library[case] for case in cases]
+    weights = [observation_weights[name] for name in cases]
+    batched_observations = BatchedSyntheticObservations(observations; weights)
 
-    simulation = ensemble_column_model_simulation(observations; closure, Nensemble, architecture,  non_ensemble_closure,
+    return batched_observations
+end
+
+function estimate_noise_covariance(grid; kwargs...)
+    # Estimate noise covariance
+    obs_1m = batched_lesbrary_observations(grid; resolution="1m", kwargs...)
+    obs_2m = batched_lesbrary_observations(grid; resolution="2m", kwargs...)
+    obs_4m = batched_lesbrary_observations(grid; resolution="4m", kwargs...)
+    Γ = cov([obs_1m, obs_2m, obs_4m])
+    ϵ = 1e-2 #* mean(abs, [Γ[n, n] for n=1:size(Γ, 1)])
+    Γ .+= ϵ * Diagonal(I, size(Γ, 1))
+    return Γ
+end
+    
+function lesbrary_inverse_problem(regrid;
+                                  free_parameters,
+                                  times = [48hours - 10minutes, 48hours],
+                                  Nensemble = 500,
+                                  observations_resolution = "1m",
+                                  Δt = 10minutes,
+                                  field_names = (:b, :e, :u, :v),
+                                  closure = CATKEVerticalDiffusivity(),
+                                  non_ensemble_closure = nothing,
+                                  suite = "one_day_suite",
+                                  tke_weight = 0.1,
+                                  architecture = GPU())
+
+    batched_observations = batched_lesbrary_observations(regrid; resolution=observations_resolution,
+                                                         times, field_names, suite, tke_weight)
+
+    observations = batched_observations.observations
+
+    simulation = ensemble_column_model_simulation(observations;
+                                                  closure,
+                                                  Nensemble,
+                                                  architecture,
+                                                  non_ensemble_closure,
                                                   tracers = (:b, :e))
 
     simulation.Δt = Δt    
@@ -108,10 +153,6 @@ function lesbrary_inverse_problem(regrid;
         view(N², :, case) .= obs.metadata.parameters.N²_deep
         view(simulation.model.coriolis, :, case) .= Ref(FPlane(f=f))
     end
-
-    weights = [1.0 for _ in observations]
-    #weights[1] = 0.1 # downweight free convection case
-    batched_observations = BatchedSyntheticObservations(observations; weights)
 
     ip = InverseProblem(batched_observations, simulation, free_parameters)
 
@@ -209,29 +250,31 @@ function calibration_progress_figure(eki; Nparticles=2)
         case_names = keys(case_dataset)
         initial_case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[1])[1, 1, :] for n in case_names)
         final_case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[Nt])[1, 1, :] for n in case_names)
-        plot_fields!(axs, "Observed at t = " * prettytime(times[1]), (:black, 0.6), grid, initial_case_field_data...;
+        plot_fields!(axs, "Obs at t = " * prettytime(times[1]), (:black, 0.6), grid, initial_case_field_data...;
                      linewidth=2, linestyle=:dash)
-        plot_fields!(axs, "Observed at t = " * prettytime(times[Nt]), (:gray23, 0.4), grid, final_case_field_data...; linewidth=6)
+        plot_fields!(axs, "Obs at t = " * prettytime(times[Nt]), (:gray23, 0.4), grid, final_case_field_data...; linewidth=6)
 
         if eki.inverse_problem isa BatchedInverseProblem
             # Plot model case with minimum error
             ip = eki.inverse_problem[1] # low res 
+            Nz = size(ip.simulation.model.grid, 3)
             obs = ip.observations[c]
             grid = obs.grid
             iter = eki.iteration
 
             for p in 1:Nparticles
                 data = NamedTuple(n => get_modeled_case(ip, c, n, kk[p]) for n in keys(obs.field_time_serieses))
-                plot_fields!(axs, "rank $p, iter $iter (low res)", :navy, grid, data...; linestyle=linestyles[p])
+                plot_fields!(axs, "rank $p, iter $iter (Nz = $Nz)", :navy, grid, data...; linestyle=linestyles[p])
             end
 
             ip = eki.inverse_problem[2] # high res 
+            Nz = size(ip.simulation.model.grid, 3)
             obs = ip.observations[c]
             grid = obs.grid
 
             for p in 1:Nparticles
                 data = NamedTuple(n => get_modeled_case(ip, c, n, kk[p]) for n in keys(obs.field_time_serieses))
-                plot_fields!(axs, "rank $p, iter $iter (hi res)", :orange, grid, data...; linestyle=linestyles[p])
+                plot_fields!(axs, "rank $p, iter $iter (Nz = $Nz)", :orange, grid, data...; linestyle=linestyles[p])
             end
 
         else
@@ -245,7 +288,6 @@ function calibration_progress_figure(eki; Nparticles=2)
                 plot_fields!(axs, "rank $p, iter $iter", :navy, grid, data...; linestyle=linestyles[p])
             end
         end
-
 
         fig[1, 6] = Legend(fig, axs[1]) 
     end
