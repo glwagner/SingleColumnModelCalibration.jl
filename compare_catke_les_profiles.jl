@@ -42,9 +42,18 @@ function load_summaries(filename)
     return summaries
 end
 
-function get_best_parameters(summary)
-    _, k = findmin(summary.mean_square_errors)
-    return summary.parameters[k]
+# Fine best *global* parameters
+function get_best_parameters(summaries)
+    best_parameters = summaries[0].mean_square_errors[1]
+    best_mse = Inf
+
+    for summary in summaries
+        mse, k = findmin(summary.mean_square_errors)
+        parameters = summary.parameters[k]
+        best_parameters = ifelse(mse < best_mse, parameters, best_parameters)
+    end
+
+    return best_parameters
 end
 
 name = :shear_nemo_like_conv_adj
@@ -54,7 +63,7 @@ dependent_parameters = dependent_parameter_sets[string(name)]
 
 mean_θ₀ = summaries[0].ensemble_mean
 mean_θₙ = summaries[end].ensemble_mean
-best_θₙ = get_best_parameters(summaries[end])
+best_θₙ = get_best_parameters(summaries)
 
 @show summaries[end]
 
@@ -84,7 +93,7 @@ architecture = CPU()
 suite = "one_day_suite"
 inverse_problem_kwargs = (; suite, free_parameters, Nensemble, architecture, closure)
 coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=10minutes, inverse_problem_kwargs...)
-fine_ip   = lesbrary_inverse_problem(fine_regrid; times, Δt=5minutes, inverse_problem_kwargs...)
+fine_ip   = lesbrary_inverse_problem(fine_regrid; times, Δt=10minutes, inverse_problem_kwargs...)
 
 forward_run!(fine_ip, [mean_θ₀, mean_θₙ, best_θₙ])
 forward_run!(coarse_ip, [mean_θ₀, mean_θₙ, best_θₙ])
@@ -117,7 +126,7 @@ titles = [
 sim_color    = (:seagreen, 0.6)
 fine_color   = (:darkred, 0.8)
 coarse_color = (:royalblue1, 0.8)
-k_plot       = 3
+k_plot       = 2
 
 Δz_coarse = Δzᶜᶜᶜ(1, 1, coarse_regrid.Nz, coarse_regrid)
 Δz_coarse_str = @sprintf("%.1f", Δz_coarse)
