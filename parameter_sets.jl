@@ -34,9 +34,9 @@ Cᴷc⁺(θ) = θ.Cᴷc⁻
 Cᴷe⁺(θ) = θ.Cᴷe⁻
 Cᴰ⁺(θ) = θ.Cᴰ⁻
 
-dependent_parameter_sets["basic"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
-dependent_parameter_sets["basic_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
-dependent_parameter_sets["basic_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
+dependent_parameter_sets["basic"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴰ⁺)
+dependent_parameter_sets["basic_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴰ⁺)
+dependent_parameter_sets["basic_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴰ⁺)
 
 dependent_parameter_sets["nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
 dependent_parameter_sets["nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 

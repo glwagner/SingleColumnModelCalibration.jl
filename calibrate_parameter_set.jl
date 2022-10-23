@@ -3,6 +3,7 @@ using Oceananigans.Units
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem
 using ParameterEstimocean.PseudoSteppingSchemes: Kovachki2018InitialConvergenceRatio
+using ParameterEstimocean.EnsembleKalmanInversions: best_next_best, nanminimum
 using Printf
 using JLD2
 
@@ -48,8 +49,12 @@ function calibrate_parameter_set(name;
                                  preliminary_combined_calibration = false,
                                  fine_Nz = 32,
                                  closure = neutral_default_catke,
+                                 #mark_failed_particles = NormExceedsMedian(1e3),
+                                 #mark_failed_particles = ObjectiveLossThreshold(1e3, baseline=nanminimum, distance=best_next_best),
+                                 mark_failed_particles = ObjectiveLossThreshold(3.0),
                                  free_parameters = get_free_parameters(name),
-                                 fine_Δt = 10minutes,
+                                 fine_Δt = 5minutes,
+                                 coarse_Δt = 5minutes,
                                  architecture = GPU())
 
     prefix = @sprintf("%s_Nens%d_%s", name, Nensemble, suite)
@@ -67,7 +72,6 @@ function calibrate_parameter_set(name;
 
     # Coarse grid has ECCO vertical resolution to z=-256 m
     Nz_ecco = length(ecco_vertical_grid) - 1
-    coarse_Δt = 10minutes
     coarse_regrid = RectilinearGrid(size=Nz_ecco, z=ecco_vertical_grid, topology=(Flat, Flat, Bounded))
 
     # Estimate noise covariance based on discrepency between LES with different resolution
@@ -82,11 +86,12 @@ function calibrate_parameter_set(name;
     inverse_problem_kwargs = (; suite, free_parameters, Nensemble, architecture, closure)
     resampler = Resampler(; resample_failure_fraction, acceptable_failure_fraction)
     pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
+    eki_kwargs = (; pseudo_stepping, mark_failed_particles, resampler)
 
     if fine_calibration
         @info "Calibrating $name parameters to the fine grid..."
         fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
-        fine_eki = EnsembleKalmanInversion(fine_ip; resampler, pseudo_stepping, noise_covariance=fine_Γ)
+        fine_eki = EnsembleKalmanInversion(fine_ip; noise_covariance=fine_Γ, eki_kwargs...)
         iterate_until!(fine_eki, pseudotime_limit, max_iterations)
 
         name = string(prefix, "_Nz", fine_regrid.Nz, "_calibration.jld2")
@@ -97,11 +102,11 @@ function calibrate_parameter_set(name;
     if coarse_calibration
         @info "Calibrating $name parameters to the coarse grid..."
         coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
-        coarse_eki = EnsembleKalmanInversion(coarse_ip; resampler, pseudo_stepping, noise_covariance=coarse_Γ)
+        coarse_eki = EnsembleKalmanInversion(coarse_ip; noise_covariance=coarse_Γ, eki_kwargs...)
         iterate_until!(coarse_eki, pseudotime_limit, max_iterations)
 
         name = string(prefix, "_Nz", coarse_regrid.Nz, "_calibration.jld2")
-        datapath = joinpath(dir, finename)
+        datapath = joinpath(dir, name)
         @save datapath iteration_summaries=coarse_eki.iteration_summaries
     end
 
@@ -110,8 +115,9 @@ function calibrate_parameter_set(name;
     #####
 
     pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
+    coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
     fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
-    preliminary_eki = EnsembleKalmanInversion(fine_ip; resampler, pseudo_stepping, noise_covariance=fine_Γ)
+    preliminary_eki = EnsembleKalmanInversion(fine_ip; noise_covariance=fine_Γ, eki_kwargs...)
 
     if preliminary_combined_calibration
         @info "Performing a preliminary calibration of $name to the fine grid..."
@@ -129,9 +135,10 @@ function calibrate_parameter_set(name;
     fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
     coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
 
-    eki = EnsembleKalmanInversion(batched_ip; resampler, pseudo_stepping,
+    eki = EnsembleKalmanInversion(batched_ip;
                                   noise_covariance = combined_Γ,
-                                  unconstrained_parameters = preliminary_eki.unconstrained_parameters)
+                                  unconstrained_parameters = preliminary_eki.unconstrained_parameters,
+                                  eki_kwargs...)
 
     eki.pseudotime = preliminary_eki.pseudotime
 
@@ -153,7 +160,7 @@ function calibrate_parameter_set(name;
     @show eki.iteration_summaries[end]
 
     name = string(prefix, "_combined_Nz", coarse_regrid.Nz, "_Nz", fine_regrid.Nz, "_calibration.jld2")
-    datapath = joinpath(dir, finename)
+    datapath = joinpath(dir, name)
     @save datapath iteration_summaries=eki.iteration_summaries
 
     return nothing

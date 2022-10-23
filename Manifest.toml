@@ -1111,9 +1111,7 @@ version = "0.5.2"
 
 [[deps.Oceananigans]]
 deps = ["AMGX", "Adapt", "AlgebraicMultigrid", "CUDA", "CUDAKernels", "Crayons", "CubedSphere", "Dates", "DocStringExtensions", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays", "Tullio"]
-git-tree-sha1 = "86ec00eead8dcc301a9d2bf096b55a733eb726f1"
-repo-rev = "glw/catke-plus-gm"
-repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
+path = "/home/greg/Projects/Oceananigans.jl"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 version = "0.77.5"
 
@@ -1229,9 +1227,7 @@ version = "1.50.9+0"
 
 [[deps.ParameterEstimocean]]
 deps = ["BlockDiagonals", "CUDA", "DataDeps", "Distributions", "DocStringExtensions", "EnsembleKalmanProcesses", "FileIO", "GaussianProcesses", "JLD2", "LineSearches", "LinearAlgebra", "MPI", "Oceananigans", "OffsetArrays", "OrderedCollections", "Printf", "ProgressBars", "Random", "SpecialFunctions", "Statistics", "Suppressor"]
-git-tree-sha1 = "5ffd28a8518945417d80c1fee18e5e6b354e3a9c"
-repo-rev = "distributed-ensemble-simulations"
-repo-url = "https://github.com/CliMA/ParameterEstimocean.jl.git"
+path = "/home/greg/Projects/ParameterEstimocean.jl"
 uuid = "eca81dc5-87a6-4430-aec8-c76695404a43"
 version = "0.13.2"
 
