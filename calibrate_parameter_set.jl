@@ -39,7 +39,7 @@ function calibrate_parameter_set(name;
                                  Nensemble = 200,
                                  tke_weight = 1e-2,
                                  suite = "one_day_suite",
-                                 pseudotime_limit = 1.0,
+                                 pseudotime_limit = 4.0,
                                  max_iterations = 1000,
                                  resample_failure_fraction = 0.2,
                                  acceptable_failure_fraction = 1.0,
@@ -94,9 +94,14 @@ function calibrate_parameter_set(name;
         fine_eki = EnsembleKalmanInversion(fine_ip; noise_covariance=fine_Γ, eki_kwargs...)
         iterate_until!(fine_eki, pseudotime_limit, max_iterations)
 
-        name = string(prefix, "_Nz", fine_regrid.Nz, "_calibration.jld2")
-        datapath = joinpath(dir, name)
+        name = string(prefix, "_Nz", fine_regrid.Nz, "_calibration")
+        datapath = joinpath(dir, name * ".jld2")
         @save datapath iteration_summaries=fine_eki.iteration_summaries
+
+        progress_fig = calibration_progress_figure(fine_eki)
+        display(progress_fig)
+        figpath = joinpath(dir, name * ".png")
+        save(figpath, progress_fig)
     end
 
     if coarse_calibration
@@ -105,9 +110,14 @@ function calibrate_parameter_set(name;
         coarse_eki = EnsembleKalmanInversion(coarse_ip; noise_covariance=coarse_Γ, eki_kwargs...)
         iterate_until!(coarse_eki, pseudotime_limit, max_iterations)
 
-        name = string(prefix, "_Nz", coarse_regrid.Nz, "_calibration.jld2")
-        datapath = joinpath(dir, name)
+        name = string(prefix, "_Nz", coarse_regrid.Nz, "_calibration")
+        datapath = joinpath(dir, name * ".jld2")
         @save datapath iteration_summaries=coarse_eki.iteration_summaries
+
+        progress_fig = calibration_progress_figure(coarse_eki)
+        display(progress_fig)
+        figpath = joinpath(dir, name * ".png")
+        save(figpath, progress_fig)
     end
 
     #####
@@ -156,12 +166,16 @@ function calibrate_parameter_set(name;
         @show latest_summary
     end
 
-    display(calibration_progress_figure(eki))
     @show eki.iteration_summaries[end]
 
-    name = string(prefix, "_combined_Nz", coarse_regrid.Nz, "_Nz", fine_regrid.Nz, "_calibration.jld2")
-    datapath = joinpath(dir, name)
+    name = string(prefix, "_combined_Nz", coarse_regrid.Nz, "_Nz", fine_regrid.Nz, "_calibration")
+    datapath = joinpath(dir, name * ".jld2")
     @save datapath iteration_summaries=eki.iteration_summaries
+
+    progress_fig = calibration_progress_figure(eki)
+    display(progress_fig)
+    figpath = joinpath(dir, name * ".png")
+    save(figpath, progress_fig)
 
     return nothing
 end

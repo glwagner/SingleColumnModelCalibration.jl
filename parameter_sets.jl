@@ -1,9 +1,8 @@
 parameter_sets = Dict(
-    #"goldilocks" => (:Cʷ★, :Cʷℓ, :CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
-    #"nemo_like"  => (:Cʷ★, :Cʷℓ, :CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc),
-    "goldilocks" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
-    "nemo_like"  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc),
-    "basic"  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :CᴷRiᶜ, :CᴷRiʷ, :Cᴷe⁻, :Cᴰ⁻, :Cᵇc, :Cˢc),
+    "nemo_like"                   => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᵇc, :Cᴰ⁻),
+    "complex_dissipation_length"  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᵇc, :Cˢc, :Cᴰ⁻, :Cᴰ⁺, :CᴰRiᶜ, :CᴰRiʷ),
+    "basic"                       => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᵇc, :Cˢc, :Cᴰ⁻, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :CᴷRiᶜ, :CᴷRiʷ),
+    "goldilocks"                  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
 )
 
 parameter_sets["complex"] = tuple(parameter_sets["goldilocks"]..., :Cᴰ⁺, :CᴰRiᶜ, :CᴰRiʷ)
@@ -45,6 +44,10 @@ dependent_parameter_sets["nemo_like_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, C
 dependent_parameter_sets["shear_nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
 dependent_parameter_sets["shear_nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
 dependent_parameter_sets["shear_nemo_like_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺, Cᴰ⁺) 
+
+dependent_parameter_sets["complex_dissipation_length"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺)
+dependent_parameter_sets["complex_dissipation_length_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺)
+dependent_parameter_sets["complex_dissipation_length_grid_length"] = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁺, Cᴷc⁺, Cᴷe⁺)
 
 dependent_parameter_sets["goldilocks"]             = (; Cᴷu⁺, Cᴷc⁺, Cᴷe⁺) 
 dependent_parameter_sets["goldilocks_conv_adj"]    = (; Cᴷu⁺, Cᴷc⁺, Cᴷe⁺) 

@@ -2,19 +2,37 @@ include("calibrate_parameter_set.jl")
 
 using Oceananigans.TurbulenceClosures: RiBasedVerticalDiffusivity
 
-start_time = time_ns()
+#sets_to_calibrate = ["shear_nemo_like"]
 
-calibrate_parameter_set("basic_conv_adj",
-                        Nensemble = 200,
-                        tke_weight = 1e-2,
-                        coarse_Δt = 10minutes,
-                        fine_Nz = 64,
-                        fine_calibration = false,
-                        preliminary_combined_calibration = false,
-                        coarse_calibration = false)
+sets_to_calibrate = [
+    "shear_nemo_like",
+    "shear_nemo_like_conv_adj",
+    "basic",
+    "basic_conv_adj",
+    "goldilocks",
+    "goldilocks_conv_adj",
+    "complex",
+    "complex_conv_adj",
+    "complex_dissipation_length",
+    "complex_dissipation_length_conv_adj",
+]
 
-elapsed = 1e-9 * (time_ns() - start_time)
-@info "Calibration took "* prettytime(elapsed)
+for set in sets_to_calibrate
+    start_time = time_ns()
+    
+    calibrate_parameter_set(set,
+                            Nensemble = 200,
+                            tke_weight = 1e-2,
+                            coarse_Δt = 20minutes,
+                            fine_Nz = 64,
+                            fine_calibration = true,
+                            coarse_calibration = true,
+                            preliminary_combined_calibration = false)
+    
+    elapsed = 1e-9 * (time_ns() - start_time)
+
+    @info "Calibration took "* prettytime(elapsed)
+end
 
 #=
 sets_to_calibrate = [
