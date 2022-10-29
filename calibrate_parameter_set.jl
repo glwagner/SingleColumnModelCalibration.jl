@@ -47,10 +47,10 @@ function calibrate_parameter_set(name;
                                  coarse_calibration = true,
                                  fine_calibration = true,
                                  preliminary_combined_calibration = false,
+                                 combined_calibration = true,
                                  fine_Nz = 32,
                                  closure = neutral_default_catke,
                                  #mark_failed_particles = NormExceedsMedian(1e3),
-                                 #mark_failed_particles = ObjectiveLossThreshold(1e3, baseline=nanminimum, distance=best_next_best),
                                  mark_failed_particles = ObjectiveLossThreshold(3.0),
                                  free_parameters = get_free_parameters(name),
                                  fine_Δt = 5minutes,
@@ -124,58 +124,60 @@ function calibrate_parameter_set(name;
     ##### "Combined" calibration to multiple resolutions
     #####
 
-    pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
-    coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
-    fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
-    preliminary_eki = EnsembleKalmanInversion(fine_ip; noise_covariance=fine_Γ, eki_kwargs...)
+    if combined_calibration
+        pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
+        coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
+        fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
+        preliminary_eki = EnsembleKalmanInversion(fine_ip; noise_covariance=fine_Γ, eki_kwargs...)
 
-    if preliminary_combined_calibration
-        @info "Performing a preliminary calibration of $name to the fine grid..."
-        iterate_until!(preliminary_eki, pseudotime_limit / 4, max_iterations)
-    end
+        if preliminary_combined_calibration
+            @info "Performing a preliminary calibration of $name to the fine grid..."
+            iterate_until!(preliminary_eki, pseudotime_limit / 4, max_iterations)
+        end
 
-    final_pseudotime = preliminary_eki.pseudotime + pseudotime_limit
-    times = collect(range(2hours, stop=24hours, length=4))
-    weights = (1.0, coarse_regrid.Nz / fine_regrid.Nz)
-    batched_ip = BatchedInverseProblem(coarse_ip, fine_ip; weights)
+        final_pseudotime = preliminary_eki.pseudotime + pseudotime_limit
+        times = collect(range(2hours, stop=24hours, length=4))
+        weights = (1.0, coarse_regrid.Nz / fine_regrid.Nz)
+        batched_ip = BatchedInverseProblem(coarse_ip, fine_ip; weights)
 
-    combined_Γ = Matrix(BlockDiagonal([weights[1] * coarse_Γ, weights[2] * fine_Γ]))
-    pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
+        combined_Γ = Matrix(BlockDiagonal([weights[1] * coarse_Γ, weights[2] * fine_Γ]))
+        pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
 
-    fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
-    coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
+        fine_ip = lesbrary_inverse_problem(fine_regrid; times, Δt=fine_Δt, inverse_problem_kwargs...)
+        coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=coarse_Δt, inverse_problem_kwargs...)
 
-    eki = EnsembleKalmanInversion(batched_ip;
-                                  noise_covariance = combined_Γ,
-                                  unconstrained_parameters = preliminary_eki.unconstrained_parameters,
-                                  eki_kwargs...)
+        eki = EnsembleKalmanInversion(batched_ip;
+                                      noise_covariance = combined_Γ,
+                                      unconstrained_parameters = preliminary_eki.unconstrained_parameters,
+                                      eki_kwargs...)
 
-    eki.pseudotime = preliminary_eki.pseudotime
+        eki.pseudotime = preliminary_eki.pseudotime
 
-    progress = calibration_progress_figure(eki)
-    display(progress)
-    @show eki.iteration_summaries[end]
-
-    @info "Now for the main event..."
-
-    while eki.pseudotime < final_pseudotime && eki.iteration < max_iterations
-        iterate!(eki)
         progress = calibration_progress_figure(eki)
-        latest_summary = eki.iteration_summaries[end]
         display(progress)
-        @show latest_summary
+        @show eki.iteration_summaries[end]
+
+        @info "Now for the main event..."
+
+        while eki.pseudotime < final_pseudotime && eki.iteration < max_iterations
+            iterate!(eki)
+            progress = calibration_progress_figure(eki)
+            latest_summary = eki.iteration_summaries[end]
+            display(progress)
+            @show latest_summary
+        end
+
+        @show eki.iteration_summaries[end]
+
+        name = string(prefix, "_combined_Nz", coarse_regrid.Nz, "_Nz", fine_regrid.Nz, "_calibration")
+        datapath = joinpath(dir, name * ".jld2")
+        @save datapath iteration_summaries=eki.iteration_summaries
+
+        progress_fig = calibration_progress_figure(eki)
+        display(progress_fig)
+        figpath = joinpath(dir, name * ".png")
+        save(figpath, progress_fig)
     end
-
-    @show eki.iteration_summaries[end]
-
-    name = string(prefix, "_combined_Nz", coarse_regrid.Nz, "_Nz", fine_regrid.Nz, "_calibration")
-    datapath = joinpath(dir, name * ".jld2")
-    @save datapath iteration_summaries=eki.iteration_summaries
-
-    progress_fig = calibration_progress_figure(eki)
-    display(progress_fig)
-    figpath = joinpath(dir, name * ".png")
-    save(figpath, progress_fig)
 
     return nothing
 end
