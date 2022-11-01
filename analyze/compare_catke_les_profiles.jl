@@ -17,22 +17,20 @@ set_theme!(Theme(fontsize=16))
 include("multi_resolution_calibration_utilities.jl")
 include("parameter_sets.jl")
 
-dir = "calibration_results"
+# dir = "." #calibration_results/round1"
+# name = :ri_based
+# closure = RiBasedVerticalDiffusivity()
+
+dir = "."
+name = :basic_conv_adj
+mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
+turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
+closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
 
 calibration_filenames = (
-    complex = "full_catke_calibration.jld2",
-    simple = "simple_catke_calibration.jld2",
-    simple_with_conv_adj = "simple_catke_conv_adj_calibration.jld2",
-
-    # Note: only combined seems to have succeeded (and barely at that)
-    #goldilocks_with_conv_adj = "goldilocks_conv_adj_Nens200_one_day_suite_fine_Nz32_coarse_calibration.jld2",
-    #goldilocks_with_conv_adj = "goldilocks_conv_adj_Nens200_one_day_suite_fine_Nz32_fine_calibration.jld2",
-    goldilocks_with_conv_adj = "goldilocks_conv_adj_Nens200_one_day_suite_fine_Nz32_combined_calibration.jld2",
-    goldilocks               = "goldilocks_Nens200_one_day_suite_fine_Nz32_combined_calibration.jld2",
-
-    #shear_nemo_like_conv_adj = "shear_nemo_like_conv_adj_Nens200_one_day_suite_fine_Nz32_fine_calibration.jld2"
-    #shear_nemo_like_conv_adj = "shear_nemo_like_conv_adj_Nens200_one_day_suite_fine_Nz32_coarse_calibration.jld2"
-    shear_nemo_like_conv_adj = "shear_nemo_like_conv_adj_Nens200_one_day_suite_fine_Nz32_combined_calibration.jld2"
+    goldilocks_conv_adj = "goldilocks_conv_adj_Nens200_one_day_suite_combined_Nz19_Nz64_calibration.jld2",
+    basic_conv_adj = "basic_conv_adj_Nens50_one_day_suite_Nz19_calibration.jld2",
+    ri_based = "Ri_based_calibration_Nens200_one_day_suite_combined_Nz19_Nz64_calibration.jld2",
 )
 
 function load_summaries(filename)
@@ -56,10 +54,10 @@ function get_best_parameters(summaries)
     return best_parameters
 end
 
-name = :shear_nemo_like_conv_adj
 filename = joinpath(dir, calibration_filenames[name])
 summaries = load_summaries(filename)
 dependent_parameters = dependent_parameter_sets[string(name)]
+#dependent_parameters = NamedTuple()
 
 mean_θ₀ = summaries[0].ensemble_mean
 mean_θₙ = summaries[end].ensemble_mean
@@ -71,20 +69,13 @@ savename = string("catke_", name, "_parameters.jld2")
 savepath = joinpath("parameters", savename)
 @save savepath mean=mean_θₙ best=best_θₙ
 
-mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
-turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
-closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
-
 parameter_names = keys(best_θₙ)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
 
 # Two grids: "coarse" with ECCO vertical resolution to z=-256 m, and a fine grid with 4m resolution
 Nz_ecco = length(ecco_vertical_grid) - 1
 coarse_regrid = RectilinearGrid(size=Nz_ecco, z=ecco_vertical_grid, topology=(Flat, Flat, Bounded))
-fine_regrid   = RectilinearGrid(size=32; z=(-256, 0), topology=(Flat, Flat, Bounded))
-
-#coarse_regrid = RectilinearGrid(size=64; z=(-256, 0), topology=(Flat, Flat, Bounded))
-#fine_regrid   = RectilinearGrid(size=128; z=(-256, 0), topology=(Flat, Flat, Bounded))
+fine_regrid   = RectilinearGrid(size=64; z=(-256, 0), topology=(Flat, Flat, Bounded))
 
 # Batch the inverse problems
 times = [2hours, 24hours]
@@ -92,8 +83,8 @@ Nensemble = 3
 architecture = CPU()
 suite = "one_day_suite"
 inverse_problem_kwargs = (; suite, free_parameters, Nensemble, architecture, closure)
-coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=10minutes, inverse_problem_kwargs...)
-fine_ip   = lesbrary_inverse_problem(fine_regrid; times, Δt=10minutes, inverse_problem_kwargs...)
+coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=20minutes, inverse_problem_kwargs...)
+fine_ip   = lesbrary_inverse_problem(fine_regrid; times, Δt=5minutes, inverse_problem_kwargs...)
 
 forward_run!(fine_ip, [mean_θ₀, mean_θₙ, best_θₙ])
 forward_run!(coarse_ip, [mean_θ₀, mean_θₙ, best_θₙ])
@@ -126,7 +117,8 @@ titles = [
 sim_color    = (:seagreen, 0.6)
 fine_color   = (:darkred, 0.8)
 coarse_color = (:royalblue1, 0.8)
-k_plot       = 2
+k_plot       = 3
+zlim         = -192
 
 Δz_coarse = Δzᶜᶜᶜ(1, 1, coarse_regrid.Nz, coarse_regrid)
 Δz_coarse_str = @sprintf("%.1f", Δz_coarse)
@@ -155,23 +147,23 @@ for c = 1:6
 
     lines!(ax_b[c], b_init,   z_fine,   linewidth=2, label="Initial condition at t = 2 hours", color=sim_color, linestyle=:dot)
     lines!(ax_b[c], b_obs,    z_fine,   linewidth=8, label="LES at t = 1 day", color=sim_color)
-    lines!(ax_b[c], b_fine,   z_fine,   linewidth=3, label="CATKE, Δz ≈ $Δz_coarse_str m", color=fine_color)
-    lines!(ax_b[c], b_coarse, z_coarse, linewidth=3, label="CATKE, Δz = $Δz_fine_str m", color=coarse_color)
+    lines!(ax_b[c], b_fine,   z_fine,   linewidth=3, label="CATKE, Δz ≈ $Δz_fine_str m", color=fine_color)
+    lines!(ax_b[c], b_coarse, z_coarse, linewidth=3, label="CATKE, Δz = $Δz_coarse_str m", color=coarse_color)
 
     xlims!(ax_b[c], 0.0386, maximum(b_init) + 2e-5)
-    ylims!(ax_b[c], -192, 0)
+    ylims!(ax_b[c], zlim, 0)
 
     if c > 1
         #xlims!(ax_u[c], -0.15, 0.35)
-        ylims!(ax_u[c], -192, 0)
+        ylims!(ax_u[c], zlim, 0)
 
         u_obs    = interior(fine_ip.observations[c].field_time_serieses.u[Nt], 1, 1, :)
         u_fine   = interior(  fine_ip.time_series_collector.field_time_serieses.u[Nt], k_plot, c, :)
         u_coarse = interior(coarse_ip.time_series_collector.field_time_serieses.u[Nt], k_plot, c, :)
 
         lines!(ax_u[c], u_obs,    z_fine,   linewidth=8, label="u, LES",              color=sim_color)
-        lines!(ax_u[c], u_fine,   z_fine,   linewidth=3, label="u, CATKE, Δz ≈ $Δz_coarse_str m", color=fine_color)
-        lines!(ax_u[c], u_coarse, z_coarse, linewidth=3, label="u, CATKE, Δz = $Δz_fine_str m",  color=coarse_color)
+        lines!(ax_u[c], u_fine,   z_fine,   linewidth=3, label="u, CATKE, Δz ≈ $Δz_fine_str m", color=fine_color)
+        lines!(ax_u[c], u_coarse, z_coarse, linewidth=3, label="u, CATKE, Δz = $Δz_coarse_str m",  color=coarse_color)
 
         if :v ∈ keys(fine_ip.observations[c].field_time_serieses)
             v_obs    = interior(fine_ip.observations[c].field_time_serieses.v[Nt], 1, 1, :)

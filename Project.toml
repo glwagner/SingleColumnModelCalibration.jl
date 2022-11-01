@@ -1,3 +1,8 @@
+name = "SingleColumnModelCalibration"
+uuid = "3ef4119f-b09a-4363-836a-de82504835cf"
+authors = ["Gregory Wagner <wagner.greg@gmail.com>"]
+version = "0.1.0"
+
 [deps]
 BlockDiagonals = "0a1fb500-61f7-11e9-3c65-f5ef3456f9f0"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
@@ -6,7 +11,9 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ElectronDisplay = "d872a56f-244b-5cc9-b574-2017b5b909a8"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MPICH_jll = "7cb0a576-ebde-5e09-9194-50597f1243b4"
+OceanTurb = "d848d694-35fd-11e9-1c91-9995598ac29e"
 Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 ParameterEstimocean = "eca81dc5-87a6-4430-aec8-c76695404a43"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
