@@ -5,12 +5,12 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-using SingleColumnModelCalibration: calibrate_parameter_set
+using SingleColumnModelCalibration: calibrate_parameter_set, parameter_sets
 
 #name = "ri_based"
 #closure = RiBasedVerticalDiffusivity()
 
-name = "nemo_like_conv_adj"
+name = "ri_dependent_dissipation"
 closure = CATKEVerticalDiffusivity()
 
 start_time = time_ns()

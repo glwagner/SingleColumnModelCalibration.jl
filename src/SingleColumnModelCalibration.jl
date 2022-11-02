@@ -8,6 +8,7 @@ using DataDeps
 using JLD2
 using CairoMakie
 using ElectronDisplay
+using OffsetArrays
 
 using Oceananigans
 using Oceananigans.Units
@@ -17,7 +18,7 @@ using ParameterEstimocean: Transformation
 using ParameterEstimocean.Observations: forward_map_names
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem
 using ParameterEstimocean.PseudoSteppingSchemes: Kovachki2018InitialConvergenceRatio
-using ParameterEstimocean.EnsembleKalmanInversions: best_next_best, nanminimum
+using ParameterEstimocean.EnsembleKalmanInversions: best_next_best, nanminimum, IterationSummary
 
 # Coarse grid used by ECCO
 ecco_vertical_grid = [-256.0,
@@ -62,5 +63,35 @@ include("parameter_sets.jl")
 include("lesbrary_inverse_problem.jl")
 include("calibration_progress_figure.jl")
 include("calibrate_parameter_set.jl")
+
+#####
+##### Utils
+#####
+
+function load_summaries(filepath)
+    file = jldopen(filepath)
+    summaries = file["iteration_summaries"]
+    close(file)
+    return summaries
+end
+
+function get_best_parameters(summary::IterationSummary)
+    _, k = findmin(summary.mean_square_errors)
+    return summary.parameters[k]
+end
+
+# Fine best *global* parameters
+function get_best_parameters(summaries::AbstractVector{<:IterationSummary})
+    best_parameters = summaries[0].mean_square_errors[1]
+    best_mse = Inf
+
+    for summary in summaries
+        mse, k = findmin(summary.mean_square_errors)
+        parameters = summary.parameters[k]
+        best_parameters = ifelse(mse < best_mse, parameters, best_parameters)
+    end
+
+    return best_parameters
+end
 
 end # module

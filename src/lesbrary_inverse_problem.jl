@@ -10,10 +10,7 @@ function batched_lesbrary_observations(regrid;
                       v = ZScore(),
                       e = RescaledZScore(tke_weight))
 
-    # Retain only the upper half
     Nz = regrid.Nz
-    Nh = floor(Int, 3Nz/8)
-    #space = SpaceIndices(z=Nh:Nz)
     space = SpaceIndices(z=1:Nz)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
@@ -68,8 +65,8 @@ function lesbrary_inverse_problem(regrid;
                                   closure = CATKEVerticalDiffusivity(),
                                   non_ensemble_closure = nothing,
                                   suite = "one_day_suite",
-                                  tke_weight = 0.1,
-                                  architecture = GPU())
+                                  tke_weight = 0.0,
+                                  architecture = CPU())
 
     batched_observations = batched_lesbrary_observations(regrid; resolution=observations_resolution,
                                                          times, field_names, suite, tke_weight)

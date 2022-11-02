@@ -4,6 +4,7 @@ using Oceananigans.Units
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem, inverting_forward_map
 using ParameterEstimocean.PseudoSteppingSchemes: Kovachki2018InitialConvergenceRatio
+using ParameterEstimocean.Parameters: build_parameters_named_tuple
 using Printf
 using JLD2
 using LinearAlgebra
@@ -11,48 +12,22 @@ using LinearAlgebra
 using CairoMakie
 using ElectronDisplay
 
-set_theme!(Theme(fontsize=16))
+using SingleColumnModelCalibration:
+    lesbrary_inverse_problem,
+    get_best_parameters,
+    load_summaries
 
-# Import "lesbrary_inverse_problem" + plotting utility "calibration_progress_figure"
-include("multi_resolution_calibration_utilities.jl")
-include("parameter_sets.jl")
+set_theme!(Theme(fontsize=16))
 
 # dir = "." #calibration_results/round1"
 # name = :ri_based
 # closure = RiBasedVerticalDiffusivity()
 
-dir = "."
-name = :basic_conv_adj
-mixing_length = MixingLength(; neutral_default_mixing_length_parameters...)
-turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(; neutral_default_tke_parameters...)
-closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
-
-calibration_filenames = (
-    goldilocks_conv_adj = "goldilocks_conv_adj_Nens200_one_day_suite_combined_Nz19_Nz64_calibration.jld2",
-    basic_conv_adj = "basic_conv_adj_Nens50_one_day_suite_Nz19_calibration.jld2",
-    ri_based = "Ri_based_calibration_Nens200_one_day_suite_combined_Nz19_Nz64_calibration.jld2",
-)
-
-function load_summaries(filename)
-    file = jldopen(filename)
-    summaries = file["iteration_summaries"]
-    close(file)
-    return summaries
-end
-
-# Fine best *global* parameters
-function get_best_parameters(summaries)
-    best_parameters = summaries[0].mean_square_errors[1]
-    best_mse = Inf
-
-    for summary in summaries
-        mse, k = findmin(summary.mean_square_errors)
-        parameters = summary.parameters[k]
-        best_parameters = ifelse(mse < best_mse, parameters, best_parameters)
-    end
-
-    return best_parameters
-end
+dir = "../results"
+include("results.jl")
+#name = :ri_dependent_nemo_like
+name = :ri_dependent_nemo_like
+closure = CATKEVerticalDiffusivity()
 
 filename = joinpath(dir, calibration_filenames[name])
 summaries = load_summaries(filename)
@@ -65,28 +40,34 @@ best_θₙ = get_best_parameters(summaries)
 
 @show summaries[end]
 
-savename = string("catke_", name, "_parameters.jld2")
-savepath = joinpath("parameters", savename)
-@save savepath mean=mean_θₙ best=best_θₙ
-
 parameter_names = keys(best_θₙ)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
+
+mean_θ₀ = build_parameters_named_tuple(free_parameters, mean_θ₀)
+mean_θₙ = build_parameters_named_tuple(free_parameters, mean_θₙ)
+best_θₙ = build_parameters_named_tuple(free_parameters, best_θₙ)
+
+savename = string("catke_", name, "_parameters.jld2")
+@save savename mean=mean_θₙ best=best_θₙ
 
 # Two grids: "coarse" with ECCO vertical resolution to z=-256 m, and a fine grid with 4m resolution
 Nz_ecco = length(ecco_vertical_grid) - 1
 coarse_regrid = RectilinearGrid(size=Nz_ecco, z=ecco_vertical_grid, topology=(Flat, Flat, Bounded))
+med_regrid    = RectilinearGrid(size=32, z=(-256, 0), topology=(Flat, Flat, Bounded))
 fine_regrid   = RectilinearGrid(size=64; z=(-256, 0), topology=(Flat, Flat, Bounded))
 
 # Batch the inverse problems
-times = [2hours, 24hours]
+times = [2hours, 48hours]
 Nensemble = 3
 architecture = CPU()
-suite = "one_day_suite"
+suite = "two_day_suite"
 inverse_problem_kwargs = (; suite, free_parameters, Nensemble, architecture, closure)
 coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=20minutes, inverse_problem_kwargs...)
-fine_ip   = lesbrary_inverse_problem(fine_regrid; times, Δt=5minutes, inverse_problem_kwargs...)
+med_ip    = lesbrary_inverse_problem(med_regrid; times,    Δt=20minutes, inverse_problem_kwargs...)
+fine_ip   = lesbrary_inverse_problem(fine_regrid; times,   Δt=20minutes, inverse_problem_kwargs...)
 
 forward_run!(fine_ip, [mean_θ₀, mean_θₙ, best_θₙ])
+forward_run!(med_ip, [mean_θ₀, mean_θₙ, best_θₙ])
 forward_run!(coarse_ip, [mean_θ₀, mean_θₙ, best_θₙ])
 
 @show coarse_ip.simulation.model.closure[3]

@@ -1,13 +1,12 @@
 parameter_sets = Dict(
     "ri_based"                    => (:ν₀, :κ₀, :κᶜ, :Cᵉ, :Ri₀, :Riᵟ),
     "nemo_like"                   => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cᴰ⁺),
-    "complex_dissipation_length"  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁻, :Cᴰ⁺, :CᴰRiᶜ, :CᴰRiʷ),
-    "basic"                       => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁺, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ),
-    "basic_dissipation_length"    => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁺, :Cᴰ⁻, :CᴰRiᶜ, :CᴰRiʷ, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ),
-    "goldilocks"                  => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁺, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe),
+    "ri_dependent"                => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁺, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ),
+    "ri_dependent_dissipation"    => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁺, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :CᴰRiᶜ, :CᴰRiʷ),
+    "complex"                     => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe, :Cᴰ⁺, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ),
+    "complex_dissipation"         => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cᵇu, :Cᵇe, :Cˢc, :Cˢu, :Cˢe, :Cᴰ⁺, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CᴷRiᶜ, :CᴷRiʷ, :Cᴰ⁻, :CᴰRiᶜ, :CᴰRiʷ),
 )
 
-parameter_sets["complex"] = tuple(parameter_sets["goldilocks"]..., :Cᴰ⁻, :CᴰRiᶜ, :CᴰRiʷ)
 parameter_sets["shear_nemo_like"] = tuple(parameter_sets["nemo_like"]..., :Cˢc)
 
 conv_adj_names = (:Cᴬc, :Cᴬe, :Cʰˢ)
@@ -40,6 +39,11 @@ dependent_parameter_sets["basic_dissipation_length_conv_adj"]    = (; Cᵇu=Cᵇ
 
 dependent_parameter_sets["nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
 dependent_parameter_sets["nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
+
+dependent_parameter_sets["ri_dependent"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴰ⁻) 
+dependent_parameter_sets["ri_dependent_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴰ⁻) 
+dependent_parameter_sets["ri_dependent_dissipation"]           = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
+dependent_parameter_sets["ri_dependent_dissipation_conv_adj"]  = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
 
 dependent_parameter_sets["shear_nemo_like"]             = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
 dependent_parameter_sets["shear_nemo_like_conv_adj"]    = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
@@ -117,3 +121,4 @@ end
 
 get_free_parameters(name) = FreeParameters(prior_library, names = parameter_sets[name],
                                            dependent_parameters = dependent_parameter_sets[name])
+
