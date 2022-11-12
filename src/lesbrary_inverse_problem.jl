@@ -3,7 +3,7 @@ function batched_lesbrary_observations(regrid;
                                        resolution = "1m",
                                        field_names = (:b, :e, :u, :v),
                                        suite = "one_day_suite",
-                                       tke_weight = 0.1)
+                                       tke_weight = 0.0)
 
     normalizations = (b = ZScore(),
                       u = ZScore(),

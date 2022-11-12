@@ -35,7 +35,9 @@ function get_modeled_case(ip, c, name, k=1)
     return interior(field, k, c, :)
 end
 
-function plot_fields!(axs, label, color, grid, b, e, u=zeros(size(b)), v=zeros(size(b)); linewidth=2, linestyle=:solid)
+function plot_fields!(axs, label, color, grid, b, e, u=zeros(size(b)), v=zeros(size(b));
+        linewidth=2, linestyle=:solid)
+
     z = znodes(Center, grid)
     b, u, v, e = Tuple(Array(f) for f in (b, u, v, e))
 
@@ -52,85 +54,80 @@ function plot_fields!(axs, label, color, grid, b, e, u=zeros(size(b)), v=zeros(s
     return nothing
 end
 
+colors = [:navy, :orange, :red]
+
 linestyles = [nothing,
               :dash,
               :dot,
               :dashdot,
               :dashdotdot]
 
-function calibration_progress_figure(eki; Nparticles=2)
-    high_res_ip = eki.inverse_problem isa BatchedInverseProblem ?
-        eki.inverse_problem[2] : eki.inverse_problem
-    times = first(high_res_ip.observations).times
-    field_names = forward_map_names(high_res_ip.observations)
-    Nt = length(times)
+function calibration_progress_figure(eki; Nsuites=1, Ngrids=1, Nparticles=2)
 
     latest_summary = eki.iteration_summaries[end]
     min_error, k_min = finitefindmin(latest_summary.mean_square_errors)
     # max_error, k_max = finitefindmax(latest_summary.mean_square_errors)
-    
+
     errors = deepcopy(latest_summary.mean_square_errors)
     notnans = isfinite.(errors)
     errors[.!notnans] .= +Inf
     kk = sortperm(errors)
 
-    fig = Figure(resolution=(1200, 1200))
+    figs = []
 
-    # Plot case by case
-    for (c, case) in enumerate(cases)
-        # Make axes
-        label = replace(case, "_" => "\n")
-        axs = make_axes(fig, c, label)
+    for s = 1:Nsuites
 
-        # Plot observed data for each field
-        case_obs = high_res_ip.observations[c]
-        case_dataset = case_obs.field_time_serieses
-        grid = case_obs.grid
-        case_names = keys(case_dataset)
-        initial_case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[1])[1, 1, :] for n in case_names)
-        final_case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[Nt])[1, 1, :] for n in case_names)
-        plot_fields!(axs, "Obs at t = " * prettytime(times[1]), (:black, 0.6), grid, initial_case_field_data...;
-                     linewidth=2, linestyle=:dash)
-        plot_fields!(axs, "Obs at t = " * prettytime(times[Nt]), (:gray23, 0.4), grid, final_case_field_data...; linewidth=6)
+        r = UnitRange((s-1) * Ngrids + 1, (s-1) * Ngrids + Ngrids)
+        batch = eki.inverse_problem[r]
+        ip = first(batch) # representative
+        fig = Figure(resolution=(1200, 1200))
 
-        if eki.inverse_problem isa BatchedInverseProblem
+        times = first(ip.observations).times
+        field_names = forward_map_names(ip.observations)
+        Nt = length(times)
+
+        # Plot case by case
+        for (c, case) in enumerate(cases)
+            # Make axes
+            label = replace(case, "_" => "\n")
+            axs = make_axes(fig, c, label)
+
+            # Plot observed data for each field
+            case_obs = ip.observations[c]
+            case_dataset = case_obs.field_time_serieses
+            grid = case_obs.grid
+            case_names = keys(case_dataset)
+            initial_case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[1])[1, 1, :]
+                                                 for n in case_names)
+
+            final_case_field_data = NamedTuple(n => interior(getproperty(case_dataset, n)[Nt])[1, 1, :]
+                                               for n in case_names)
+
+            plot_fields!(axs, "Obs at t = " * prettytime(times[1]), (:black, 0.6),
+                         grid, initial_case_field_data...; linewidth=2, linestyle=:dash)
+                         
+            plot_fields!(axs, "Obs at t = " * prettytime(times[Nt]), (:gray23, 0.4),
+                         grid, final_case_field_data...; linewidth=6)
+
             # Plot model case with minimum error
-            ip = eki.inverse_problem[1] # low res 
-            Nz = size(ip.simulation.model.grid, 3)
-            obs = ip.observations[c]
-            grid = obs.grid
-            iter = eki.iteration
+            for (b, ip) in enumerate(batch)
+                Nz = size(ip.simulation.model.grid, 3)
+                obs = ip.observations[c]
+                grid = obs.grid
+                iter = eki.iteration
 
-            for p in 1:Nparticles
-                data = NamedTuple(n => get_modeled_case(ip, c, n, kk[p]) for n in keys(obs.field_time_serieses))
-                plot_fields!(axs, "rank $p, iter $iter (Nz = $Nz)", :navy, grid, data...; linestyle=linestyles[p])
+                for p in 1:Nparticles
+                    data = NamedTuple(n => get_modeled_case(ip, c, n, kk[p]) for n in keys(obs.field_time_serieses))
+                    plot_fields!(axs, "rank $p, iter $iter (Nz = $Nz)", colors[b], grid, data...;
+                                 linestyle=linestyles[p])
+                end
             end
 
-            ip = eki.inverse_problem[2] # high res 
-            Nz = size(ip.simulation.model.grid, 3)
-            obs = ip.observations[c]
-            grid = obs.grid
-
-            for p in 1:Nparticles
-                data = NamedTuple(n => get_modeled_case(ip, c, n, kk[p]) for n in keys(obs.field_time_serieses))
-                plot_fields!(axs, "rank $p, iter $iter (Nz = $Nz)", :orange, grid, data...; linestyle=linestyles[p])
-            end
-
-        else
-            ip = eki.inverse_problem
-            obs = ip.observations[c]
-            grid = obs.grid
-            iter = eki.iteration
-
-            for p in 1:Nparticles
-                data = NamedTuple(n => get_modeled_case(ip, c, n, kk[p]) for n in keys(obs.field_time_serieses))
-                plot_fields!(axs, "rank $p, iter $iter", :navy, grid, data...; linestyle=linestyles[p])
-            end
         end
 
-        fig[1, 6] = Legend(fig, axs[1]) 
+        push!(figs, fig)
     end
-
-    return fig
+            
+    return figs
 end
 

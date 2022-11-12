@@ -6,9 +6,11 @@ using Distributions
 using Printf
 using DataDeps
 using JLD2
+using OffsetArrays
+
 using CairoMakie
 using ElectronDisplay
-using OffsetArrays
+#using GLMakie
 
 using Oceananigans
 using Oceananigans.Units
