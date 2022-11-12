@@ -15,7 +15,7 @@ closure = CATKEVerticalDiffusivity()
 
 grid_parameters = [
     (size=32, z=(-256, 0)),
-   #(size=64, z=(-256, 0))
+    (size=64, z=(-256, 0))
 ]
 
 suite_parameters = [
