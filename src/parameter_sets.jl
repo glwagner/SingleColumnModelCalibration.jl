@@ -47,19 +47,19 @@ bounds_library[:Ri₀] = (0.0,  4.0)
 bounds_library[:Riᵟ] = (0.0,  4.0)
 
 # Turbulent kinetic energy parameters
-bounds_library[:CᵂwΔ] = ( 1.0,  10.0)
-bounds_library[:Cᵂu★] = ( 1.0,  10.0)
-bounds_library[:Cᴰ⁻]  = ( 1.0,  4.0)
-bounds_library[:Cᴰ⁺]  = ( 1.0,  4.0)
+bounds_library[:CᵂwΔ] = ( 2.0,  10.0)
+bounds_library[:Cᵂu★] = ( 2.0,  10.0)
+bounds_library[:Cᴰ⁻]  = ( 0.5,  3.0)
+bounds_library[:Cᴰ⁺]  = ( 0.5,  3.0)
 
 # Mixing length parameters
-bounds_library[:Cᴷu⁻] = ( 0.1, 2.0)
+bounds_library[:Cᴷu⁻] = ( 0.1, 1.0)
 bounds_library[:Cᴷc⁻] = ( 0.1, 2.0)
-bounds_library[:Cᴷe⁻] = ( 0.1, 4.0)
+bounds_library[:Cᴷe⁻] = ( 1.0, 4.0)
 
-bounds_library[:Cᴷu⁺] = ( 0.1, 2.0)
-bounds_library[:Cᴷc⁺] = ( 0.1, 4.0)
-bounds_library[:Cᴷe⁺] = ( 0.1, 4.0)
+bounds_library[:Cᴷu⁺] = ( 0.1, 1.0)
+bounds_library[:Cᴷc⁺] = ( 0.1, 2.0)
+bounds_library[:Cᴷe⁺] = ( 1.0, 4.0)
 
 bounds_library[:CRiᶜ] = ( 0.1,  2.0)
 bounds_library[:CRiʷ] = ( 0.1,  2.0)
@@ -76,8 +76,8 @@ bounds_library[:Cᴬu]  = ( 0.0,  10.0)
 bounds_library[:Cᴬc]  = ( 0.1,   2.0)
 bounds_library[:Cᴬe]  = ( 1.0,  30.0)
 
+bounds_library[:Cʰˢ]  = ( 0.5,   6.0)
 bounds_library[:Cʰ]   = ( 0.0,   0.1)
-bounds_library[:Cʰˢ]  = ( 0.1,   5.0)
 
 prior_library = Dict()
 
