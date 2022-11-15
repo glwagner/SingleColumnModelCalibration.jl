@@ -19,7 +19,7 @@ set_theme!(Theme(fontsize=16))
 
 architecture = CPU()
 
-Nhours = 12
+Nhours = 72
 resolution = "1m"
 suite = "$(Nhours)_hour_suite"
 stop_time = Nhours * hours

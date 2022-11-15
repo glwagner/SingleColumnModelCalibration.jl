@@ -52,7 +52,7 @@ function calibrate_parameter_set(name, closure;
     for p in suite_parameters
         suite = p.name
         stop_time = p.stop_time
-        times = collect(range(start_time, stop=stop_time, length=Ntimes))
+        times = [start_time, stop_time] #collect(range(start_time, stop=stop_time, length=Ntimes))
 
         grid_inverse_problems = []
         grid_weights = []

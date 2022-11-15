@@ -11,7 +11,8 @@ function batched_lesbrary_observations(regrid;
                       e = RescaledZScore(tke_weight))
 
     Nz = regrid.Nz
-    space = SpaceIndices(z=1:Nz)
+    Nb = round(Int, Nz/3)
+    space = SpaceIndices(z=Nb:Nz)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
