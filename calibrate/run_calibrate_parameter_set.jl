@@ -10,10 +10,10 @@ using SingleColumnModelCalibration: calibrate_parameter_set, parameter_sets
 #name = "ri_based"
 #closure = RiBasedVerticalDiffusivity()
 
-name = "variable_Pr"
-name = "variable_Pr"
+name = "constant_Pr_conv_adj"
+#name = "variable_Pr"
 closure = CATKEVerticalDiffusivity()
-rchitecture = CPU()
+architecture = CPU()
 
 grid_parameters = [
     (size=32, z=(-256, 0)),
