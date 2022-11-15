@@ -12,7 +12,7 @@ function calibrate_parameter_set(name, closure;
                                  acceptable_failure_fraction = 1.0,
                                  initial_convergence_ratio = 0.7,
                                  plot_progress = true,
-                                 mark_failed_particles = ObjectiveLossThreshold(3.0),
+                                 mark_failed_particles = ObjectiveLossThreshold(2.0),
                                  free_parameters = get_free_parameters(name),
                                  architecture = CPU(),
                                  Ntimes = 3,

@@ -10,8 +10,10 @@ using SingleColumnModelCalibration: calibrate_parameter_set, parameter_sets
 #name = "ri_based"
 #closure = RiBasedVerticalDiffusivity()
 
-name = "variable_Pr_conv_adj"
+name = "variable_Pr"
+name = "variable_Pr"
 closure = CATKEVerticalDiffusivity()
+rchitecture = CPU()
 
 grid_parameters = [
     (size=32, z=(-256, 0)),
@@ -28,20 +30,21 @@ resultsdir = "../results"
 
 start_time = time_ns()
 
-#Threads.@threads for i = 1:10
-# for i = 1:10
-i = 1
-    eki = calibrate_parameter_set(name, closure;
-                                  prefixname = string(name, "_", i),
-                                  Nensemble = 100,
-                                  pseudotime_limit = 1.0,
-                                  max_iterations = 1,
-                                  plot_progress = false,
-                                  resample_failure_fraction = 0.0,
-                                  savedir = resultsdir,
-                                  grid_parameters,
-                                  suite_parameters)
-# end
+@sync begin
+    for i = 1:10
+        @async begin
+            eki = calibrate_parameter_set(name, closure; architecture,
+                                          prefixname = string(name, "_", i),
+                                          Nensemble = 1000,
+                                          pseudotime_limit = 4.0,
+                                          plot_progress = false,
+                                          resample_failure_fraction = 0.2,
+                                          savedir = resultsdir,
+                                          grid_parameters,
+                                          suite_parameters)
+        end
+    end
+end
 
 elapsed = 1e-9 * (time_ns() - start_time)
 
