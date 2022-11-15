@@ -1104,13 +1104,17 @@ version = "0.5.4"
 
 [[deps.OceanTurb]]
 deps = ["LinearAlgebra", "OffsetArrays", "Printf", "PyCall", "StaticArrays", "Statistics"]
-path = "/Users/gregorywagner/Projects/OceanTurb.jl"
+git-tree-sha1 = "57b2449141910f57bdf5c7a8a1bea027e866437c"
+repo-rev = "glw/up-static-arrays-compat"
+repo-url = "https://github.com/glwagner/OceanTurb.jl.git"
 uuid = "d848d694-35fd-11e9-1c91-9995598ac29e"
 version = "0.3.3"
 
 [[deps.Oceananigans]]
 deps = ["AMGX", "Adapt", "AlgebraicMultigrid", "CUDA", "CUDAKernels", "Crayons", "CubedSphere", "Dates", "DocStringExtensions", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays", "Tullio"]
-path = "/Users/gregorywagner/Projects/Oceananigans.jl"
+git-tree-sha1 = "cd8df2310d84df42c8729fba3c95804861a99e1c"
+repo-rev = "glw/catke-plus-gm"
+repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 version = "0.78.2"
 
