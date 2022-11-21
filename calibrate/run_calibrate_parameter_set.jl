@@ -1,19 +1,27 @@
 using Oceananigans
 using Oceananigans.Units
+using JLD2
 
 using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-using SingleColumnModelCalibration: calibrate_parameter_set, parameter_sets
+using ParameterEstimocean: iterate!
+
+using SingleColumnModelCalibration:
+    build_ensemble_kalman_inversion,
+    generate_filepath,
+    parameter_sets
 
 #name = "ri_based"
 #closure = RiBasedVerticalDiffusivity()
 
-name = "constant_Pr_conv_adj"
-#name = "variable_Pr"
-closure = CATKEVerticalDiffusivity()
-architecture = CPU()
+names = [
+    #"constant_Pr",
+    #"constant_Pr_conv_adj",
+    #"variable_Pr",
+    "variable_Pr_conv_adj",
+]
 
 grid_parameters = [
     (size=32, z=(-256, 0)),
@@ -28,25 +36,71 @@ suite_parameters = [
 
 resultsdir = "../results"
 
-start_time = time_ns()
+closure = CATKEVerticalDiffusivity()
+architecture = CPU()
+Nensemble = 100
+resample_failure_fraction = 0.2
+stop_pseudotime = 100.0
+Δt = 60minutes
+Nrepeats = 4
 
-@sync begin
-    for i = 1:10
-        @async begin
-            eki = calibrate_parameter_set(name, closure; architecture,
-                                          prefixname = string(name, "_", i),
-                                          Nensemble = 1000,
-                                          pseudotime_limit = 4.0,
-                                          plot_progress = false,
-                                          resample_failure_fraction = 0.2,
-                                          savedir = resultsdir,
-                                          grid_parameters,
-                                          suite_parameters)
-        end
+for name in names
+#name = "variable_Pr_conv_adj"
+    start_time = time_ns()
+    
+    repeat_ekis = []
+    for i = 1:Nrepeats
+        eki = build_ensemble_kalman_inversion(closure, name;
+                                              architecture,
+                                              Nensemble,
+                                              Δt,
+                                              grid_parameters,
+                                              suite_parameters,
+                                              resample_failure_fraction)
+        push!(repeat_ekis, eki)
     end
+
+    asyncmap(1:Nrepeats) do i
+        eki = repeat_ekis[i]
+
+        logname = string(name, "_", i, ".txt")
+
+        while eki.pseudotime < stop_pseudotime
+            iterate!(eki)
+
+            if eki.iteration % 10 == 0
+                open(logname, "a") do io
+                    show(io, "text/plain", eki.iteration_summaries[end])
+                    write(io, '\n')
+                    write(io, '\n')
+                end
+
+                @show eki.iteration_summaries[end]
+            end
+        end
+
+        filename = string(name, "_", i)
+        filepath = generate_filepath(; Δt,
+                                     dir = resultsdir,
+                                     suite_parameters,
+                                     grid_parameters,
+                                     stop_pseudotime,
+                                     Nensemble,
+                                     filename)
+
+
+        rm(filepath; force=true)
+
+        @info "Saving data to $filepath..."
+        file = jldopen(filepath, "a+")
+        file["resample_failure_fraction"] = resample_failure_fraction
+        file["stop_pseudotime"] = stop_pseudotime
+        file["iteration_summaries"] = eki.iteration_summaries
+        close(file)
+    end
+
+    elapsed = 1e-9 * (time_ns() - start_time)
+    
+    @info "Calibrating $name parameters took " * prettytime(elapsed)
 end
-
-elapsed = 1e-9 * (time_ns() - start_time)
-
-@info "Calibrating $name parameters took " * prettytime(elapsed)
 

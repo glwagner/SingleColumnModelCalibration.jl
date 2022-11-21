@@ -1,11 +1,11 @@
 parameter_sets = Dict(
     "ri_based"    => (:ν₀, :κ₀, :κᶜ, :Cᵉ, :Ri₀, :Riᵟ),
-    "constant_Pr" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁺),
-    "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁺, :Cᴰ⁻, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CRiᶜ, :CRiʷ),
-    "complex"     => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇc, :Cˢc, :Cᴰ⁺, :Cᴰ⁻, :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CRiᶜ, :CRiʷ, :Cᵇu, :Cᵇe, :Cˢu, :Cˢe),
+    "constant_Pr" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇ, :Cˢ, :Cᴰ⁺),
+    "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cᴷc⁺, :Cᴷu⁺, :Cᴷe⁺, :Cᵇ, :Cˢ, :Cᴰ⁺, :Cᴰ⁻,
+                      :Cᴷc⁻, :Cᴷu⁻, :Cᴷe⁻, :CRiᶜ, :CRiʷ),
 )
 
-conv_adj_names = (:Cᴬc, :Cᴬe, :Cʰˢ)
+conv_adj_names = (:Cᶜc, :Cᶜe, :Cᵉc, :Cᵉe, :Cᶜˢ)
 
 for (set, names) in parameter_sets
     conv_adj_set = set * "_conv_adj"
@@ -18,19 +18,13 @@ for (set, names) in parameter_sets
     dependent_parameter_sets[set] = NamedTuple()
 end
 
-Cᵟu(θ)  = θ.Cᵟc
-Cᵟe(θ)  = θ.Cᵟc
-Cᵇ(θ)   = θ.Cᵇc
-Cˢ(θ)   = θ.Cˢc
+Cᴰ⁻(θ)  = θ.Cᴰ⁺
 Cᴷu⁻(θ) = θ.Cᴷu⁺
 Cᴷc⁻(θ) = θ.Cᴷc⁺
 Cᴷe⁻(θ) = θ.Cᴷe⁺
-Cᴰ⁻(θ)  = θ.Cᴰ⁺
 
-dependent_parameter_sets["constant_Pr"]              = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
-dependent_parameter_sets["constant_Pr_conv_adj"]     = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ, Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
-dependent_parameter_sets["variable_Pr"]              = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
-dependent_parameter_sets["variable_Pr_conv_adj"]     = (; Cᵇu=Cᵇ, Cᵇe=Cᵇ, Cˢu=Cˢ, Cˢe=Cˢ)
+dependent_parameter_sets["constant_Pr"]          = (; Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
+dependent_parameter_sets["constant_Pr_conv_adj"] = (; Cᴷu⁻, Cᴷc⁻, Cᴷe⁻, Cᴰ⁻) 
 
 #####
 ##### Bounds and priors
@@ -47,37 +41,35 @@ bounds_library[:Ri₀] = (0.0,  4.0)
 bounds_library[:Riᵟ] = (0.0,  4.0)
 
 # Turbulent kinetic energy parameters
-bounds_library[:CᵂwΔ] = ( 2.0,  10.0)
-bounds_library[:Cᵂu★] = ( 2.0,  10.0)
-bounds_library[:Cᴰ⁻]  = ( 0.5,  3.0)
-bounds_library[:Cᴰ⁺]  = ( 0.5,  3.0)
+bounds_library[:CᵂwΔ] = (0.1, 10.0)
+bounds_library[:Cᵂu★] = (0.1, 10.0)
+bounds_library[:Cᴰ⁻]  = (0.1,  1.0)
+bounds_library[:Cᴰ⁺]  = (0.1,  1.0)
 
 # Mixing length parameters
-bounds_library[:Cᴷu⁻] = ( 0.1, 1.0)
-bounds_library[:Cᴷc⁻] = ( 0.1, 2.0)
-bounds_library[:Cᴷe⁻] = ( 1.0, 4.0)
+bounds_library[:Cᵇ]   = (0.1, 1.0)
+bounds_library[:Cˢ]   = (0.1, 4.0)
 
-bounds_library[:Cᴷu⁺] = ( 0.1, 1.0)
-bounds_library[:Cᴷc⁺] = ( 0.1, 2.0)
-bounds_library[:Cᴷe⁺] = ( 1.0, 4.0)
+bounds_library[:Cᴷu⁻] = (0.1, 1.0)
+bounds_library[:Cᴷc⁻] = (0.1, 1.0)
+bounds_library[:Cᴷe⁻] = (1.0, 4.0)
 
-bounds_library[:CRiᶜ] = ( 0.1,  2.0)
-bounds_library[:CRiʷ] = ( 0.1,  2.0)
+bounds_library[:Cᴷu⁺] = (0.1, 1.0)
+bounds_library[:Cᴷc⁺] = (0.1, 1.0)
+bounds_library[:Cᴷe⁺] = (1.0, 4.0)
 
-bounds_library[:Cᵇu]  = ( 0.1, 2.0)
-bounds_library[:Cᵇc]  = ( 0.1, 2.0)
-bounds_library[:Cᵇe]  = ( 0.1, 2.0)
+bounds_library[:CRiᶜ] = (0.1, 2.0)
+bounds_library[:CRiʷ] = (0.1, 2.0)
 
-bounds_library[:Cˢu]  = ( 0.1, 4.0)
-bounds_library[:Cˢc]  = ( 0.1, 4.0)
-bounds_library[:Cˢe]  = ( 0.1, 4.0)
+# Convective adjustment parameters
+bounds_library[:Cᶜc]  = (0.1, 2.0)
+bounds_library[:Cᵉc]  = (0.1, 2.0)
+bounds_library[:Cᶜe]  = (0.1, 2.0)
+bounds_library[:Cᵉe]  = (0.1, 2.0)
+bounds_library[:Cᶜˢ]  = (0.1, 5.0)
 
-bounds_library[:Cᴬu]  = ( 0.0,  10.0)
-bounds_library[:Cᴬc]  = ( 0.1,   2.0)
-bounds_library[:Cᴬe]  = ( 1.0,  30.0)
-
-bounds_library[:Cʰˢ]  = ( 0.5,   6.0)
-bounds_library[:Cʰ]   = ( 0.0,   0.1)
+#bounds_library[:Cᶜe]  = ( 1.0,  30.0)
+#bounds_library[:Cᵉe]  = ( 1.0,  30.0)
 
 prior_library = Dict()
 

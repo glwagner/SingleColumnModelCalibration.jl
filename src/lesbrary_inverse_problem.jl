@@ -1,8 +1,6 @@
-function batched_lesbrary_observations(regrid;
-                                       times = [48hours - 10minutes, 48hours],
+function batched_lesbrary_observations(regrid; times, suite,
                                        resolution = "1m",
                                        field_names = (:b, :e, :u, :v),
-                                       suite = "one_day_suite",
                                        tke_weight = 0.0)
 
     normalizations = (b = ZScore(),
@@ -11,8 +9,10 @@ function batched_lesbrary_observations(regrid;
                       e = RescaledZScore(tke_weight))
 
     Nz = regrid.Nz
-    Nb = round(Int, Nz/3)
-    space = SpaceIndices(z=Nb:Nz)
+    zf = znodes(Face, regrid)
+    kb = round(Int, Nz/3) # exclude the bottom third, ie ≈ - 170m
+    kt = findfirst(z -> z > -16, zf) - 1 # exclude the top 16 meters
+    space = SpaceIndices(z=kb:kt)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
@@ -79,6 +79,7 @@ function lesbrary_inverse_problem(regrid;
                                                   Nensemble,
                                                   architecture,
                                                   non_ensemble_closure,
+                                                  verbose = false,
                                                   tracers = (:b, :e))
 
     simulation.Δt = Δt    

@@ -16,12 +16,9 @@ using CairoMakie
 using ElectronDisplay
 
 using SingleColumnModelCalibration:
-    lesbrary_inverse_problem,
-    get_best_parameters,
     dependent_parameter_sets,
-    prior_library,
-    ecco_vertical_grid,
-    load_summaries
+    build_batched_inverse_problem,
+    prior_library
 
 set_theme!(Theme(fontsize=16))
 
@@ -29,77 +26,54 @@ set_theme!(Theme(fontsize=16))
 # name = :ri_based
 # closure = RiBasedVerticalDiffusivity()
 
-dir = "../results"
-include("results.jl")
-name = :complex_dissipation_conv_adj
+dir = "../parameters"
+#name = "variable_Pr_conv_adj"
+name = "constant_Pr"
+#name = "constant_Pr_conv_adj"
+#name = "variable_Pr_conv_adj"
 closure = CATKEVerticalDiffusivity()
 
-filename = joinpath(dir, calibration_filenames[name])
-summaries = load_summaries(filename)
+filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
+file = jldopen(filepath)
+optimal_parameters = file["optimal_parameters"]
+close(file)
+
 dependent_parameters = dependent_parameter_sets[string(name)]
-#dependent_parameters = NamedTuple()
-
-mean_θ₀ = summaries[0].ensemble_mean
-mean_θₙ = summaries[end].ensemble_mean
-best_θₙ = get_best_parameters(summaries)
-
-@show summaries[end]
-
-parameter_names = keys(best_θₙ)
+parameter_names = keys(optimal_parameters)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
-
-mean_θ₀ = build_parameters_named_tuple(free_parameters, mean_θ₀)
-mean_θₙ = build_parameters_named_tuple(free_parameters, mean_θₙ)
-best_θₙ = build_parameters_named_tuple(free_parameters, best_θₙ)
-
-savename = string("catke_", name, "_parameters.jld2")
-@save savename mean=mean_θₙ best=best_θₙ
-
-# Two grids: "coarse" with ECCO vertical resolution to z=-256 m, and a fine grid with 4m resolution
-Nz_ecco = length(ecco_vertical_grid) - 1
-#coarse_regrid = RectilinearGrid(size=Nz_ecco, z=ecco_vertical_grid, topology=(Flat, Flat, Bounded))
-coarse_regrid = RectilinearGrid(size=32, z=(-256, 0), topology=(Flat, Flat, Bounded))
-med_regrid    = RectilinearGrid(size=48, z=(-256, 0), topology=(Flat, Flat, Bounded))
-fine_regrid   = RectilinearGrid(size=64; z=(-256, 0), topology=(Flat, Flat, Bounded))
+optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_parameters)
+@show optimal_parameters
 
 # Batch the inverse problems
-Nensemble = 3
-architecture = CPU()
+grid_parameters = [
+    (size=128, z=(-256, 0)),
+    (size=64,  z=(-256, 0)),
+    (size=32,  z=(-256, 0)),
+]
 
-suite = "48_hour_suite"
-times = [2hours, 48hours]
+grid_colors = [
+    (:black, 0.8),
+    (:darkred, 0.8),
+    (:royalblue1, 0.8)
+]
 
-#times = [2hours, 24hours]
-#suite = "24_hour_suite"
+suite_parameters = [
+    (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
+    (name = "12_hour_suite", resolution="1m", stop_time=12hours),
+    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
+    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
+    (name = "36_hour_suite", resolution="1m", stop_time=36hours),
+    (name = "48_hour_suite", resolution="1m", stop_time=48hours),
+    (name = "72_hour_suite", resolution="1m", stop_time=72hours),
+]
 
-#times = [2hours, 12hours]
-#suite = "12_hour_suite"
+batched_ip = build_batched_inverse_problem(closure, name;
+                                           Nensemble = 1,
+                                           Δt = 5minutes,
+                                           grid_parameters,
+                                           suite_parameters)
 
-inverse_problem_kwargs = (; suite, free_parameters, Nensemble, architecture, closure)
-coarse_ip = lesbrary_inverse_problem(coarse_regrid; times, Δt=20minutes, inverse_problem_kwargs...)
-med_ip    = lesbrary_inverse_problem(med_regrid; times,    Δt=20minutes, inverse_problem_kwargs...)
-fine_ip   = lesbrary_inverse_problem(fine_regrid; times,   Δt=20minutes, inverse_problem_kwargs...)
-
-forward_run!(fine_ip, [mean_θ₀, mean_θₙ, best_θₙ])
-forward_run!(med_ip, [mean_θ₀, mean_θₙ, best_θₙ])
-forward_run!(coarse_ip, [mean_θ₀, mean_θₙ, best_θₙ])
-
-@show coarse_ip.simulation.model.closure[3]
-
-#####
-##### Figure
-#####
-
-fig = Figure(resolution=(1200, 600))
-
-z_fine = znodes(Center, fine_regrid)
-z_coarse = znodes(Center, coarse_regrid)
-z_med = znodes(Center, med_regrid)
-times = observation_times(fine_ip.observations)
-Nt = length(times)
-
-ax_b = []
-ax_u = []
+forward_run!(batched_ip, [optimal_parameters])
 
 titles = [
     "Free convection",
@@ -110,96 +84,112 @@ titles = [
     "Strong wind \n no rotation",
 ]
 
-sim_color    = (:seagreen, 0.6)
-fine_color   = (:darkred, 0.8)
-med_color   = (:orange, 0.8)
-coarse_color = (:royalblue1, 0.8)
-k_plot       = 3
-zlim         = -192
+#####
+##### Figure
+#####
 
-lesstr = string("LES at t = ", prettytime(times[end]))
+LES_color = (:seagreen, 0.6)
 
-Δz_coarse = Δzᶜᶜᶜ(1, 1, coarse_regrid.Nz, coarse_regrid)
-Δz_coarse_str = @sprintf("%.1f", Δz_coarse)
-Δz_fine = Δzᶜᶜᶜ(1, 1, fine_regrid.Nz, fine_regrid)
-Δz_fine_str = @sprintf("%.1f", Δz_fine)
-Δz_med = Δzᶜᶜᶜ(1, 1, med_regrid.Nz, med_regrid)
-Δz_med_str = @sprintf("%.1f", Δz_med)
+k★      = 1
+zlim    = -192
+Ngrids  = length(grid_parameters)
+Nsuites = length(suite_parameters)
 
-for c = 1:6
-    if c < 5
-        yaxisposition=:left
-    else
-        yaxisposition=:right
+suite_names = [suite_parameters[s].name for s = 1:length(suite_parameters)]
+
+for (s, suite) in enumerate(suite_names)
+
+    fig = Figure(resolution=(1200, 600))
+
+    i1 = Ngrids*(s-1) + 1
+    ip1 = batched_ip[i1]
+    times = observation_times(ip1.observations)
+    Nt = length(times)
+
+    ax_b = []
+    ax_u = []
+
+    LES_str = string("LES at t = ", prettytime(times[end]))
+
+    grid1 = ip1.simulation.model.grid
+    z1 = znodes(Center, grid1)
+    Δz1 = Δzᶜᶜᶜ(1, 1, grid1.Nz, grid1)
+    Δz1_str = @sprintf("%d", Δz1)
+    
+    for c = 1:6
+        yaxisposition = c < 6 ? :left : :right
+        Label(fig[1, c], titles[c], tellwidth=false)
+
+        ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy (m s⁻²)", yaxisposition, xticks=[0.0386, 0.039, 0.0394])
+        push!(ax_b, ax_bc)
+
+        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks=-0.1:0.1:0.3)
+        push!(ax_u, ax_uc)
+
+        b_init = interior(ip1.observations[c].field_time_serieses.b[1], 1, 1, :)
+        b_obs  = interior(ip1.observations[c].field_time_serieses.b[Nt], 1, 1, :)
+        start_time = ip1.observations[c].times[1]
+
+        lines!(ax_b[c], b_init, z1, linewidth=2, label="Initial condition at t = " * prettytime(start_time), color=LES_color, linestyle=:dot)
+        lines!(ax_b[c], b_obs,  z1, linewidth=8, label=LES_str, color=LES_color)
+        
+        xlims!(ax_b[c], 0.0386, maximum(b_init) + 2e-5)
+        ylims!(ax_b[c], zlim, 0)
+
+        if c > 1
+            ylims!(ax_u[c], zlim, 0)
+            u_obs = interior(ip1.observations[c].field_time_serieses.u[Nt], 1, 1, :)
+            lines!(ax_u[c], u_obs, z1, linewidth=8, label="u, LES",  color=LES_color)
+
+            if :v ∈ keys(ip1.observations[c].field_time_serieses)
+                v_obs = interior(ip1.observations[c].field_time_serieses.v[Nt], 1, 1, :)
+                lines!(ax_u[c], v_obs, z1, color=LES_color, linewidth=4, linestyle=:dash) #, label="v, LES")
+            end
+        end
+
+        hidespines!(ax_b[c], :t)
+        c != 1 && hidespines!(ax_u[c], :t)
+
+        c != 1 && hidespines!(ax_b[c], :l)
+        c != 1 && c != 6 && hideydecorations!(ax_b[c], grid=false)
+        c != 6 && hidespines!(ax_b[c], :r)
+
+        c > 2 && hidespines!(ax_u[c], :l)
+        c != 1 && c != 6 && hidespines!(ax_u[c], :r)
+        c > 2 && c != 6 && hideydecorations!(ax_u[c], grid=false)
     end
 
-    Label(fig[1, c], titles[c], tellwidth=false)
+    iᵇ = Ngrids*(s-1)
 
-    ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy (m s⁻²)", yaxisposition, xticks=[0.0386, 0.039, 0.0394])
-    push!(ax_b, ax_bc)
+    for c = 1:6
+        for iᵍ = 1:Ngrids
+            ip = batched_ip[iᵇ + iᵍ]
+            grid = ip.simulation.model.grid
+            z = znodes(Center, grid)
+            Δz = Δzᶜᶜᶜ(1, 1, grid.Nz, grid)
+            Δz_str = @sprintf("%d", Δz)
+            color = grid_colors[iᵍ]
 
-    ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks=-0.1:0.1:0.3)
-    push!(ax_u, ax_uc)
+            b = interior(ip.time_series_collector.field_time_serieses.b[Nt], k★, c, :)
+            lines!(ax_b[c], b, z, linewidth=3; label="CATKE, Δz = $Δz_str m", color)
 
-    b_init   = interior(fine_ip.observations[c].field_time_serieses.b[1], 1, 1, :)
-    b_obs    = interior(fine_ip.observations[c].field_time_serieses.b[Nt], 1, 1, :)
-    b_fine   = interior(  fine_ip.time_series_collector.field_time_serieses.b[Nt], k_plot, c, :)
-    b_med    = interior(   med_ip.time_series_collector.field_time_serieses.b[Nt], k_plot, c, :)
-    b_coarse = interior(coarse_ip.time_series_collector.field_time_serieses.b[Nt], k_plot, c, :)
+            if c > 1
+                u = interior(ip.time_series_collector.field_time_serieses.u[Nt], k★, c, :)
+                lines!(ax_u[c], u, z, linewidth=3; label="u, CATKE, Δz = $Δz_str m", color)
 
-    lines!(ax_b[c], b_init,   z_fine,   linewidth=2, label="Initial condition at t = 2 hours", color=sim_color, linestyle=:dot)
-    lines!(ax_b[c], b_obs,    z_fine,   linewidth=8, label=lesstr, color=sim_color)
-    lines!(ax_b[c], b_fine,   z_fine,   linewidth=3, label="CATKE, Δz ≈ $Δz_fine_str m", color=fine_color)
-    lines!(ax_b[c], b_med,    z_med,    linewidth=3, label="CATKE, Δz = $Δz_med_str m", color=med_color)
-    lines!(ax_b[c], b_coarse, z_coarse, linewidth=3, label="CATKE, Δz = $Δz_coarse_str m", color=coarse_color)
-
-    xlims!(ax_b[c], 0.0386, maximum(b_init) + 2e-5)
-    ylims!(ax_b[c], zlim, 0)
-
-    if c > 1
-        #xlims!(ax_u[c], -0.15, 0.35)
-        ylims!(ax_u[c], zlim, 0)
-
-        u_obs    = interior(fine_ip.observations[c].field_time_serieses.u[Nt], 1, 1, :)
-        u_fine   = interior(  fine_ip.time_series_collector.field_time_serieses.u[Nt], k_plot, c, :)
-        u_med    = interior(  med_ip.time_series_collector.field_time_serieses.u[Nt], k_plot, c, :)
-        u_coarse = interior(coarse_ip.time_series_collector.field_time_serieses.u[Nt], k_plot, c, :)
-
-        lines!(ax_u[c], u_obs,    z_fine,   linewidth=8, label="u, LES",                          color=sim_color)
-        lines!(ax_u[c], u_fine,   z_fine,   linewidth=3, label="u, CATKE, Δz ≈ $Δz_fine_str m",   color=fine_color)
-        lines!(ax_u[c], u_med,    z_med,    linewidth=3, label="u, CATKE, Δz ≈ $Δz_med_str m",    color=med_color)
-        lines!(ax_u[c], u_coarse, z_coarse, linewidth=3, label="u, CATKE, Δz = $Δz_coarse_str m", color=coarse_color)
-
-        if :v ∈ keys(fine_ip.observations[c].field_time_serieses)
-            v_obs    = interior(fine_ip.observations[c].field_time_serieses.v[Nt], 1, 1, :)
-            v_fine   = interior(  fine_ip.time_series_collector.field_time_serieses.v[Nt], k_plot, c, :)
-            v_med    = interior(   med_ip.time_series_collector.field_time_serieses.v[Nt], k_plot, c, :)
-            v_coarse = interior(coarse_ip.time_series_collector.field_time_serieses.v[Nt], k_plot, c, :)
-
-            lines!(ax_u[c], v_obs,    z_fine,   color=sim_color,    linewidth=4, linestyle=:dash) #, label="v, LES")
-            lines!(ax_u[c], v_fine,   z_fine,   color=fine_color,   linewidth=2, linestyle=:dash, label="v") #, fine resolution CATKE")
-            lines!(ax_u[c], v_med,    z_med,    color=med_color,    linewidth=2, linestyle=:dash) #, med resolution CATKE")
-            lines!(ax_u[c], v_coarse, z_coarse, color=coarse_color, linewidth=2, linestyle=:dash) #, label="v, coarse resolution CATKE")
+                if :v ∈ keys(ip1.observations[c].field_time_serieses)
+                    v = interior(ip.time_series_collector.field_time_serieses.v[Nt], k★, c, :)
+                    lines!(ax_u[c], v, z; color, linewidth=2, linestyle=:dash, label="v")
+                end
+            end
         end
     end
 
-    hidespines!(ax_b[c], :t)
-    c != 1 && hidespines!(ax_u[c], :t)
+    Legend(fig[3, 1], ax_b[2])
+    text!(ax_u[2], +0.1, -50.0, text="u")
+    text!(ax_u[2], -0.14, -110.0, text="v")
 
-    c != 1 && hidespines!(ax_b[c], :l)
-    c != 1 && c != 6 && hideydecorations!(ax_b[c], grid=false)
-    c != 6 && hidespines!(ax_b[c], :r)
+    display(fig)
 
-    c > 2 && hidespines!(ax_u[c], :l)
-    c != 1 && c != 6 && hidespines!(ax_u[c], :r)
-    c > 2 && c != 6 && hideydecorations!(ax_u[c], grid=false)
+    #save("$(name)_catke_LES_comparison.png", fig)
 end
-
-Legend(fig[3, 1], ax_b[2])
-text!(ax_u[2], +0.1, -50.0, text="u")
-text!(ax_u[2], -0.14, -110.0, text="v")
-#Legend(fig[5, 1], ax_u[2])
-
-display(fig)
-
-save("$(name)_catke_LES_comparison.png", fig)

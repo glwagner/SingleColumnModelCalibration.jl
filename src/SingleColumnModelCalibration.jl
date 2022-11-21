@@ -51,7 +51,7 @@ cases = ["free_convection",
          "strong_wind",
          "strong_wind_no_rotation"]
 
-# Weight by number of fields (excluding TKE)
+# Weight by number of fields, excluding TKE
 observation_weights = Dict(
     "free_convection"          => 1.0,
     "strong_wind_weak_cooling" => 1/3,
