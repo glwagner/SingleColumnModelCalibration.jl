@@ -17,9 +17,9 @@ using SingleColumnModelCalibration:
 #closure = RiBasedVerticalDiffusivity()
 
 names = [
-    #"constant_Pr",
-    #"constant_Pr_conv_adj",
-    #"variable_Pr",
+    "constant_Pr",
+    "variable_Pr",
+    "constant_Pr_conv_adj",
     "variable_Pr_conv_adj",
 ]
 
@@ -39,13 +39,12 @@ resultsdir = "../results"
 closure = CATKEVerticalDiffusivity()
 architecture = CPU()
 Nensemble = 100
-resample_failure_fraction = 0.2
-stop_pseudotime = 100.0
+resample_failure_fraction = 0.05
+stop_pseudotime = 1000.0
 Δt = 60minutes
-Nrepeats = 4
+Nrepeats = 10
 
 for name in names
-#name = "variable_Pr_conv_adj"
     start_time = time_ns()
     
     repeat_ekis = []
