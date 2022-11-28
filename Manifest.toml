@@ -1107,7 +1107,9 @@ version = "0.3.3"
 
 [[deps.Oceananigans]]
 deps = ["AMGX", "Adapt", "AlgebraicMultigrid", "CUDA", "CUDAKernels", "Crayons", "CubedSphere", "Dates", "DocStringExtensions", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays", "Tullio"]
-path = "/Users/gregorywagner/Projects/Oceananigans.jl"
+git-tree-sha1 = "8ac63e1001c16a011d9b8907861dfa8c6a65425e"
+repo-rev = "glw/catke-plus-gm"
+repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 version = "0.78.2"
 
@@ -1229,7 +1231,9 @@ version = "1.50.9+0"
 
 [[deps.ParameterEstimocean]]
 deps = ["BlockDiagonals", "CUDA", "DataDeps", "Distributions", "DocStringExtensions", "EnsembleKalmanProcesses", "GaussianProcesses", "JLD2", "LineSearches", "LinearAlgebra", "MPI", "Oceananigans", "OffsetArrays", "OrderedCollections", "Printf", "ProgressBars", "Random", "SpecialFunctions", "Statistics", "Suppressor"]
-path = "/Users/gregorywagner/Projects/ParameterEstimocean.jl/"
+git-tree-sha1 = "9b2d1ce6769a8b312126d10934d34656bc59cec7"
+repo-rev = "glw/async-updates"
+repo-url = "https://github.com/CliMA/ParameterEstimocean.jl.git"
 uuid = "eca81dc5-87a6-4430-aec8-c76695404a43"
 version = "0.14.1"
 
