@@ -17,7 +17,7 @@ function batched_lesbrary_observations(regrid; times, suite,
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
 
-    case_path(case) = joinpath("..", "data", suite, resolution, case * "_instantaneous_statistics.jld2")
+    case_path(case) = joinpath("../../../../home/greg/Projects/SingleColumnModelCalibration.jl/data", suite, resolution, case * "_instantaneous_statistics.jld2")
 
     observation_library = Dict()
 
