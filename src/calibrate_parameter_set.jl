@@ -44,6 +44,7 @@ function build_batched_inverse_problem(closure, name="";
                                        Δt = 20minutes,
                                        architecture = CPU(),
                                        overwrite_existing = false,
+                                       cases = default_cases,
                                        tke_weight = 0.0)
 
     suite_parameters = vectorize(suite_parameters)
@@ -70,7 +71,7 @@ function build_batched_inverse_problem(closure, name="";
         grid_weights = []
 
         for grid in grids
-            ip = lesbrary_inverse_problem(grid; times, Δt, suite, observations_resolution,
+            ip = lesbrary_inverse_problem(grid; times, Δt, suite, observations_resolution, cases,
                                           inverse_problem_kwargs...)
 
             # Assume the grid is not "too stretched" for this to be useful
@@ -101,17 +102,18 @@ function build_ensemble_kalman_inversion(closure, name="";
                                          start_time = default_start_time,
                                          Ntimes = default_Ntimes,
                                          tke_weight = 0.0,
+                                         cases = default_cases,
                                          # EnsembleKalmanInverion parameters
                                          noise_covariance = nothing,
                                          resample_failure_fraction = 0.2,
                                          acceptable_failure_fraction = 1.0,
                                          forward_map_output = nothing,
                                          resampler = Resampler(; resample_failure_fraction, acceptable_failure_fraction),
-                                         initial_convergence_ratio = 0.7,
+                                         pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio=0.7),
                                          mark_failed_particles = ObjectiveLossThreshold(3.0),
                                          batched_inverse_problem_kw...)
 
-    batched_ip = build_batched_inverse_problem(closure, name; Ntimes, grid_parameters, suite_parameters, batched_inverse_problem_kw...)
+    batched_ip = build_batched_inverse_problem(closure, name; Ntimes, grid_parameters, suite_parameters, cases, batched_inverse_problem_kw...)
     grids = rectilinear_grids_from_parameters(grid_parameters)
     noise_covariances = []
 
@@ -123,7 +125,7 @@ function build_ensemble_kalman_inversion(closure, name="";
 
         for grid in grids
             # Estimate noise covariance based on discrepency between LES with different resolution
-            Γ = estimate_noise_covariance(grid; times, tke_weight, suite)
+            Γ = estimate_noise_covariance(grid; times, tke_weight, suite, cases)
             push!(grid_Γ, Γ)
         end
 
@@ -139,8 +141,6 @@ function build_ensemble_kalman_inversion(closure, name="";
     else
         batched_Γ = noise_covariance
     end
-
-    pseudo_stepping = Kovachki2018InitialConvergenceRatio(; initial_convergence_ratio)
 
     eki = EnsembleKalmanInversion(batched_ip;
                                   noise_covariance = batched_Γ,

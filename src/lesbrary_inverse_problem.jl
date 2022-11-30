@@ -1,7 +1,8 @@
 function batched_lesbrary_observations(regrid; times, suite,
                                        resolution = "1m",
                                        field_names = (:b, :e, :u, :v),
-                                       tke_weight = 0.0)
+                                       tke_weight = 0.0,
+                                       cases = default_cases)
 
     normalizations = (b = ZScore(),
                       u = ZScore(),
@@ -67,10 +68,11 @@ function lesbrary_inverse_problem(regrid;
                                   non_ensemble_closure = nothing,
                                   suite = "one_day_suite",
                                   tke_weight = 0.0,
+                                  cases = default_cases,
                                   architecture = CPU())
 
     batched_observations = batched_lesbrary_observations(regrid; resolution=observations_resolution,
-                                                         times, field_names, suite, tke_weight)
+                                                         times, field_names, suite, tke_weight, cases)
 
     observations = batched_observations.observations
 
