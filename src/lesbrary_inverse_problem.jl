@@ -18,7 +18,7 @@ function batched_lesbrary_observations(regrid; times, suite,
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
 
-    case_path(case) = joinpath("../data", suite, resolution, case * "_instantaneous_statistics.jld2")
+    case_path(case) = joinpath("/Users/andresouza/Desktop/Repositories/SingleColumnModelCalibration.jl/data", suite, resolution, case * "_instantaneous_statistics.jld2")
 
     observation_library = Dict()
 
@@ -52,8 +52,8 @@ function estimate_noise_covariance(grid; kwargs...)
     obs_2m = batched_lesbrary_observations(grid; resolution="2m", kwargs...)
     obs_4m = batched_lesbrary_observations(grid; resolution="4m", kwargs...)
     Γ = cov([obs_1m, obs_2m, obs_4m])
-    # ϵ = 1e-2 #* mean(abs, [Γ[n, n] for n=1:size(Γ, 1)])
-    # Γ .+= ϵ * Diagonal(I, size(Γ, 1))
+    ϵ = 1e-2 #* mean(abs, [Γ[n, n] for n=1:size(Γ, 1)])
+    Γ .+= ϵ * Diagonal(I, size(Γ, 1))
 
     # Remove off-diagonal elements
     Γ = diagm(diag(Γ)) .* 2
