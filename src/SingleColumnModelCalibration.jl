@@ -9,8 +9,6 @@ using JLD2
 using OffsetArrays
 
 using CairoMakie
-using ElectronDisplay
-#using GLMakie
 
 using Oceananigans
 using Oceananigans.Units
@@ -18,9 +16,9 @@ using Oceananigans.Units
 using ParameterEstimocean
 using ParameterEstimocean: Transformation
 using ParameterEstimocean.Observations: forward_map_names
+using ParameterEstimocean.EnsembleKalmanInversions: IterationSummary
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem
 using ParameterEstimocean.PseudoSteppingSchemes: Kovachki2018InitialConvergenceRatio
-using ParameterEstimocean.EnsembleKalmanInversions: best_next_best, nanminimum, IterationSummary
 
 # Coarse grid used by ECCO
 ecco_vertical_grid = [-256.0,

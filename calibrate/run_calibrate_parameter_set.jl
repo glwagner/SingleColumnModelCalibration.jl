@@ -7,6 +7,7 @@ using Oceananigans.TurbulenceClosures:
     CATKEVerticalDiffusivity
 
 using ParameterEstimocean: iterate!
+using ParameterEstimocean
 
 using SingleColumnModelCalibration:
     build_ensemble_kalman_inversion,
