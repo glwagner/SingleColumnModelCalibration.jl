@@ -60,7 +60,7 @@ bounds_library[:CᶜD]  = (0.01, 10.0)
 bounds_library[:Cᵉc]  = (0.01,  2.0)
 bounds_library[:Cᵉe]  = (0.01,  2.0)
 bounds_library[:CᵉD]  = (0.01,  2.0)
-bounds_library[:Cᶜˢ]  = (0.01, 10.0)
+bounds_library[:Cˢᶜ]  = (0.01, 10.0)
 
 # Ri-based
 bounds_library[:ν₀]  = (0.0,  1.0)

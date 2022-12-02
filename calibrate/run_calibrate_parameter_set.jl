@@ -25,7 +25,8 @@ names = [
 
 grid_parameters = [
     (size=32, z=(-256, 0)),
-    (size=64, z=(-256, 0))
+    (size=64, z=(-256, 0)),
+    #(size=128, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -41,7 +42,7 @@ architecture = CPU()
 Nensemble = 100
 resample_failure_fraction = 0.05
 stop_pseudotime = 1000.0
-Δt = 60minutes
+Δt = 20minutes
 Nrepeats = 10
 
 for name in names

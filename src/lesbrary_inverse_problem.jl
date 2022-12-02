@@ -51,7 +51,7 @@ function estimate_noise_covariance(grid; kwargs...)
     obs_2m = batched_lesbrary_observations(grid; resolution="2m", kwargs...)
     obs_4m = batched_lesbrary_observations(grid; resolution="4m", kwargs...)
     Γ = cov([obs_1m, obs_2m, obs_4m])
-    ϵ = 1e-2 #* mean(abs, [Γ[n, n] for n=1:size(Γ, 1)])
+    ϵ = 1e-2 * mean(abs, [Γ[n, n] for n=1:size(Γ, 1)])
     Γ .+= ϵ * Diagonal(I, size(Γ, 1))
     return Γ
 end

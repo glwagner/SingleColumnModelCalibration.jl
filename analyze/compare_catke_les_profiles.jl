@@ -27,10 +27,10 @@ set_theme!(Theme(fontsize=16))
 # closure = RiBasedVerticalDiffusivity()
 
 dir = "../parameters"
-name = "constant_Pr"
+#name = "constant_Pr"
 #name = "variable_Pr"
 #name = "constant_Pr_conv_adj"
-#name = "variable_Pr_conv_adj"
+name = "variable_Pr_conv_adj"
 closure = CATKEVerticalDiffusivity()
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -69,7 +69,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 1minute,
+                                           Δt = 1minutes,
                                            grid_parameters,
                                            suite_parameters)
 
