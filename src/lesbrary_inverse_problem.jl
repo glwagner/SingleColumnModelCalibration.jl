@@ -2,7 +2,8 @@ function batched_lesbrary_observations(regrid; times, suite,
                                        resolution = "1m",
                                        field_names = (:b, :e, :u, :v),
                                        tke_weight = 0.0,
-                                       cases = default_cases)
+                                       cases = default_cases,
+                                       data_dir = "../data")
 
     normalizations = (b = ZScore(),
                       u = ZScore(),
@@ -18,7 +19,7 @@ function batched_lesbrary_observations(regrid; times, suite,
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
 
-    case_path(case) = joinpath("/Users/andresouza/Desktop/Repositories/SingleColumnModelCalibration.jl/data", suite, resolution, case * "_instantaneous_statistics.jld2")
+    case_path(case) = joinpath(data_dir, suite, resolution, case * "_instantaneous_statistics.jld2")
 
     observation_library = Dict()
 
@@ -46,20 +47,14 @@ function batched_lesbrary_observations(regrid; times, suite,
     return batched_observations
 end
 
-function estimate_noise_covariance(grid; kwargs...)
+function estimate_noise_covariance(grid; modify = Γ => Γ, kwargs...)
     # Estimate noise covariance
     obs_1m = batched_lesbrary_observations(grid; resolution="1m", kwargs...)
     obs_2m = batched_lesbrary_observations(grid; resolution="2m", kwargs...)
     obs_4m = batched_lesbrary_observations(grid; resolution="4m", kwargs...)
     Γ = cov([obs_1m, obs_2m, obs_4m])
-    ϵ = 1e-2 #* mean(abs, [Γ[n, n] for n=1:size(Γ, 1)])
-    Γ .+= ϵ * Diagonal(I, size(Γ, 1))
-
-    # Remove off-diagonal elements
-    Γ = diagm(diag(Γ)) .* 2
-    # Γ = Γ + I(size(Γ, 1))
     
-    return Γ
+    return modify(Γ)
 end
     
 function lesbrary_inverse_problem(regrid;
@@ -74,10 +69,11 @@ function lesbrary_inverse_problem(regrid;
                                   suite = "one_day_suite",
                                   tke_weight = 0.0,
                                   cases = default_cases,
-                                  architecture = CPU())
+                                  architecture = CPU(), 
+                                  data_dir = "../data")
 
     batched_observations = batched_lesbrary_observations(regrid; resolution=observations_resolution,
-                                                         times, field_names, suite, tke_weight, cases)
+                                                         times, field_names, suite, tke_weight, cases, data_dir)
 
     observations = batched_observations.observations
 
