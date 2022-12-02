@@ -20,6 +20,10 @@ using ParameterEstimocean.EnsembleKalmanInversions: IterationSummary
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem
 using ParameterEstimocean.PseudoSteppingSchemes: Kovachki2018InitialConvergenceRatio
 
+export build_ensemble_kalman_inversion,
+        generate_filepath,
+        parameter_sets
+
 # Coarse grid used by ECCO
 ecco_vertical_grid = [-256.0,
                       -238.3,
