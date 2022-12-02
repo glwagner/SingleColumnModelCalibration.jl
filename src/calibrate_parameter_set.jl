@@ -43,6 +43,7 @@ function build_batched_inverse_problem(closure, name="";
                                        Ntimes = default_Ntimes,
                                        Δt = 20minutes,
                                        architecture = CPU(),
+                                       default_observations_resolution = "2m",
                                        overwrite_existing = false,
                                        cases = default_cases,
                                        tke_weight = 0.0)
@@ -63,9 +64,10 @@ function build_batched_inverse_problem(closure, name="";
     for p in suite_parameters
         suite = p.name
         stop_time = p.stop_time
-        times = Ntimes == 2 ? [start_time, stop_time] :
+        times = isnothing(Ntimes) ? nothing :
+                Ntimes == 2 ? [start_time, stop_time] :
                               collect(range(start_time, stop=stop_time, length=Ntimes))
-        observations_resolution = :resolution ∈ keys(p) ? p.resolution : "1m" 
+        observations_resolution = :resolution ∈ keys(p) ? p.resolution : default_observations_resolution
 
         grid_inverse_problems = []
         grid_weights = []
@@ -96,6 +98,8 @@ function build_batched_inverse_problem(closure, name="";
     return batched_ip
 end
 
+
+
 function build_ensemble_kalman_inversion(closure, name="";
                                          grid_parameters,
                                          suite_parameters,
@@ -104,6 +108,7 @@ function build_ensemble_kalman_inversion(closure, name="";
                                          tke_weight = 0.0,
                                          cases = default_cases,
                                          modify = Γ => Γ,
+                                         default_observations_resolution = "2m",
                                          # EnsembleKalmanInverion parameters
                                          noise_covariance = nothing,
                                          resample_failure_fraction = 0.2,
@@ -114,14 +119,16 @@ function build_ensemble_kalman_inversion(closure, name="";
                                          mark_failed_particles = ObjectiveLossThreshold(3.0),
                                          batched_inverse_problem_kw...)
 
-    batched_ip = build_batched_inverse_problem(closure, name; Ntimes, grid_parameters, suite_parameters, cases, batched_inverse_problem_kw...)
+    batched_ip = build_batched_inverse_problem(closure, name; Ntimes, default_observations_resolution, grid_parameters, suite_parameters, cases, batched_inverse_problem_kw...)
     grids = rectilinear_grids_from_parameters(grid_parameters)
     noise_covariances = []
 
     for p in suite_parameters
         suite = p.name
         stop_time = p.stop_time
-        times = Ntimes == 2 ? [start_time, stop_time] : collect(range(start_time, stop=stop_time, length=Ntimes))
+        times = isnothing(Ntimes) ? nothing :
+                Ntimes == 2 ? [start_time, stop_time] :
+                              collect(range(start_time, stop=stop_time, length=Ntimes))
         grid_Γ = []
 
         for grid in grids
