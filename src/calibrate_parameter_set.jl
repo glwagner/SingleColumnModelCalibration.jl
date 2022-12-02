@@ -75,7 +75,7 @@ function build_batched_inverse_problem(closure, name="";
                                           inverse_problem_kwargs...)
 
             # Assume the grid is not "too stretched" for this to be useful
-            weight = 1 / grid.Nz
+            weight = 100 / grid.Nz
 
             push!(grid_inverse_problems, ip)
             push!(grid_weights, weight)
@@ -103,6 +103,7 @@ function build_ensemble_kalman_inversion(closure, name="";
                                          Ntimes = default_Ntimes,
                                          tke_weight = 0.0,
                                          cases = default_cases,
+                                         modify = Γ => Γ,
                                          # EnsembleKalmanInverion parameters
                                          noise_covariance = nothing,
                                          resample_failure_fraction = 0.2,
@@ -125,7 +126,7 @@ function build_ensemble_kalman_inversion(closure, name="";
 
         for grid in grids
             # Estimate noise covariance based on discrepency between LES with different resolution
-            Γ = estimate_noise_covariance(grid; times, tke_weight, suite, cases)
+            Γ = estimate_noise_covariance(grid; modify, times, tke_weight, suite, cases)
             push!(grid_Γ, Γ)
         end
 
