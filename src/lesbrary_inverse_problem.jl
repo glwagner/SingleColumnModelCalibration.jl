@@ -59,7 +59,7 @@ end
     
 function lesbrary_inverse_problem(regrid;
                                   free_parameters,
-                                  times = [48hours - 10minutes, 48hours],
+                                  times = nothing,
                                   Nensemble = 500,
                                   observations_resolution = "1m",
                                   Δt = 10minutes,
