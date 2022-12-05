@@ -151,6 +151,7 @@ function build_ensemble_kalman_inversion(closure, name="";
     end
 
     eki = EnsembleKalmanInversion(batched_ip;
+                                  tikhonov = true,
                                   noise_covariance = batched_Γ,
                                   pseudo_stepping,
                                   forward_map_output,
