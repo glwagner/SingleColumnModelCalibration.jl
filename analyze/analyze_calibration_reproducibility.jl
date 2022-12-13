@@ -159,16 +159,19 @@ function collect_calibration_data(name, suffix;
     return data
 end
 
-suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+#suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 #suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+#suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens400_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
 Nrepeats = 10
 
 names = [
+    "constant_Pr_no_shear",
     "constant_Pr",
-    "constant_Pr_conv_adj",
+    "constant_Pr_no_shear_simple_conv_adj",
     "variable_Pr",
-    "variable_Pr_conv_adj"
+    # "variable_Pr_conv_adj"
 ]
 
 dataset = Dict()

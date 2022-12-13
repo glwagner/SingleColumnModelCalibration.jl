@@ -27,10 +27,10 @@ set_theme!(Theme(fontsize=16))
 # closure = RiBasedVerticalDiffusivity()
 
 dir = "../parameters"
-#name = "constant_Pr"
-#name = "variable_Pr"
+#name = "constant_Pr_no_shear"
+name = "variable_Pr"
 #name = "constant_Pr_conv_adj"
-name = "variable_Pr_conv_adj"
+#name = "variable_Pr_conv_adj"
 closure = CATKEVerticalDiffusivity()
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -191,5 +191,6 @@ for (s, suite) in enumerate(suite_names)
 
     display(fig)
 
-    #save("$(name)_catke_LES_comparison.png", fig)
+    save("$(name)_$(suite)_assessment.png", fig)
 end
+

@@ -10,24 +10,29 @@ using Statistics
 using LinearAlgebra
 
 names = [
+    "constant_Pr_no_shear",
     "constant_Pr",
-    "constant_Pr_conv_adj",
+    "constant_Pr_no_shear_simple_conv_adj",
     "variable_Pr",
-    "variable_Pr_conv_adj"
+    #"variable_Pr_conv_adj"
 ]
 
 labels_dict = Dict(
+    "constant_Pr_no_shear" => "Constant \n Pr \n (no shear)",
     "constant_Pr" => "Constant \n Pr",
     "variable_Pr" => "Variable \n Pr",
-    "constant_Pr_conv_adj" => "Conv. adj. \n Constant \n Pr",
+    "constant_Pr_no_shear_simple_conv_adj" => "Conv. adj. \n Constant \n Pr",
     "variable_Pr_conv_adj" => "Conv. Adj. \n Variable \n Pr",
 )
 
 labels = [labels_dict[n] for n in names]
 
 #suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+#suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+#suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens400_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
+Nrepeats = 10
 
 @load dataset_filename dataset
 
@@ -41,6 +46,20 @@ for n = 1:length(names)
     Φ★, best_run = findmin(run_data[:final_minimum_objectives])
     optimal_parameters = run_data[:final_best_parameters][best_run]
 
+    best_particles = []
+    best_objectives = []
+    for r = 1:Nrepeats
+        first_iteration_summary = first(run_data[:iteration_summaries][r])
+        Φ₁, k₁ = findmin(o -> isnan(first(o)) ? Inf : first(o), first_iteration_summary.objective_values)
+        θ = first_iteration_summary.parameters[k₁]
+        push!(best_particles, θ)
+        push!(best_objectives, Φ₁)
+    end
+
+    _, r₁★ = findmin(best_objectives)
+    θ₁★ = best_particles[r₁★]
+    @show θ₁★ 
+
     savedir = joinpath("..", "parameters")
     savename = string(name, "_best_parameters.jld2")
     savepath = joinpath(savedir, savename)
@@ -48,8 +67,11 @@ for n = 1:length(names)
     rm(savepath; force=true)
     file = jldopen(savepath, "a+")
     file["optimal_parameters"] = optimal_parameters
+    file["example_first_mean_parameters"] = first(run_data[:iteration_summaries][1]).ensemble_mean
+    file["first_best_parameters"] = θ₁★
     file["final_best_parameters"] = run_data[:final_best_parameters]
     file["final_mean_parameters"] = run_data[:final_mean_parameters]
+    file["first_mean_parameters"] = run_data[:final_mean_parameters]
     close(file)
 end
 

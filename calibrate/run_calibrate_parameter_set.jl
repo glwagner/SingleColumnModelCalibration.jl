@@ -16,11 +16,18 @@ using SingleColumnModelCalibration:
 #name = "ri_based"
 #closure = RiBasedVerticalDiffusivity()
 
+# Other names:
+# "constant_Pr"
+# "constant_Pr_conv_adj"
+
 names = [
+    "constant_Pr_no_shear",
     "constant_Pr",
     "variable_Pr",
-    "constant_Pr_conv_adj",
-    "variable_Pr_conv_adj",
+    "constant_Pr_no_shear_simple_conv_adj",
+    "variable_Pr_simple_conv_adj",
+    "constant_Pr_no_shear_simple_conv_adj",
+    "variable_Pr_simple_conv_adj",
 ]
 
 grid_parameters = [
@@ -39,9 +46,9 @@ resultsdir = "../results"
 
 closure = CATKEVerticalDiffusivity()
 architecture = CPU()
-Nensemble = 100
+Nensemble = 400
 resample_failure_fraction = 0.05
-stop_pseudotime = 1000.0
+stop_pseudotime = 10000.0
 Δt = 20minutes
 Nrepeats = 10
 

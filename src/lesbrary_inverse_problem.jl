@@ -17,18 +17,18 @@ function batched_lesbrary_observations(regrid; times, suite,
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
 
-    case_path(case) = joinpath("..", "data", suite, resolution, case * "_instantaneous_statistics.jld2")
+    case_path(case) = joinpath("..", "data", "profiles", suite, resolution, case * "_instantaneous_statistics.jld2")
 
     observation_library = Dict()
 
     # Don't optimize u, v for free_convection
-    free_convection_names = filter(n -> n ∈ (:b, :e), field_names)
+    free_convection_names = filter(n -> n ∈ (:b, :T, :e), field_names)
     observation_library["free_convection"] =
         SyntheticObservations(case_path("free_convection"); transformation, times, regrid,
                               field_names = free_convection_names)
                                                                     
     # Don't optimize v for non-rotating cases
-    strong_wind_no_rotation_names = filter(n -> n ∈ (:b, :e, :u), field_names)
+    strong_wind_no_rotation_names = filter(n -> n ∈ (:b, :T, :e, :u), field_names)
     observation_library["strong_wind_no_rotation"] =
         SyntheticObservations(case_path("strong_wind_no_rotation"); transformation, times, regrid,
                               field_names = strong_wind_no_rotation_names)
@@ -51,8 +51,12 @@ function estimate_noise_covariance(grid; kwargs...)
     obs_2m = batched_lesbrary_observations(grid; resolution="2m", kwargs...)
     obs_4m = batched_lesbrary_observations(grid; resolution="4m", kwargs...)
     Γ = cov([obs_1m, obs_2m, obs_4m])
-    ϵ = 1e-2 * mean(abs, [Γ[n, n] for n=1:size(Γ, 1)])
+
+    # Add constant component to diagonal to "regularize" Γ
+    diag = [Γ[n, n] for n=1:size(Γ, 1)]
+    ϵ = 1e0 * mean(abs, diag)
     Γ .+= ϵ * Diagonal(I, size(Γ, 1))
+
     return Γ
 end
     

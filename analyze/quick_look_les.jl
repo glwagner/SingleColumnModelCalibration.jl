@@ -91,8 +91,8 @@ for c = 1:6
     ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks=-0.1:0.1:0.3)
     push!(ax_u, ax_uc)
 
-    b_init   = interior(observation_library[c].field_time_serieses.b[1], 1, 1, :)
-    b_obs    = interior(observation_library[c].field_time_serieses.b[Nt], 1, 1, :)
+    b_init = interior(observation_library[c].field_time_serieses.b[1], 1, 1, :)
+    b_obs  = interior(observation_library[c].field_time_serieses.b[Nt], 1, 1, :)
 
     lines!(ax_b[c], b_init, z, linewidth=2, label="Initial condition at t = 2 hours", color=sim_color, linestyle=:dot)
     lines!(ax_b[c], b_obs,  z, linewidth=8, label=les_str, color=sim_color)
