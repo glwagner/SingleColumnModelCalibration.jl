@@ -15,8 +15,7 @@ using ElectronDisplay
 set_theme!(Theme(fontsize=24))
 
 name = "variable_Pr"
-#suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-suffix = "Nens400_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
 
 @load dataset_filename dataset
@@ -59,8 +58,6 @@ close(file)
 
 rr = sortperm(data[:final_minimum_objectives])
 
-max_Ni = maximum(length(summaries) for summaries in data[:iteration_summaries])
-
 Ni = length(iteration_summaries)
 Nc = length(iteration_summaries[0].ensemble_mean)
 Ne = length(iteration_summaries[0].parameters)
@@ -75,33 +72,36 @@ for r = 1:Nrepeats
     push!(detC, detCr)
 end
 
-fig = Figure(resolution=(1200, 700))
+fig = Figure(resolution=(1200, 900))
 
 xticks = LogTicks(-3:4)
-axΦ = Axis(fig[1, 1:2]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\Phi \left ( \langle \mathcal{C} \rangle \right ) / \Phi_\star")
-axV = Axis(fig[1, 3:4]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathcal{L}(\mathcal{C})")
+axΦ = Axis(fig[1, 1:2]; xticks, xscale=log10, xlabel="Pseudotime", ylabel="Normalized \n EKI Objective")
+axV = Axis(fig[1, 3:4]; xticks, xscale=log10, xlabel="Pseudotime", ylabel="Ensemble size")
 
-τlims = (4e-3, 2e4)
+axΦ2 = Axis(fig[1, 1:2], alignmode=Outside(20), tellheight=false, height=170, width=280, valign=:top, halign=:right,
+            xticks=LogTicks(0:4), xscale=log10, backgroundcolor=(:black, 0.1),
+            xticklabelsize = 18,  yticklabelsize = 18,
+            xlabelsize = 18,  ylabelsize = 18,
+            xlabel = "Pseudotime", ylabel="Normalized \n EKI Objective")
+
+ylims!(axΦ2, 0.9, 1.6)
+xlims!(axΦ2, 1, 1e3)
+
 xticks = LogTicks([-2, 0, 2, 4])
-axCc = Axis(fig[2, 1]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{\ell}_c")
-axCu = Axis(fig[3, 1]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{\ell}_u")
-axCe = Axis(fig[2, 2]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{\ell}_e")
-axCD = Axis(fig[3, 2]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{\ell}_D")
+axCc = Axis(fig[3, 1]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{+}_c \, , \, \, \mathbb{C}^{-}_c")
+axCu = Axis(fig[5, 1]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{+}_u \, , \, \, \mathbb{C}^{-}_u")
+axCe = Axis(fig[3, 2]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{+}_e \, , \, \, \mathbb{C}^{-}_e")
+axCD = Axis(fig[5, 2]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{+}_D \, , \, \, \mathbb{C}^{-}_D")
 
-axCR = Axis(fig[2, 4]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{\delta}_{\text{Ri}} \, , \, \, \mathbb{C}^{c}_{\text{Ri}}")
-axCb = Axis(fig[2, 3]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{b}")
-axCw = Axis(fig[3, 4]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{||}_Q")
-axC★ = Axis(fig[3, 3]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{=}_Q")
+axCR = Axis(fig[3, 4]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{\delta}_{\text{Ri}} \, , \, \, \mathbb{C}^{c}_{\text{Ri}}")
+axCb = Axis(fig[3, 3]; xticks, xscale=log10, ylabel=L"\mathbb{C}^{b}")
+axCw = Axis(fig[5, 4]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{||}_Q")
+axC★ = Axis(fig[5, 3]; xticks, xscale=log10, xlabel="Pseudotime", ylabel=L"\mathbb{C}^{=}_Q")
 
 hidexdecorations!(axCc; grid=false)
 hidexdecorations!(axCb; grid=false)
 hidexdecorations!(axCe; grid=false)
-
-#hidexdecorations!(axCw; grid=false)
-#hidexdecorations!(axCC; grid=false)
-#hidexdecorations!(axCu; grid=false)
-#hidexdecorations!(axCD; grid=false)
-#hidexdecorations!(axC★; grid=false)
+hidexdecorations!(axCR; grid=false)
 
 hidespines!(axΦ, :t, :r)
 hidespines!(axV, :t, :r)
@@ -109,7 +109,6 @@ hidespines!(axV, :t, :r)
 hidespines!(axCc, :t, :r, :b)
 hidespines!(axCu, :t, :r)
 hidespines!(axCb, :t, :r, :b)
-#hidespines!(axCC, :t, :r)
 
 hidespines!(axCe, :t, :r, :b)
 hidespines!(axCR, :t, :r, :b)
@@ -117,62 +116,54 @@ hidespines!(axCD, :t, :r)
 hidespines!(axCw, :t, :r)
 hidespines!(axC★, :t, :r)
 
-max_Ni = 80
-xlims!(axΦ,  τlims...)
-xlims!(axV,  τlims...)
+for ax in [axΦ,  
+           axV,  
+           axCc, 
+           axCu, 
+           axCb, 
+           axCe, 
+           axCD, 
+           axCR, 
+           axCw, 
+           axC★]
 
-xlims!(axCc, τlims...)
-xlims!(axCu, τlims...)
-xlims!(axCb, τlims...)
-xlims!(axCe, τlims...)
-xlims!(axCD, τlims...)
-xlims!(axCR, τlims...)
-xlims!(axCw, τlims...)
-xlims!(axC★, τlims...)
+    xlims!(ax, 4e-3, 2e3)
+end
 
 ylims!(axCc, 0.0, 1.0)
 ylims!(axCu, 0.0, 1.0)
-ylims!(axCb, 0.0, 2.0)
-
+ylims!(axCb, 0.0, 1.0)
 ylims!(axCe, 0.0, 10.0)
 ylims!(axCD, 0.0, 10.0)
 ylims!(axCR, 0.0, 1.0)
-ylims!(axCw, 0.0, 10.0)
-ylims!(axC★, 0.0, 10.0)
+ylims!(axCw, 0.0, 20.0)
+ylims!(axC★, 0.0, 2.0)
 
-hlines!(axCR, 0.25, color=(:black, 0.6), linewidth=4)
-
-for r in rr #[[1, 2, 3, 4, 5]]
+for r in rr
     Φ = data[:mean_parameter_objective_serieses][r]
-    run_iterations = 0:(length(Φ)-1)
     pseudotimes = parent([summ.pseudotime for summ in data[:iteration_summaries][r]])
 
     ln = lines!(axΦ, pseudotimes[2:end], Φ[2:end] ./ Φ★, linewidth=3)
     ln.color[] = (ln.color.val, 0.6)
 
-    ln = lines!(axV, pseudotimes[2:end], detC[r][2:end] ./ first(detC[r]), linewidth=3)
+    ln = lines!(axΦ2, pseudotimes[2:end], Φ[2:end] ./ Φ★, linewidth=3)
+    ln.color[] = (ln.color.val, 0.8)
+
+    ln = lines!(axV, pseudotimes[2:end], detC[r][2:end], linewidth=3)
     ln.color[] = (ln.color.val, 0.6)
 end
 
 pseudotimes = parent([summ.pseudotime for summ in data[:iteration_summaries][best_run]])
 lines!(axΦ, pseudotimes[2:end], Φ_best[2:end] ./ Φ★, linewidth=8, color=(:black, 0.4))
-lines!(axV, pseudotimes[2:end], detC[best_run][2:end] ./ first(detC[best_run]), linewidth=8, color=(:black, 0.4))
+lines!(axΦ2, pseudotimes[2:end], Φ_best[2:end] ./ Φ★, linewidth=8, color=(:black, 0.6))
+lines!(axV, pseudotimes[2:end], detC[best_run][2:end], linewidth=8, color=(:black, 0.4))
+
 
 markersize = 5
 scatter_α = 0.05
 scatter_colors = [(:royalblue1, scatter_α),
                   (:red,        scatter_α),
-                  (:seagreen,   scatter_α),
-                  (:purple,   scatter_α),
-                  (:purple,   scatter_α),
-                  (:purple,   scatter_α),
-                  (:purple,   scatter_α),
-                  (:purple,   scatter_α),
-                  (:purple,   scatter_α),
-                  (:purple,   scatter_α)]
-
-bcolor1 = (:royalblue1, 0.5)
-bcolor2 = (:red,        0.5)
+                  (:seagreen,   scatter_α)]
 
 for (ir, r) in enumerate(rr[[1]])
 
@@ -198,29 +189,38 @@ for (ir, r) in enumerate(rr[[1]])
     
     for i = 2:Ni
         τ = iteration_summaries[i-1].pseudotime
-        color = (:royalblue1, scatter_α) #scatter_colors[ir]
-        scatter!(axCu, τ * ones(Ne), C⁺u[:, i];  markersize, marker=:circle, color)
-        scatter!(axCc, τ * ones(Ne), C⁺c[:, i];  markersize, marker=:circle, color)
-        scatter!(axCD, τ * ones(Ne), C⁺D[:, i];  markersize, marker=:circle, color)
-        scatter!(axCe, τ * ones(Ne), C⁺e[:, i];  markersize, marker=:circle, color)
-
+        color = scatter_colors[1]
+        scatter!(axCu, τ * ones(Ne), C⁺u[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_u")
+        scatter!(axCc, τ * ones(Ne), C⁺c[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_c")
+        scatter!(axCD, τ * ones(Ne), C⁺D[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_D")
+        scatter!(axCe, τ * ones(Ne), C⁺e[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_e")
         scatter!(axCw, τ * ones(Ne), CᵂwΔ[:, i]; markersize, marker=:circle, color)
         scatter!(axC★, τ * ones(Ne), Cᵂu★[:, i]; markersize, marker=:circle, color)
         scatter!(axCb, τ * ones(Ne), Cᵇ[:, i];   markersize, marker=:circle, color)
-
-        scatter!(axCR, τ * ones(Ne), CRiʷ[:, i];   markersize, marker=:circle, color)
+        scatter!(axCR, τ * ones(Ne), CRiʷ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{\delta}^c_\text{Ri}")
         
-        color = (:red, scatter_α)
-        scatter!(axCu, τ * ones(Ne), C⁻u[:, i];  markersize, marker=:circle, color)
-        scatter!(axCc, τ * ones(Ne), C⁻c[:, i];  markersize, marker=:circle, color)
-        scatter!(axCD, τ * ones(Ne), C⁻D[:, i];  markersize, marker=:circle, color)
-        scatter!(axCe, τ * ones(Ne), C⁻e[:, i];  markersize, marker=:circle, color)
-
-        scatter!(axCR, τ * ones(Ne), CRiᶜ[:, i];   markersize, marker=:circle, color)
-
-
+        color = scatter_colors[2]
+        scatter!(axCu, τ * ones(Ne), C⁻u[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_u")
+        scatter!(axCc, τ * ones(Ne), C⁻c[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_c")
+        scatter!(axCD, τ * ones(Ne), C⁻D[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_D")
+        scatter!(axCe, τ * ones(Ne), C⁻e[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_e")
+        scatter!(axCR, τ * ones(Ne), CRiᶜ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{C}^c_\text{Ri}")
     end
 end
+
+dot1 = MarkerElement(color = first(scatter_colors[1]), marker=:circle, markersize = 15)
+dot2 = MarkerElement(color = first(scatter_colors[2]), marker=:circle, markersize = 15)
+
+kw = (orientation=:horizontal, tellheight=true, tellwidth=false, framevisible=false)
+Legend(fig[2, 1], [dot1, dot2], [L"\mathbb{C}^{+}_c", L"\mathbb{C}^{-}_c"]; kw...)
+Legend(fig[4, 1], [dot1, dot2], [L"\mathbb{C}^{+}_u", L"\mathbb{C}^{-}_u"]; kw...)
+Legend(fig[2, 2], [dot1, dot2], [L"\mathbb{C}^{+}_e", L"\mathbb{C}^{-}_e"]; kw...)
+Legend(fig[4, 2], [dot1, dot2], [L"\mathbb{C}^{+}_D", L"\mathbb{C}^{-}_D"]; kw...)
+Legend(fig[2, 4], [dot1, dot2], [L"\mathbb{C}^{\delta}_{\text{Ri}}", L"\mathbb{C}^{c}_{\text{Ri}}"]; kw...)
+
+rowgap!(fig.layout, 2, 0)
+rowgap!(fig.layout, 3, 20)
+rowgap!(fig.layout, 4, 0)
 
 display(fig)
 

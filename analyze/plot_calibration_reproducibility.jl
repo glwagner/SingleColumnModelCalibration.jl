@@ -11,10 +11,8 @@ using LinearAlgebra
 
 names = [
     "constant_Pr_no_shear",
-    "constant_Pr",
-    "constant_Pr_no_shear_simple_conv_adj",
     "variable_Pr",
-    #"variable_Pr_conv_adj"
+    "variable_Pr_conv_adj",
 ]
 
 labels_dict = Dict(
@@ -27,20 +25,28 @@ labels_dict = Dict(
 
 labels = [labels_dict[n] for n in names]
 
-#suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-#suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-#suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-suffix = "Nens400_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-dataset_filename = "calibration_summary_" * suffix
+suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+#suffix = "Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+
+suffixes = [
+    "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
+    "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
+    "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
+    #"Nens1200_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
+    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
+    #"Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+]
+
 Nrepeats = 10
-
-@load dataset_filename dataset
-
-# Save best parameters
 
 # Extract best parameters
 for n = 1:length(names)
+    suffix = suffixes[n]
     name = names[n]
+
+    dataset_filename = "calibration_summary_" * suffix
+    @load dataset_filename dataset
     run_data = dataset[name]
 
     Φ★, best_run = findmin(run_data[:final_minimum_objectives])
@@ -87,11 +93,16 @@ tickindices = collect(1:length(names))
 ax1 = Axis(fig[1, 1], ylabel="EKI objective", xticks=(tickindices, labels))#, yscale=log10)
 ax2 = Axis(fig[1, 2], xlabel="EKI iteration", ylabel="EKI objective", yscale=log10)
 
-colors = [:orange1, :black, :seagreen, :royalblue]
+colors = [:orange1, :black, :seagreen, :royalblue, :red]
 
 for n = 1:length(names)
+    suffix = suffixes[n]
     name = names[n]
+
+    dataset_filename = "calibration_summary_" * suffix
+    @load dataset_filename dataset
     d = dataset[name]
+
     color = (colors[n], 0.6)
     scatter!(ax1, n * ones(Nrepeats), d[:final_minimum_objectives]; color, marker=:star5, label=string(name, ", best"))
     scatter!(ax1, n * ones(Nrepeats), d[:final_mean_parameter_objectives]; color, marker=:circle, label=string(name, ", mean"))
@@ -105,8 +116,6 @@ for n = 1:length(names)
         τ = [summary.pseudotime for summary in parent(d[:iteration_summaries][i])]
         Nτ = length(τ) 
         color = (colors[n], 0.3)
-        #ls = lines!(ax2, τ, d[:minimum_objective_serieses][i]; color)
-        #ls = lines!(ax2, τ, d[:mean_parameter_objective_serieses][i][1:length(τ)]; color, linewidth=3)
         ls = scatter!(ax2, [1, Nτ], d[:minimum_objective_serieses][i][[1, Nτ]]; marker=:star5, color)
         ls = lines!(ax2, d[:mean_parameter_objective_serieses][i]; color, linewidth=3)
     end
@@ -136,8 +145,13 @@ ax8 = Axis(fig2[4, 2], ylabel="Cᵉ", xticks=(tickindices, labels))
 #ylims!(ax4, 0.2, 0.8)
 
 for n = 1:length(names)
+    suffix = suffixes[n]
     name = names[n]
+
+    dataset_filename = "calibration_summary_" * suffix
+    @load dataset_filename dataset
     d = dataset[name]
+
     color = (colors[n], 0.6)
 
     scatter!(ax1, n * ones(Nrepeats), map(C -> C.C⁺u, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
@@ -218,5 +232,4 @@ for n = 1:length(names)
 end
   
 display(fig2)
-
 

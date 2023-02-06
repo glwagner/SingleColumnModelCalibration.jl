@@ -28,9 +28,9 @@ set_theme!(Theme(fontsize=16))
 
 dir = "../parameters"
 #name = "constant_Pr_no_shear"
-name = "variable_Pr"
+#name = "variable_Pr"
 #name = "constant_Pr_conv_adj"
-#name = "variable_Pr_conv_adj"
+name = "variable_Pr_conv_adj"
 closure = CATKEVerticalDiffusivity()
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -59,17 +59,17 @@ grid_colors = [
 
 suite_parameters = [
     (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
-    (name = "12_hour_suite", resolution="1m", stop_time=12hours),
-    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
-    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
-    (name = "36_hour_suite", resolution="1m", stop_time=36hours),
-    (name = "48_hour_suite", resolution="1m", stop_time=48hours),
+#    (name = "12_hour_suite", resolution="1m", stop_time=12hours),
+#    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
+#    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
+#    (name = "36_hour_suite", resolution="1m", stop_time=36hours),
+#    (name = "48_hour_suite", resolution="1m", stop_time=48hours),
     (name = "72_hour_suite", resolution="1m", stop_time=72hours),
 ]
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 1minutes,
+                                           Δt = 5minutes,
                                            grid_parameters,
                                            suite_parameters)
 
@@ -123,7 +123,8 @@ for (s, suite) in enumerate(suite_names)
         ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy (m s⁻²)", yaxisposition, xticks=[0.0386, 0.039, 0.0394])
         push!(ax_b, ax_bc)
 
-        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks=-0.1:0.1:0.3)
+        xticks = suite_parameters[s].name == "6_hour_suite" ? (-0.2:0.2:0.4) : (-0.2:0.2:0.6)
+        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks)
         push!(ax_u, ax_uc)
 
         b_init = interior(ip1.observations[c].field_time_serieses.b[1], 1, 1, :)
@@ -133,6 +134,20 @@ for (s, suite) in enumerate(suite_names)
         lines!(ax_b[c], b_init, z1, linewidth=2, label="Initial condition at t = " * prettytime(start_time), color=LES_color, linestyle=:dot)
         lines!(ax_b[c], b_obs,  z1, linewidth=8, label=LES_str, color=LES_color)
         
+        if c == 6
+            if s == 1
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.1, 0.6)
+            else
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.1, 0.4)
+            end
+        else
+            if s == 1
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.25, 0.4)
+            else
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.07, 0.2)
+            end
+        end
+
         xlims!(ax_b[c], 0.0386, maximum(b_init) + 2e-5)
         ylims!(ax_b[c], zlim, 0)
 
@@ -186,8 +201,13 @@ for (s, suite) in enumerate(suite_names)
     end
 
     Legend(fig[3, 1], ax_b[2])
-    text!(ax_u[2], +0.1, -50.0, text="u")
-    text!(ax_u[2], -0.14, -110.0, text="v")
+    if s == 1
+        text!(ax_u[2], +0.18, -40.0, text="u")
+        text!(ax_u[2], -0.2, -130.0, text="v")
+    else
+        text!(ax_u[2], +0.09, -27.0, text="u")
+        text!(ax_u[2], -0.06, -30.0, text="v")
+    end
 
     display(fig)
 
