@@ -2,17 +2,19 @@ using Oceananigans
 using Oceananigans.Units
 using ParameterEstimocean
 using SingleColumnModelCalibration: calibrate_parameter_set, finitefindmin
-using CairoMakie
-using ElectronDisplay
+using GLMakie
+#using CairoMakie
+#using ElectronDisplay
 using JLD2
 using Printf
 using Statistics
 using LinearAlgebra
 
 names = [
-    "constant_Pr_no_shear",
-    "variable_Pr",
-    "variable_Pr_conv_adj",
+    #"constant_Pr_no_shear",
+    #"variable_Pr",
+    #"variable_Pr_conv_adj",
+    "ri_based"
 ]
 
 labels_dict = Dict(
@@ -21,24 +23,25 @@ labels_dict = Dict(
     "variable_Pr" => "Variable \n Pr",
     "constant_Pr_no_shear_simple_conv_adj" => "Conv. adj. \n Constant \n Pr",
     "variable_Pr_conv_adj" => "Conv. Adj. \n Variable \n Pr",
+    "ri_based" => "Ri based",
 )
 
 labels = [labels_dict[n] for n in names]
 
-suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 #suffix = "Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 
 suffixes = [
-    "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
-    "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
-    "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
+    "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
+    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
+    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
     #"Nens1200_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
     #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
     #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
     #"Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 ]
 
-Nrepeats = 10
+Nrepeats = 5
 
 # Extract best parameters
 for n = 1:length(names)

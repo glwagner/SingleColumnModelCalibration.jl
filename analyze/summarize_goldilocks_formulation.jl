@@ -7,16 +7,16 @@ using Printf
 using Statistics
 using LinearAlgebra
 
-using CairoMakie
-using ElectronDisplay
+using GLMakie
+#using CairoMakie
+#using ElectronDisplay
 
 set_theme!(Theme(fontsize=24))
 
 name = "variable_Pr_conv_adj"
-#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-#suffix = "Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-set_filename = "calibration_summary_" * suffix
+#suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+dataset_filename = "calibration_summary_" * suffix
 
 @load dataset_filename dataset
 

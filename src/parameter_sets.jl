@@ -1,5 +1,5 @@
 parameter_sets = Dict(
-    "ri_based"             => (:ν₀, :κ₀, :κᶜ, :Cᵉ, :Ri₀, :Riᵟ),
+    "ri_based"             => (:ν₀, :κ₀, :κᶜᵃ, :Cᵉⁿ, :Cᵃᵛ, :Ri₀, :Riᵟ),
     "constant_Pr"          => (:CᵂwΔ, :Cᵂu★, :C⁺c, :C⁺u, :C⁺e, :C⁺D, :Cᵇ, :Cˢ),
     "constant_Pr_no_shear" => (:CᵂwΔ, :Cᵂu★, :C⁺c, :C⁺u, :C⁺e, :C⁺D, :Cᵇ),
     "variable_Pr"          => (:CᵂwΔ, :Cᵂu★, :C⁺c, :C⁺u, :C⁺e, :C⁺D, :Cᵇ, :C⁻c, :C⁻u, :C⁻e, :C⁻D, :CRiᶜ, :CRiʷ),
@@ -85,13 +85,13 @@ bounds_library[:CᵉD]  = (0.0, 10.0)
 bounds_library[:Cˢᶜ]  = (0.0, 10.0)
 
 # Ri-based
-bounds_library[:ν₀]  = (0.0,  1.0)
-bounds_library[:κ₀]  = (0.0,  1.0)
-bounds_library[:κᶜ]  = (0.0, 10.0)
-bounds_library[:Cᵉ]  = (0.0, 10.0)
-bounds_library[:Ri₀] = (0.0,  4.0)
-bounds_library[:Riᵟ] = (0.0,  4.0)
-
+bounds_library[:ν₀]  = (0.0, 1.0)
+bounds_library[:κ₀]  = (0.0, 1.0)
+bounds_library[:κᶜᵃ] = (0.0, 4.0)
+bounds_library[:Cᵉⁿ] = (0.0, 2.0)
+bounds_library[:Cᵃᵛ] = (0.0, 4.0)
+bounds_library[:Ri₀] = (0.0, 2.0)
+bounds_library[:Riᵟ] = (0.0, 2.0)
 
 prior_library = Dict()
 

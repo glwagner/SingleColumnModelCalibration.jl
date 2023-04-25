@@ -8,9 +8,8 @@ using DataDeps
 using JLD2
 using OffsetArrays
 
-using CairoMakie
-using ElectronDisplay
-#using GLMakie
+#using CairoMakie
+#using ElectronDisplay
 
 using Oceananigans
 using Oceananigans.Units

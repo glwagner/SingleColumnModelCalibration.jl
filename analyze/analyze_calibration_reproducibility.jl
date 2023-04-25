@@ -2,8 +2,7 @@ using Oceananigans
 using Oceananigans.Units
 using ParameterEstimocean
 using SingleColumnModelCalibration: calibrate_parameter_set, finitefindmin
-using CairoMakie
-using ElectronDisplay
+using GLMakie
 using JLD2
 using Printf
 using Statistics
@@ -159,25 +158,40 @@ function collect_calibration_data(name, suffix;
     return data
 end
 
-#suffix = "Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
-Nrepeats = 10
+Nrepeats = 5
 
 names = [
-    "constant_Pr_no_shear",
-    "variable_Pr",
-    "variable_Pr_conv_adj",
+    #"constant_Pr_no_shear",
+    #"variable_Pr",
+    #"variable_Pr_conv_adj",
+    "ri_based",
 ]
+
+#closure = CATKEVerticalDiffusivity()
+closure = RiBasedVerticalDiffusivity()
 
 dataset = Dict()
 for n = 1:length(names)
     name = names[n]
-    run_data = collect_calibration_data(name, suffix; Nrepeats, dir="../results")
-    dataset[name] = run_data
+    data = collect_calibration_data(name, suffix; closure, Nrepeats, dir="../results")
+    dataset[name] = data
+
+    # Find best run
+    Φ★, best_run = findmin(data[:final_minimum_objectives])
+    Φþ, worst_run = findmax(data[:final_minimum_objectives])
+    Φ_best = data[:mean_parameter_objective_serieses][best_run]
+    iteration_summaries = data[:iteration_summaries][best_run]
+    optimal_parameters = data[:final_best_parameters][best_run]
+
+    @info name
+    for (k, v) in zip(keys(optimal_parameters), values(optimal_parameters))
+        @printf "% 6s %.5f \n" k v
+    end
 end
 
 # Save summary data
 @save dataset_filename dataset
-
 

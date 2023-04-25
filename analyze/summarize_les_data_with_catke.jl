@@ -241,6 +241,7 @@ ip = batched_ip[1]
 
 times = observation_times(ip.observations)
 Nt = length(times)
+
 b1 = interior(ip.time_series_collector.field_time_serieses.b[Nt], 1, c1, :)
 u1 = interior(ip.time_series_collector.field_time_serieses.u[Nt], 1, c1, :)
 v1 = interior(ip.time_series_collector.field_time_serieses.v[Nt], 1, c1, :)
