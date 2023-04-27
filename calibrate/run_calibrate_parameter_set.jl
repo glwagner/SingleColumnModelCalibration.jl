@@ -75,7 +75,7 @@ closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equ
 architecture = CPU()
 resample_failure_fraction = 0.05
 stop_pseudotime = 1e3
-Nensemble = 1000
+Nensemble = 400
 Δt = 10minutes
 Nrepeats = 10
 
@@ -94,8 +94,7 @@ end
 
 start_time = time_ns()
 
-asyncmap(1:Nrepeats) do i
-#for i = 1:Nrepeats
+for i = 1:Nrepeats
     eki = repeat_ekis[i]
 
     logname = string(name, "_", i, ".txt")

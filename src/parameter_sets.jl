@@ -76,12 +76,12 @@ bounds_library[:CRiᶜ] = (0.0, 1.0)
 bounds_library[:CRiʷ] = (0.0, 1.0)
 
 # Convective adjustment parameters
-bounds_library[:Cᶜc]  = (0.0, 10.0)
-bounds_library[:Cᶜe]  = (0.0, 10.0)
-bounds_library[:CᶜD]  = (0.0, 10.0)
-bounds_library[:Cᵉc]  = (0.0,  1.0)
-bounds_library[:Cᵉe]  = (0.0, 10.0)
-bounds_library[:CᵉD]  = (0.0, 10.0)
+bounds_library[:Cᶜc]  = (0.0, 2.0)
+bounds_library[:Cᶜe]  = (0.0, 2.0)
+bounds_library[:CᶜD]  = (0.0, 2.0)
+bounds_library[:Cᵉc]  = (0.0, 1.0)
+bounds_library[:Cᵉe]  = (0.0, 1.0)
+bounds_library[:CᵉD]  = (0.0, 1.0)
 bounds_library[:Cˢᶜ]  = (0.0, 10.0)
 
 # Ri-based

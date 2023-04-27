@@ -14,7 +14,7 @@ using GLMakie
 set_theme!(Theme(fontsize=24))
 
 name = "variable_Pr_conv_adj"
-suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens400_Δt600_τ1000_Nz32_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 #suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
 
@@ -203,9 +203,9 @@ for (ir, r) in enumerate(rr[[1]])
         scatter!(axCe, τ * ones(Ne), C⁺e[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_e")
 
         scatter!(axCw, τ * ones(Ne), CᵂwΔ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{C}^{||}_Q")
-        scatter!(axCb, τ * ones(Ne), Cᵉc[:, i];   markersize, marker=:circle, color)
-        scatter!(axCC, τ * ones(Ne), Cᶜc[:, i];   markersize, marker=:circle, color, label=L"\mathbb{C}^c_c")
-        scatter!(axCR, τ * ones(Ne), CRiʷ[:, i];   markersize, marker=:circle, color, label=L"\mathbb{\delta}^c_\text{Ri}")
+        scatter!(axCb, τ * ones(Ne), Cᵉc[:, i];  markersize, marker=:circle, color)
+        scatter!(axCC, τ * ones(Ne), Cᶜc[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^c_c")
+        scatter!(axCR, τ * ones(Ne), CRiʷ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{\delta}^c_\text{Ri}")
 
         #scatter!(axCb, τ * ones(Ne), Cᵇ[:, i];   markersize, marker=:circle, color)
         
@@ -247,3 +247,4 @@ save("summarize_goldilocks_calibration.png", fig)
 for (k, v) in zip(keys(optimal_parameters), values(optimal_parameters))
     @printf "% 6s %.5f \n" k v
 end
+
