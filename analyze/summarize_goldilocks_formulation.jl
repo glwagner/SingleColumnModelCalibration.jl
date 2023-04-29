@@ -14,8 +14,7 @@ using GLMakie
 set_theme!(Theme(fontsize=24))
 
 name = "variable_Pr_conv_adj"
-suffix = "Nens400_Δt600_τ1000_Nz32_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-#suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens100_Δt600_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
 
 @load dataset_filename dataset
@@ -187,7 +186,7 @@ for (ir, r) in enumerate(rr[[1]])
 
     CᵂwΔ = [iteration_summaries[i-1].parameters[p][:CᵂwΔ] for p = 1:Ne, i = 1:Ni]
     Cᵂu★ = [iteration_summaries[i-1].parameters[p][:Cᵂu★] for p = 1:Ne, i = 1:Ni]
-    Cᵇ   = [iteration_summaries[i-1].parameters[p][:Cᵇ]   for p = 1:Ne, i = 1:Ni]
+    Cᴺ   = [iteration_summaries[i-1].parameters[p][:Cᴺ]   for p = 1:Ne, i = 1:Ni]
 
     Cᶜc   = [iteration_summaries[i-1].parameters[p][:Cᶜc]   for p = 1:Ne, i = 1:Ni]
     Cᵉc   = [iteration_summaries[i-1].parameters[p][:Cᵉc]   for p = 1:Ne, i = 1:Ni]
@@ -207,7 +206,7 @@ for (ir, r) in enumerate(rr[[1]])
         scatter!(axCC, τ * ones(Ne), Cᶜc[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^c_c")
         scatter!(axCR, τ * ones(Ne), CRiʷ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{\delta}^c_\text{Ri}")
 
-        #scatter!(axCb, τ * ones(Ne), Cᵇ[:, i];   markersize, marker=:circle, color)
+        #scatter!(axCb, τ * ones(Ne), Cᴺ[:, i];   markersize, marker=:circle, color)
         
         color = scatter_colors[2]
         scatter!(axCu, τ * ones(Ne), C⁻u[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_u")

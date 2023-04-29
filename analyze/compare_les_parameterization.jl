@@ -80,7 +80,6 @@ optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_param
 
 # Batch the inverse problems
 grid_parameters = [
-    #(size=256, z=(-256, 0)),
     (size=128, z=(-256, 0)),
     #(size=64,  z=(-256, 0)),
     (size=32,  z=(-256, 0)),
@@ -104,7 +103,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 20minutes,
+                                           Δt = 5minutes,
                                            grid_parameters,
                                            suite_parameters)
 
