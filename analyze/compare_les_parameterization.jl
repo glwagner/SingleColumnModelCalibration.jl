@@ -39,8 +39,8 @@ dir = "../parameters"
 name = "variable_Pr_conv_adj"
 
 turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
-    C⁻D   = 1.0,
-    C⁺D   = 1.0,
+    CˡᵒD   = 1.0,
+    CʰⁱD   = 1.0,
     CᶜD   = 0.0,
     CᵉD   = 0.0,
     Cᵂu★  = 1.0,
@@ -48,20 +48,20 @@ turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
 )
 
 mixing_length = MixingLength(
-    Cᵇ   = Inf, 
+    Cˢ   = 1.0, 
     Cᶜc  = 0.0,
     Cᶜe  = 0.0,
     Cᵉc  = 0.0,
     Cᵉe  = 0.0,
-    Cˢᶜ  = 0.0,
-    C⁻u  = 1.0,
-    C⁺u  = 1.0,
-    C⁻c  = 1.0,
-    C⁺c  = 1.0,
-    C⁻e  = 1.0,
-    C⁺e  = 1.0,
-    CRiʷ = 1.0,
-    CRiᶜ = 0.0,
+    Cˢᵖ  = 0.0,
+    Cˡᵒu  = 1.0,
+    Cʰⁱu  = 1.0,
+    Cˡᵒc  = 1.0,
+    Cʰⁱc  = 1.0,
+    Cˡᵒe  = 1.0,
+    Cʰⁱe  = 1.0,
+    CRiᵟ = 1.0,
+    CRi⁰ = 0.0,
 )
 
 closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
@@ -81,8 +81,8 @@ optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_param
 # Batch the inverse problems
 grid_parameters = [
     (size=128, z=(-256, 0)),
-    #(size=64,  z=(-256, 0)),
     (size=32,  z=(-256, 0)),
+    (size=16,  z=(-256, 0)),
 ]
 
 grid_colors = [
@@ -92,8 +92,8 @@ grid_colors = [
 ]
 
 suite_parameters = [
-    #(name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
-    (name = "12_hour_suite", resolution="1m", stop_time=12hours),
+    (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
+    #(name = "12_hour_suite", resolution="1m", stop_time=12hours),
 #    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
 #    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
 #    (name = "36_hour_suite", resolution="1m", stop_time=36hours),

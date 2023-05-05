@@ -136,6 +136,7 @@ for (n, p) in enumerate(suite_parameters)
     velocities = model.velocities
     tracers = model.tracers
     buoyancy = model.buoyancy
+    diffusivities = model.diffusivity_fields
     clock = model.clock
     
     Cᵇ = closure.mixing_length.Cᵇ
@@ -146,7 +147,7 @@ for (n, p) in enumerate(suite_parameters)
     top_tracer_bcs = NamedTuple(c => tracers[c].boundary_conditions.top for c in propertynames(tracers))
    
     ℓᶜ = KernelFunctionOperation{Center, Center, Face}(tracer_mixing_lengthᶜᶜᶠ, grid,
-                                                       closure, velocities, tracers, buoyancy, clock, top_tracer_bcs)
+                                                       closure, velocities, tracers, buoyancy, diffusivities.Qᵇ)
 
     l_CATKE = interior(compute!(Field(ℓᶜ)), 1, c, :)
     l_CATKE[Nz+1] = NaN

@@ -158,13 +158,9 @@ function collect_calibration_data(name, suffix;
     return data
 end
 
-#suffix = "Nens400_Δt600_τ1000_Nz32_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-#suffix = "Nens1000_Δt600_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-suffix = "Nens100_Δt600_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-#suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
-Nrepeats = 4
+Nrepeats = 3
 
 names = [
     #"constant_Pr_no_shear",

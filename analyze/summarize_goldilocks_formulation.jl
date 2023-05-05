@@ -14,7 +14,7 @@ using GLMakie
 set_theme!(Theme(fontsize=24))
 
 name = "variable_Pr_conv_adj"
-suffix = "Nens100_Δt600_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
 
 @load dataset_filename dataset
@@ -171,22 +171,22 @@ for (ir, r) in enumerate(rr[[1]])
     iteration_summaries = data[:iteration_summaries][r]
     Ni = length(iteration_summaries)
     
-    C⁺u  = [iteration_summaries[i-1].parameters[p][:C⁺u]  for p = 1:Ne, i = 1:Ni]
-    C⁺c  = [iteration_summaries[i-1].parameters[p][:C⁺c]  for p = 1:Ne, i = 1:Ni]
-    C⁺D  = [iteration_summaries[i-1].parameters[p][:C⁺D]  for p = 1:Ne, i = 1:Ni]
-    C⁺e  = [iteration_summaries[i-1].parameters[p][:C⁺e]  for p = 1:Ne, i = 1:Ni]
+    Cʰⁱu  = [iteration_summaries[i-1].parameters[p][:Cʰⁱu]  for p = 1:Ne, i = 1:Ni]
+    Cʰⁱc  = [iteration_summaries[i-1].parameters[p][:Cʰⁱc]  for p = 1:Ne, i = 1:Ni]
+    CʰⁱD  = [iteration_summaries[i-1].parameters[p][:CʰⁱD]  for p = 1:Ne, i = 1:Ni]
+    Cʰⁱe  = [iteration_summaries[i-1].parameters[p][:Cʰⁱe]  for p = 1:Ne, i = 1:Ni]
 
-    C⁻u  = [iteration_summaries[i-1].parameters[p][:C⁻u]  for p = 1:Ne, i = 1:Ni]
-    C⁻c  = [iteration_summaries[i-1].parameters[p][:C⁻c]  for p = 1:Ne, i = 1:Ni]
-    C⁻D  = [iteration_summaries[i-1].parameters[p][:C⁻D]  for p = 1:Ne, i = 1:Ni]
-    C⁻e  = [iteration_summaries[i-1].parameters[p][:C⁻e]  for p = 1:Ne, i = 1:Ni]
+    Cˡᵒu  = [iteration_summaries[i-1].parameters[p][:Cˡᵒu]  for p = 1:Ne, i = 1:Ni]
+    Cˡᵒc  = [iteration_summaries[i-1].parameters[p][:Cˡᵒc]  for p = 1:Ne, i = 1:Ni]
+    CˡᵒD  = [iteration_summaries[i-1].parameters[p][:CˡᵒD]  for p = 1:Ne, i = 1:Ni]
+    Cˡᵒe  = [iteration_summaries[i-1].parameters[p][:Cˡᵒe]  for p = 1:Ne, i = 1:Ni]
 
-    CRiʷ  = [iteration_summaries[i-1].parameters[p][:CRiʷ]  for p = 1:Ne, i = 1:Ni]
-    CRiᶜ  = [iteration_summaries[i-1].parameters[p][:CRiᶜ]  for p = 1:Ne, i = 1:Ni]
+    CRiᵟ  = [iteration_summaries[i-1].parameters[p][:CRiᵟ]  for p = 1:Ne, i = 1:Ni]
+    CRi⁰  = [iteration_summaries[i-1].parameters[p][:CRi⁰]  for p = 1:Ne, i = 1:Ni]
 
     CᵂwΔ = [iteration_summaries[i-1].parameters[p][:CᵂwΔ] for p = 1:Ne, i = 1:Ni]
     Cᵂu★ = [iteration_summaries[i-1].parameters[p][:Cᵂu★] for p = 1:Ne, i = 1:Ni]
-    Cᴺ   = [iteration_summaries[i-1].parameters[p][:Cᴺ]   for p = 1:Ne, i = 1:Ni]
+    Cˢ   = [iteration_summaries[i-1].parameters[p][:Cˢ]   for p = 1:Ne, i = 1:Ni]
 
     Cᶜc   = [iteration_summaries[i-1].parameters[p][:Cᶜc]   for p = 1:Ne, i = 1:Ni]
     Cᵉc   = [iteration_summaries[i-1].parameters[p][:Cᵉc]   for p = 1:Ne, i = 1:Ni]
@@ -196,25 +196,25 @@ for (ir, r) in enumerate(rr[[1]])
     for i = 2:Ni
         τ = iteration_summaries[i-1].pseudotime
         color = scatter_colors[1]
-        scatter!(axCu, τ * ones(Ne), C⁺u[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_u")
-        scatter!(axCc, τ * ones(Ne), C⁺c[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_c")
-        scatter!(axCD, τ * ones(Ne), C⁺D[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_D")
-        scatter!(axCe, τ * ones(Ne), C⁺e[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_e")
+        scatter!(axCu, τ * ones(Ne), Cʰⁱu[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_u")
+        scatter!(axCc, τ * ones(Ne), Cʰⁱc[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_c")
+        scatter!(axCD, τ * ones(Ne), CʰⁱD[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_D")
+        scatter!(axCe, τ * ones(Ne), Cʰⁱe[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{+}_e")
 
         scatter!(axCw, τ * ones(Ne), CᵂwΔ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{C}^{||}_Q")
         scatter!(axCb, τ * ones(Ne), Cᵉc[:, i];  markersize, marker=:circle, color)
         scatter!(axCC, τ * ones(Ne), Cᶜc[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^c_c")
-        scatter!(axCR, τ * ones(Ne), CRiʷ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{\delta}^c_\text{Ri}")
+        scatter!(axCR, τ * ones(Ne), CRiᵟ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{\delta}^c_\text{Ri}")
 
-        #scatter!(axCb, τ * ones(Ne), Cᴺ[:, i];   markersize, marker=:circle, color)
+        #scatter!(axCb, τ * ones(Ne), Cˢ[:, i];   markersize, marker=:circle, color)
         
         color = scatter_colors[2]
-        scatter!(axCu, τ * ones(Ne), C⁻u[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_u")
-        scatter!(axCc, τ * ones(Ne), C⁻c[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_c")
-        scatter!(axCD, τ * ones(Ne), C⁻D[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_D")
-        scatter!(axCe, τ * ones(Ne), C⁻e[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_e")
+        scatter!(axCu, τ * ones(Ne), Cˡᵒu[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_u")
+        scatter!(axCc, τ * ones(Ne), Cˡᵒc[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_c")
+        scatter!(axCD, τ * ones(Ne), CˡᵒD[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_D")
+        scatter!(axCe, τ * ones(Ne), Cˡᵒe[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^{-}_e")
         scatter!(axCw, τ * ones(Ne), Cᵂu★[:, i]; markersize, marker=:circle, color, label=L"\mathbb{C}^{=}_Q")
-        scatter!(axCR, τ * ones(Ne), CRiᶜ[:, i]; markersize, marker=:circle, color, label=L"\mathbb{C}^c_\text{Ri}")
+        scatter!(axCR, τ * ones(Ne), CRi⁰[:, i]; markersize, marker=:circle, color, label=L"\mathbb{C}^c_\text{Ri}")
         scatter!(axCC, τ * ones(Ne), CᶜD[:, i];  markersize, marker=:circle, color, label=L"\mathbb{C}^c_D")
 
         color = scatter_colors[3]

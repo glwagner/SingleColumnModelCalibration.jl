@@ -18,9 +18,8 @@ using SingleColumnModelCalibration:
     parameter_sets
 
 grid_parameters = [
-#    (size=32, z=(-256, 0)),
+    (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
-    (size=128, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -31,19 +30,9 @@ suite_parameters = [
 
 resultsdir = "../results"
 
-# Other names:
-# "constant_Pr"
-# "constant_Pr_conv_adj"
-
-#closure = RiBasedVerticalDiffusivity()
-#name = "ri_based"
-#name = "constant_Pr_no_shear"
-#name = "variable_Pr"
-name = "variable_Pr_conv_adj"
-
 turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
-    C⁻D   = 1.0,
-    C⁺D   = 1.0,
+    CˡᵒD  = 1.0,
+    CʰⁱD  = 1.0,
     CᶜD   = 0.0,
     CᵉD   = 0.0,
     Cᵂu★  = 1.0,
@@ -51,20 +40,20 @@ turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
 )
 
 mixing_length = MixingLength(
-    Cᴺ   = Inf, 
+    Cˢ   = Inf, 
     Cᶜc  = 0.0,
     Cᶜe  = 0.0,
     Cᵉc  = 0.0,
     Cᵉe  = 0.0,
-    Cˢᶜ  = 0.0,
-    C⁻u  = 1.0,
-    C⁺u  = 1.0,
-    C⁻c  = 1.0,
-    C⁺c  = 1.0,
-    C⁻e  = 1.0,
-    C⁺e  = 1.0,
-    CRiʷ = 1.0,
-    CRiᶜ = 0.0,
+    Cˢᵖ  = 0.0,
+    Cˡᵒu = 1.0,
+    Cʰⁱu = 1.0,
+    Cˡᵒc = 1.0,
+    Cʰⁱc = 1.0,
+    Cˡᵒe = 1.0,
+    Cʰⁱe = 1.0,
+    CRi⁰ = 1.0,
+    CRiᵟ = 0.0,
 )
 
 minimum_turbulent_kinetic_energy = 1e-6
@@ -74,8 +63,19 @@ closure = CATKEVerticalDiffusivity(; mixing_length,
                                    minimum_turbulent_kinetic_energy,
                                    minimum_convective_buoyancy_flux)
 
+name = "variable_Pr_conv_adj"
+
+# Other names:
+# "variable_Pr"
+# "constant_Pr"
+# "constant_Pr_conv_adj"
+#
+# Another closure:
+# closure = RiBasedVerticalDiffusivity()
+# name = "ri_based"
+
 architecture = CPU()
-resample_failure_fraction = 0.05
+resample_failure_fraction = 0.1
 stop_pseudotime = 1e3
 Nensemble = 400
 Δt = 20minutes
