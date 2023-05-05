@@ -4,12 +4,9 @@ parameter_sets = Dict(
     "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ),
 )
 
-tracer_conv_adj_names = (:Cᶜc, :Cᵉc, :Cˢᵖ)
-simple_conv_adj_names = (:Cᶜc, :Cᵉc, :CᶜD, :Cˢᶜ)
+conv_adj_names = (:Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
 
-sets = ["constant_Pr", "variable_Pr"]
-
-for set in sets
+for set in ["constant_Pr", "variable_Pr"]
     names = parameter_sets[set]
     conv_adj_set = set * "_conv_adj"
     parameter_sets[conv_adj_set] =  tuple(names..., conv_adj_names...)
@@ -26,16 +23,8 @@ Cˡᵒu(θ) = θ.Cʰⁱu
 Cˡᵒc(θ) = θ.Cʰⁱc
 Cˡᵒe(θ) = θ.Cʰⁱe
 
-for name in ["constant_Pr",
-             "constant_Pr_no_shear",
-             "constant_Pr_no_shear_simple_conv_adj",
-             "constant_Pr_simple_conv_adj",
-             "constant_Pr_no_shear_tracer_conv_adj",
-             "constant_Pr_tracer_conv_adj",
-             "constant_Pr_no_shear_conv_adj",
-             "constant_Pr_conv_adj"]
-
-    dependent_parameter_sets[name] = (; Cˡᵒu, Cˡᵒc, Cˡᵒe, CˡᵒD) 
+for set in ["constant_Pr", "constant_Pr_conv_adj"]
+    dependent_parameter_sets[set] = (; Cˡᵒu, Cˡᵒc, Cˡᵒe, CˡᵒD) 
 end
 
 parameter_sets["fixed_Ric"] = (:CᵂwΔ, :Cᵂu★, :Cˢ,
@@ -43,6 +32,11 @@ parameter_sets["fixed_Ric"] = (:CᵂwΔ, :Cᵂu★, :Cˢ,
                                :Cˡᵒc, :Cˡᵒu, :Cˡᵒe,
                                :CRi⁰, :CRiᵟ, :Cᶜc,
                                :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
+
+function CˡᵒD_fixed_Riᶜ(θ)
+    Riᶜ = 0.25
+    return max(0.0, θ.Cˡᵒu / Riᶜ - θ.Cˡᵒc)
+end
 
 dependent_parameter_sets["fixed_Ric"] = (; CˡᵒD = CˡᵒD_fixed_Riᶜ)
 
