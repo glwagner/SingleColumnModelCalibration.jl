@@ -18,8 +18,9 @@ using SingleColumnModelCalibration:
     parameter_sets
 
 grid_parameters = [
+    (size=16, z=(-256, 0)),
     (size=32, z=(-256, 0)),
-    (size=64, z=(-256, 0)),
+    #(size=64, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -74,10 +75,10 @@ name = "variable_Pr_conv_adj"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
-architecture = CPU()
-resample_failure_fraction = 0.1
+architecture = GPU()
+resample_failure_fraction = 0.2
 stop_pseudotime = 1e3
-Nensemble = 400
+Nensemble = 1000
 Δt = 20minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
