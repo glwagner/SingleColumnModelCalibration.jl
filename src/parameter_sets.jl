@@ -1,27 +1,18 @@
 parameter_sets = Dict(
-    "ri_based"             => (:ν₀, :κ₀, :κᶜᵃ, :Cᵉⁿ, :Cᵃᵛ, :Ri₀, :Riᵟ),
-    "constant_Pr"          => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ),
-    "variable_Pr"          => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ),
+    "ri_based"    => (:ν₀, :κ₀, :κᶜᵃ, :Cᵉⁿ, :Cᵃᵛ, :Ri₀, :Riᵟ),
+    "constant_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ),
+    "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ),
 )
 
-conv_adj_names = (:Cᶜc, :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
 tracer_conv_adj_names = (:Cᶜc, :Cᵉc, :Cˢᵖ)
 simple_conv_adj_names = (:Cᶜc, :Cᵉc, :CᶜD, :Cˢᶜ)
 
-sets = ["constant_Pr",
-        "variable_Pr"]
+sets = ["constant_Pr", "variable_Pr"]
 
 for set in sets
     names = parameter_sets[set]
-        
     conv_adj_set = set * "_conv_adj"
     parameter_sets[conv_adj_set] =  tuple(names..., conv_adj_names...)
-
-    tracer_conv_adj_set = set * "_tracer_conv_adj"
-    parameter_sets[tracer_conv_adj_set] =  tuple(names..., tracer_conv_adj_names...)
-
-    simple_conv_adj_set = set * "_simple_conv_adj"
-    parameter_sets[simple_conv_adj_set] =  tuple(names..., simple_conv_adj_names...)
 end
 
 # Some dependent parameters
@@ -47,6 +38,14 @@ for name in ["constant_Pr",
     dependent_parameter_sets[name] = (; Cˡᵒu, Cˡᵒc, Cˡᵒe, CˡᵒD) 
 end
 
+parameter_sets["fixed_Ric"] = (:CᵂwΔ, :Cᵂu★, :Cˢ,
+                               :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD,
+                               :Cˡᵒc, :Cˡᵒu, :Cˡᵒe,
+                               :CRi⁰, :CRiᵟ, :Cᶜc,
+                               :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
+
+dependent_parameter_sets["fixed_Ric"] = (; CˡᵒD = CˡᵒD_fixed_Riᶜ)
+
 #####
 ##### Bounds and priors
 #####
@@ -60,13 +59,13 @@ bounds_library[:CˡᵒD] = (0.0, 2.0)
 bounds_library[:CʰⁱD] = (0.0, 2.0)
 
 # Mixing length parameters
-bounds_library[:Cˢ]   = (0.0, 1.0)
+bounds_library[:Cˢ]   = (0.0, 4.0)
 bounds_library[:Cᵇ]   = (0.0, 1.0)
 
-bounds_library[:Cˡᵒu] = (0.0, 1.0)
-bounds_library[:Cʰⁱu] = (0.0, 1.0)
-bounds_library[:Cˡᵒc] = (0.0, 1.0)
-bounds_library[:Cʰⁱc] = (0.0, 1.0)
+bounds_library[:Cˡᵒu] = (0.0, 2.0)
+bounds_library[:Cʰⁱu] = (0.0, 2.0)
+bounds_library[:Cˡᵒc] = (0.0, 2.0)
+bounds_library[:Cʰⁱc] = (0.0, 2.0)
 bounds_library[:Cˡᵒe] = (0.0, 2.0)
 bounds_library[:Cʰⁱe] = (0.0, 2.0)
 
