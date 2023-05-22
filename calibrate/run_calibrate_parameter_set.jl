@@ -18,6 +18,7 @@ using SingleColumnModelCalibration:
     parameter_sets
 
 grid_parameters = [
+    #(size=16, z=(-256, 0)),
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
 ]
@@ -64,6 +65,7 @@ closure = CATKEVerticalDiffusivity(; mixing_length,
                                    minimum_convective_buoyancy_flux)
 
 name = "variable_Pr_conv_adj"
+#name = "fixed_Ric"
 
 # Other names:
 # "variable_Pr"
@@ -74,10 +76,11 @@ name = "variable_Pr_conv_adj"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
-architecture = CPU()
+architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e3
-Nensemble = 400
+max_iterations = 10000
+Nensemble = 1000
 Δt = 20minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
@@ -91,9 +94,21 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-logname = string(name, "_", irepeat, ".txt")
+label = "fully_centered" #"conservative"
+logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
-while eki.pseudotime < stop_pseudotime
+filename = string(name, "_", irepeat)
+filepath = generate_filepath(; Δt,
+                             dir = resultsdir,
+                             suite_parameters,
+                             grid_parameters,
+                             stop_pseudotime,
+                             Nensemble,
+                             filename)
+    
+filepath = filepath[1:end-5] * "_$label.jld2"
+
+while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
     iterate!(eki)
 
     if eki.iteration % 10 == 0
@@ -105,25 +120,18 @@ while eki.pseudotime < stop_pseudotime
 
         @show eki.iteration_summaries[end]
     end
+
+    if eki.iteration % 100 == 0
+        rm(filepath; force=true)
+        
+        @info "Saving data to $filepath..."
+        file = jldopen(filepath, "a+")
+        file["resample_failure_fraction"] = resample_failure_fraction
+        file["stop_pseudotime"] = stop_pseudotime
+        file["iteration_summaries"] = eki.iteration_summaries
+        close(file)
+    end
 end
-
-filename = string(name, "_", irepeat)
-filepath = generate_filepath(; Δt,
-                             dir = resultsdir,
-                             suite_parameters,
-                             grid_parameters,
-                             stop_pseudotime,
-                             Nensemble,
-                             filename)
-
-rm(filepath; force=true)
-
-@info "Saving data to $filepath..."
-file = jldopen(filepath, "a+")
-file["resample_failure_fraction"] = resample_failure_fraction
-file["stop_pseudotime"] = stop_pseudotime
-file["iteration_summaries"] = eki.iteration_summaries
-close(file)
 
 elapsed = 1e-9 * (time_ns() - start_time)
 
