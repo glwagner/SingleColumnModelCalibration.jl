@@ -37,6 +37,7 @@ dir = "../parameters"
 #name = "variable_Pr"
 #name = "constant_Pr_conv_adj"
 name = "variable_Pr_conv_adj"
+#name = "fixed_Ric"
 
 turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
     CˡᵒD   = 1.0,
@@ -76,6 +77,30 @@ dependent_parameters = dependent_parameter_sets[string(name)]
 parameter_names = keys(optimal_parameters)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
 optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_parameters)
+
+#=
+optimal_parameters = (
+    CᵂwΔ = 7.520e+00, 
+    Cᵂu★ = 1.311e+00, 
+    Cʰⁱc = 9.295e-01,
+    Cʰⁱu = 9.838e-01,
+    Cʰⁱe = 3.082e-01,
+    CʰⁱD = 4.268e+00,
+      Cˢ = 8.400e-01,
+    Cˡᵒc = 5.642e-01,
+    Cˡᵒu = 8.394e-01,
+    Cˡᵒe = 1.938e+00,
+    CˡᵒD = 3.329e+00, 
+    CRi⁰ = 6.156e-01,
+    CRiᵟ = 8.687e-02,
+     Cᶜc = 1.139e+00,
+     Cᶜe = 1.596e+00,
+     CᶜD = 1.502e+00,
+     Cᵉc = 5.125e-02,
+     Cˢᵖ = 5.683e-02,
+)
+=#
+
 @show optimal_parameters
 
 # Batch the inverse problems
