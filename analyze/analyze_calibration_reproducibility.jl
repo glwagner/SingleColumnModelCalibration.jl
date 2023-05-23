@@ -48,13 +48,12 @@ function collect_calibration_data(name, suffix;
 
         push!(mean_parameter_serieses, [deepcopy(summ.ensemble_mean) for summ in iteration_summaries[end]])
 
-        @printf "%.3e " Φ★
+        @printf "%.3e \n" Φ★
         for (k, p) in zip(keys(last_summary.parameters[k★]),
                           values(last_summary.parameters[k★]))
 
-            @printf "%s: %.2e " k p
+            @printf "%s: %.2e \n" k p
         end
-        println(" ")
 
         run_objectives = zeros(length(iteration_summaries[end]))
         for (i, summary) in enumerate(iteration_summaries[end])
@@ -67,7 +66,7 @@ function collect_calibration_data(name, suffix;
 
     Nens = 0
     for parameter_series in mean_parameter_serieses
-        Nens = max(Nens, length(parameter_series))
+        Nens = min(max(Nens, length(parameter_series)), 100)
     end
 
     #####
@@ -95,14 +94,18 @@ function collect_calibration_data(name, suffix;
                                   grid_parameters,
                                   suite_parameters)
 
+    @show eki
+
     Γ⁻¹² = eki.precomputed_arrays[:inv_sqrt_Γy]
+    @show size(Γ⁻¹²)
     y = observation_map(eki.inverse_problem)
     Nobs = length(y)
     final_mean_parameter_objectives = Float64[]
     mean_parameter_objective_serieses = []
 
     for parameter_series in mean_parameter_serieses
-        G = forward_map(eki.inverse_problem, parent(parameter_series))
+        parameter_series = parent(parameter_series)[end-Nens+1:end]
+        G = forward_map(eki.inverse_problem, parameter_series)
         Nt = length(parameter_series)
         series_objectives = eki_objective(y, view(G, :, 1:Nt), Γ⁻¹²)
         push!(mean_parameter_objective_serieses, map(obj -> first(obj), series_objectives))
@@ -158,14 +161,15 @@ function collect_calibration_data(name, suffix;
     return data
 end
 
-suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_conservative.jld2"
 dataset_filename = "calibration_summary_" * suffix
-Nrepeats = 3
+Nrepeats = 1
 
 names = [
     #"constant_Pr_no_shear",
     #"variable_Pr",
     "variable_Pr_conv_adj",
+    #"fixed_Ric",
     #"ri_based",
 ]
 
@@ -189,6 +193,33 @@ for n = 1:length(names)
     for (k, v) in zip(keys(optimal_parameters), values(optimal_parameters))
         @printf "% 6s %.5f \n" k v
     end
+
+    best_first_particles = []
+    best_first_objectives = []
+    for r = 1:Nrepeats
+        first_iteration_summary = first(data[:iteration_summaries][r])
+        Φ₁, k₁ = findmin(o -> isnan(first(o)) ? Inf : first(o), first_iteration_summary.objective_values)
+        θ = first_iteration_summary.parameters[k₁]
+        push!(best_first_particles, θ)
+        push!(best_first_objectives, Φ₁)
+    end
+
+    Φ₁★, r₁★ = findmin(best_first_objectives)
+    θ₁★ = best_first_particles[r₁★]
+
+    savedir = joinpath("..", "parameters")
+    savename = string(name, "_best_parameters.jld2")
+    savepath = joinpath(savedir, savename)
+
+    rm(savepath; force=true)
+    file = jldopen(savepath, "a+")
+    file["optimal_parameters"] = optimal_parameters
+    file["example_first_mean_parameters"] = first(data[:iteration_summaries][1]).ensemble_mean
+    file["first_best_parameters"] = θ₁★
+    file["final_best_parameters"] = data[:final_best_parameters]
+    file["final_mean_parameters"] = data[:final_mean_parameters]
+    file["first_mean_parameters"] = data[:final_mean_parameters]
+    close(file)
 end
 
 # Save summary data
