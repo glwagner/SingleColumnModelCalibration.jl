@@ -76,11 +76,11 @@ name = "variable_Pr_conv_adj"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
-architecture = GPU()
+architecture = CPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e3
-max_iterations = 10000
-Nensemble = 1000
+max_iterations = 1000
+Nensemble = 400
 Δt = 20minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
@@ -94,7 +94,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "fully_centered" #"conservative"
+label = "medium_tight_priors" #"conservative"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)
