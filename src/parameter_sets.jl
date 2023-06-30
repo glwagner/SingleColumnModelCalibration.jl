@@ -1,14 +1,13 @@
 parameter_sets = Dict(
-    "ri_based"    => (:ν₀, :κ₀, :κᶜ, :Cᵉ, :Ri₀, :Riᵟ),
-    "constant_Pr" => (:CᵂwΔ, :Cᵂu★, :C⁺c, :C⁺u, :C⁺e, :C⁺D, :Cᵇ, :Cˢ),
-    "constant_Pr_no_shear" => (:CᵂwΔ, :Cᵂu★, :C⁺c, :C⁺u, :C⁺e, :C⁺D, :Cᵇ),
-    "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :C⁺c, :C⁺u, :C⁺e, :C⁺D, :Cᵇ, #:Cˢ, 
-                                    :C⁻c, :C⁻u, :C⁻e, :C⁻D, :CRiᶜ, :CRiʷ),
+    "ri_based"    => (:ν₀, :κ₀, :κᶜᵃ, :Cᵉⁿ, :Cᵃᵛ, :Ri₀, :Riᵟ),
+    "constant_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ),
+    "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ),
 )
 
-conv_adj_names = (:Cᶜc, :Cᶜe, :CᶜD, :Cᵉc, :Cᵉe, :CᵉD, :Cˢᶜ)
+conv_adj_names = (:Cᶜc, :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
 
-for (set, names) in parameter_sets
+for set in ["constant_Pr", "variable_Pr"]
+    names = parameter_sets[set]
     conv_adj_set = set * "_conv_adj"
     parameter_sets[conv_adj_set] =  tuple(names..., conv_adj_names...)
 end
@@ -19,13 +18,27 @@ for (set, names) in parameter_sets
     dependent_parameter_sets[set] = NamedTuple()
 end
 
-C⁻D(θ)  = θ.C⁺D
-C⁻u(θ) = θ.C⁺u
-C⁻c(θ) = θ.C⁺c
-C⁻e(θ) = θ.C⁺e
+CˡᵒD(θ) = θ.CʰⁱD
+Cˡᵒu(θ) = θ.Cʰⁱu
+Cˡᵒc(θ) = θ.Cʰⁱc
+Cˡᵒe(θ) = θ.Cʰⁱe
 
-dependent_parameter_sets["constant_Pr"]          = (; C⁻u, C⁻c, C⁻e, C⁻D) 
-dependent_parameter_sets["constant_Pr_conv_adj"] = (; C⁻u, C⁻c, C⁻e, C⁻D) 
+for set in ["constant_Pr", "constant_Pr_conv_adj"]
+    dependent_parameter_sets[set] = (; Cˡᵒu, Cˡᵒc, Cˡᵒe, CˡᵒD) 
+end
+
+parameter_sets["fixed_Ric"] = (:CᵂwΔ, :Cᵂu★, :Cˢ,
+                               :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD,
+                               :Cˡᵒc, :Cˡᵒu, :Cˡᵒe,
+                               :CRi⁰, :CRiᵟ, :Cᶜc,
+                               :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
+
+function CˡᵒD_fixed_Riᶜ(θ)
+    Riᶜ = 0.25
+    return max(0.0, θ.Cˡᵒu / Riᶜ - θ.Cˡᵒc)
+end
+
+dependent_parameter_sets["fixed_Ric"] = (; CˡᵒD = CˡᵒD_fixed_Riᶜ)
 
 parameter_guide = Dict(:C⁻D    => (name = "Dissipation parameter (TKE equation)", latex = L"C^D", bounds = (0.1, 10.0)), 
                         :C⁺D    => (name = "Dissipation parameter (TKE equation)", latex = L"C^D", bounds = (0.1, 10.0)), 
@@ -71,47 +84,43 @@ parameter_guide = Dict(:C⁻D    => (name = "Dissipation parameter (TKE equation
 bounds_library = Dict()
 
 # Turbulent kinetic energy parameters
-bounds_library[:CᵂwΔ] = (0.1, 10.0)
-bounds_library[:Cᵂu★] = (0.1, 10.0)
-bounds_library[:C⁻D]  = (0.1, 10.0)
-bounds_library[:C⁺D]  = (0.1, 10.0)
+bounds_library[:CᵂwΔ] = (0.0, 4.0)
+bounds_library[:Cᵂu★] = (0.0, 4.0)
 
 # Mixing length parameters
-bounds_library[:Cᵇ]   = (0.2, 2.0)
-bounds_library[:Cˢ]   = (0.2, 2.0)
+bounds_library[:Cˢ]   = (0.0, 1.0)
+bounds_library[:Cᵇ]   = (0.0, 1.0)
 
-bounds_library[:C⁻u] = (0.1, 1.0)
-bounds_library[:C⁺u] = (0.1, 1.0)
-bounds_library[:C⁻c] = (0.1, 1.0)
-bounds_library[:C⁺c] = (0.1, 1.0)
-bounds_library[:C⁻e] = (0.1, 10.0)
-bounds_library[:C⁺e] = (0.1, 10.0)
+bounds_library[:CˡᵒD] = (0.0, 1.0)
+bounds_library[:Cˡᵒu] = (0.0, 1.0)
+bounds_library[:Cˡᵒc] = (0.0, 1.0)
+bounds_library[:Cˡᵒe] = (0.0, 4.0)
 
-bounds_library[:CRiᶜ] = (0.1, 1.0)
-bounds_library[:CRiʷ] = (0.1, 2.0)
+bounds_library[:Cʰⁱc] = (0.0, 1.0)
+bounds_library[:Cʰⁱu] = (0.0, 1.0)
+bounds_library[:CʰⁱD] = (0.0, 1.0)
+bounds_library[:Cʰⁱe] = (0.0, 4.0)
+
+bounds_library[:CRi⁰] = (0.0, 1.0)
+bounds_library[:CRiᵟ] = (0.0, 1.0)
 
 # Convective adjustment parameters
-bounds_library[:Cᶜc]  = (0.01, 10.0)
-bounds_library[:Cᶜe]  = (0.01, 10.0)
-bounds_library[:CᶜD]  = (0.01, 10.0)
-bounds_library[:Cᵉc]  = (0.01,  2.0)
-bounds_library[:Cᵉe]  = (0.01,  2.0)
-bounds_library[:CᵉD]  = (0.01,  2.0)
-bounds_library[:Cˢᶜ]  = (0.01, 10.0)
+bounds_library[:Cᶜc]  = (0.0, 1.0)
+bounds_library[:Cᶜe]  = (0.0, 1.0)
+bounds_library[:CᶜD]  = (0.0, 2.0)
+bounds_library[:Cᵉc]  = (0.0, 1.0)
+bounds_library[:Cᵉe]  = (0.0, 1.0)
+bounds_library[:CᵉD]  = (0.0, 1.0)
+bounds_library[:Cˢᵖ]  = (0.0, 1.0)
 
 # Ri-based
-bounds_library[:ν₀]  = (0.0,  1.0)
-bounds_library[:κ₀]  = (0.0,  1.0)
-bounds_library[:κᶜ]  = (0.0, 10.0)
-bounds_library[:Cᵉ]  = (0.0, 10.0)
-bounds_library[:Ri₀] = (0.0,  4.0)
-bounds_library[:Riᵟ] = (0.0,  4.0)
-
-# prior_library = Dict()
-
-# for p in keys(bounds_library)
-#     prior_library[p] = ScaledLogitNormal(; bounds=parameter_guide[p].bounds)
-# end
+bounds_library[:ν₀]  = (0.0, 1.0)
+bounds_library[:κ₀]  = (0.0, 1.0)
+bounds_library[:κᶜᵃ] = (0.0, 2.0)
+bounds_library[:Cᵉⁿ] = (0.0, 2.0)
+bounds_library[:Cᵃᵛ] = (0.0, 2.0)
+bounds_library[:Ri₀] = (0.0, 2.0)
+bounds_library[:Riᵟ] = (0.0, 2.0)
 
 bounds(name) = parameter_guide[name].bounds
 

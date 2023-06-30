@@ -3,6 +3,10 @@ using Oceananigans.Operators: Δzᶜᶜᶜ
 using Oceananigans.Units
 using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 
+using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
+    MixingLength,
+    TurbulentKineticEnergyEquation
+
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem, inverting_forward_map
 using ParameterEstimocean.PseudoSteppingSchemes: Kovachki2018InitialConvergenceRatio
@@ -12,8 +16,9 @@ using Printf
 using JLD2
 using LinearAlgebra
 
-using CairoMakie
-using ElectronDisplay
+using GLMakie
+#using CairoMakie
+#using ElectronDisplay
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
@@ -23,15 +28,45 @@ using SingleColumnModelCalibration:
 set_theme!(Theme(fontsize=16))
 
 # dir = "." #calibration_results/round1"
-# name = :ri_based
+# name = "ri_based"
 # closure = RiBasedVerticalDiffusivity()
+# closure_label = "RiBased"
 
 dir = "../parameters"
-name = "constant_Pr"
+#name = "constant_Pr_no_shear"
 #name = "variable_Pr"
 #name = "constant_Pr_conv_adj"
-#name = "variable_Pr_conv_adj"
-closure = CATKEVerticalDiffusivity()
+name = "variable_Pr_conv_adj"
+#name = "fixed_Ric"
+
+turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
+    CˡᵒD   = 1.0,
+    CʰⁱD   = 1.0,
+    CᶜD   = 0.0,
+    CᵉD   = 0.0,
+    Cᵂu★  = 1.0,
+    CᵂwΔ  = 1.0,
+)
+
+mixing_length = MixingLength(
+    Cˢ   = 1.0, 
+    Cᶜc  = 0.0,
+    Cᶜe  = 0.0,
+    Cᵉc  = 0.0,
+    Cᵉe  = 0.0,
+    Cˢᵖ  = 0.0,
+    Cˡᵒu  = 1.0,
+    Cʰⁱu  = 1.0,
+    Cˡᵒc  = 1.0,
+    Cʰⁱc  = 1.0,
+    Cˡᵒe  = 1.0,
+    Cʰⁱe  = 1.0,
+    CRiᵟ = 1.0,
+    CRi⁰ = 0.0,
+)
+
+closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
+closure_label = "CATKE"
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
 file = jldopen(filepath)
@@ -42,34 +77,58 @@ dependent_parameters = dependent_parameter_sets[string(name)]
 parameter_names = keys(optimal_parameters)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
 optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_parameters)
+
+#=
+optimal_parameters = (
+    CᵂwΔ = 7.520e+00, 
+    Cᵂu★ = 1.311e+00, 
+    Cʰⁱc = 9.295e-01,
+    Cʰⁱu = 9.838e-01,
+    Cʰⁱe = 3.082e-01,
+    CʰⁱD = 4.268e+00,
+      Cˢ = 8.400e-01,
+    Cˡᵒc = 5.642e-01,
+    Cˡᵒu = 8.394e-01,
+    Cˡᵒe = 1.938e+00,
+    CˡᵒD = 3.329e+00, 
+    CRi⁰ = 6.156e-01,
+    CRiᵟ = 8.687e-02,
+     Cᶜc = 1.139e+00,
+     Cᶜe = 1.596e+00,
+     CᶜD = 1.502e+00,
+     Cᵉc = 5.125e-02,
+     Cˢᵖ = 5.683e-02,
+)
+=#
+
 @show optimal_parameters
 
 # Batch the inverse problems
 grid_parameters = [
     (size=128, z=(-256, 0)),
-    (size=64,  z=(-256, 0)),
     (size=32,  z=(-256, 0)),
+    (size=16,  z=(-256, 0)),
 ]
 
 grid_colors = [
-    (:black, 0.8),
+    (:royalblue1, 0.8),
     (:darkred, 0.8),
-    (:royalblue1, 0.8)
+    (:black, 0.8),
 ]
 
 suite_parameters = [
     (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
-    (name = "12_hour_suite", resolution="1m", stop_time=12hours),
-    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
-    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
-    (name = "36_hour_suite", resolution="1m", stop_time=36hours),
-    (name = "48_hour_suite", resolution="1m", stop_time=48hours),
+    #(name = "12_hour_suite", resolution="1m", stop_time=12hours),
+#    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
+#    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
+#    (name = "36_hour_suite", resolution="1m", stop_time=36hours),
+#    (name = "48_hour_suite", resolution="1m", stop_time=48hours),
     (name = "72_hour_suite", resolution="1m", stop_time=72hours),
 ]
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 1minute,
+                                           Δt = 5minutes,
                                            grid_parameters,
                                            suite_parameters)
 
@@ -112,7 +171,7 @@ for (s, suite) in enumerate(suite_names)
     LES_str = string("LES at t = ", prettytime(times[end]))
 
     grid1 = ip1.simulation.model.grid
-    z1 = znodes(Center, grid1)
+    z1 = znodes(grid1, Center())
     Δz1 = Δzᶜᶜᶜ(1, 1, grid1.Nz, grid1)
     Δz1_str = @sprintf("%d", Δz1)
     
@@ -123,7 +182,8 @@ for (s, suite) in enumerate(suite_names)
         ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy (m s⁻²)", yaxisposition, xticks=[0.0386, 0.039, 0.0394])
         push!(ax_b, ax_bc)
 
-        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks=-0.1:0.1:0.3)
+        xticks = suite_parameters[s].name == "6_hour_suite" ? (-0.2:0.2:0.4) : (-0.2:0.2:0.6)
+        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks)
         push!(ax_u, ax_uc)
 
         b_init = interior(ip1.observations[c].field_time_serieses.b[1], 1, 1, :)
@@ -133,6 +193,20 @@ for (s, suite) in enumerate(suite_names)
         lines!(ax_b[c], b_init, z1, linewidth=2, label="Initial condition at t = " * prettytime(start_time), color=LES_color, linestyle=:dot)
         lines!(ax_b[c], b_obs,  z1, linewidth=8, label=LES_str, color=LES_color)
         
+        if c == 6
+            if s == 1
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.1, 0.6)
+            else
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.1, 0.4)
+            end
+        else
+            if s == 1
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.25, 0.4)
+            else
+                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.07, 0.2)
+            end
+        end
+
         xlims!(ax_b[c], 0.0386, maximum(b_init) + 2e-5)
         ylims!(ax_b[c], zlim, 0)
 
@@ -165,17 +239,17 @@ for (s, suite) in enumerate(suite_names)
         for iᵍ = 1:Ngrids
             ip = batched_ip[iᵇ + iᵍ]
             grid = ip.simulation.model.grid
-            z = znodes(Center, grid)
+            z = znodes(grid, Center())
             Δz = Δzᶜᶜᶜ(1, 1, grid.Nz, grid)
             Δz_str = @sprintf("%d", Δz)
             color = grid_colors[iᵍ]
 
             b = interior(ip.time_series_collector.field_time_serieses.b[Nt], k★, c, :)
-            lines!(ax_b[c], b, z, linewidth=3; label="CATKE, Δz = $Δz_str m", color)
+            lines!(ax_b[c], b, z, linewidth=3; label="$closure_label, Δz = $Δz_str m", color)
 
             if c > 1
                 u = interior(ip.time_series_collector.field_time_serieses.u[Nt], k★, c, :)
-                lines!(ax_u[c], u, z, linewidth=3; label="u, CATKE, Δz = $Δz_str m", color)
+                lines!(ax_u[c], u, z, linewidth=3; label="u, $closure_label, Δz = $Δz_str m", color)
 
                 if :v ∈ keys(ip1.observations[c].field_time_serieses)
                     v = interior(ip.time_series_collector.field_time_serieses.v[Nt], k★, c, :)
@@ -186,10 +260,16 @@ for (s, suite) in enumerate(suite_names)
     end
 
     Legend(fig[3, 1], ax_b[2])
-    text!(ax_u[2], +0.1, -50.0, text="u")
-    text!(ax_u[2], -0.14, -110.0, text="v")
+    if s == 1
+        text!(ax_u[2], +0.18, -40.0, text="u")
+        text!(ax_u[2], -0.2, -130.0, text="v")
+    else
+        text!(ax_u[2], +0.09, -27.0, text="u")
+        text!(ax_u[2], -0.06, -30.0, text="v")
+    end
 
     display(fig)
 
-    #save("$(name)_catke_LES_comparison.png", fig)
+    save("$(name)_$(suite)_assessment.png", fig)
 end
+

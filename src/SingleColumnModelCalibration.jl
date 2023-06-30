@@ -8,8 +8,6 @@ using DataDeps
 using JLD2
 using OffsetArrays
 
-using CairoMakie
-
 using Oceananigans
 using Oceananigans.Units
 
