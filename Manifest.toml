@@ -2,7 +2,7 @@
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "c5acda88726b1dd3a1534eb807adb52d91cfce6a"
+project_hash = "e4ffbcae49affa09dd93ead87d785a47da7d61cb"
 
 [[deps.AMD]]
 deps = ["Libdl", "LinearAlgebra", "SparseArrays", "Test"]
@@ -925,9 +925,9 @@ version = "0.1.7"
 
 [[deps.MPItrampoline_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "MPIPreferences", "TOML"]
-git-tree-sha1 = "b3dcf8e1c610a10458df3c62038c8cc3a4d6291d"
+git-tree-sha1 = "228d5366a7c89b3c81469592b6f4c612db693d50"
 uuid = "f1f71cc9-e9ae-5b93-9b94-4fe0e1ad3748"
-version = "5.3.0+0"
+version = "5.3.0+1"
 
 [[deps.MacroTools]]
 deps = ["Markdown", "Random"]
@@ -1074,7 +1074,9 @@ version = "0.5.4"
 
 [[deps.Oceananigans]]
 deps = ["Adapt", "CUDA", "Crayons", "CubedSphere", "Dates", "DocStringExtensions", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays"]
-path = "/home/greg/Projects/Oceananigans.jl"
+git-tree-sha1 = "ed66a9996ae85dc769dcb24481a06a9429f2ce5a"
+repo-rev = "v0.81.1"
+repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 version = "0.81.1"
 
@@ -1420,9 +1422,9 @@ version = "3.2.3+1"
 
 [[deps.SCS_MKL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "MKL_jll"]
-git-tree-sha1 = "15b887b4b1f747f98b22fba2225fe7cd26861cea"
+git-tree-sha1 = "1ca6e41193c08fb345b58a05a6cfa8e309939313"
 uuid = "3f2553a9-4106-52be-b7dd-865123654657"
-version = "3.2.3+0"
+version = "3.2.3+1"
 
 [[deps.SCS_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "OpenBLAS32_jll"]
