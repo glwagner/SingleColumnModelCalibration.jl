@@ -16,8 +16,8 @@ using Printf
 using JLD2
 using LinearAlgebra
 
-using GLMakie
-#using CairoMakie
+#using GLMakie
+using CairoMakie
 #using ElectronDisplay
 
 using SingleColumnModelCalibration:
@@ -25,7 +25,7 @@ using SingleColumnModelCalibration:
     build_batched_inverse_problem,
     prior_library
 
-set_theme!(Theme(fontsize=16))
+set_theme!(Theme(fontsize=19))
 
 # dir = "." #calibration_results/round1"
 # name = "ri_based"
@@ -78,6 +78,58 @@ parameter_names = keys(optimal_parameters)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
 optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_parameters)
 
+optimal_parameters = (
+    Cˢ   = 2.4, # 0.41,
+    Cᵇ   = Inf,
+    Cᶜc  = 1.5,
+    Cᶜe  = 1.2,
+    Cᵉc  = 0.2,
+    Cᵉe  = 0.0,
+    Cˢᵖ  = 0.14,
+    Cˡᵒu = 0.19, # 0.46,
+    Cʰⁱu = 0.086, # 0.21,
+    Cˡᵒc = 0.20, # 0.49,
+    Cʰⁱc = 0.045, # 0.11,
+    Cˡᵒe = 1.9, # 4.5,
+    Cʰⁱe = 0.57, # 1.4,
+    CRiᵟ = 0.45,
+    CRi⁰ = 0.47,
+    # CˡᵒD = 2.3,
+    # CʰⁱD = 6.7,
+    CˡᵒD = 1.1, # 0.43,
+    CʰⁱD = 0.37, # 0.15,
+    CᶜD  = 0.88,
+    Cᵂu★ = 1.1,
+    CᵂwΔ = 4.0,
+)
+
+#=
+optimal_parameters = (
+    Cˢ   = 0.41,
+    Cᵇ   = Inf,
+    Cᶜc  = 1.5,
+    Cᶜe  = 1.2,
+    Cᵉc  = 0.085,
+    Cᵉe  = 0.0,
+    Cˢᵖ  = 0.14,
+    Cˡᵒu = 0.46,
+    Cʰⁱu = 0.21,
+    Cˡᵒc = 0.49,
+    Cʰⁱc = 0.11,
+    Cˡᵒe = 4.5,
+    Cʰⁱe = 1.4,
+    CRiᵟ = 0.45,
+    CRi⁰ = 0.47,
+    # CˡᵒD = 2.3,
+    # CʰⁱD = 6.7,
+    CˡᵒD = 0.43,
+    CʰⁱD = 0.15,
+    CᶜD  = 0.88,
+    Cᵂu★ = 1.1,
+    CᵂwΔ = 4.0,
+)
+=#
+
 #=
 optimal_parameters = (
     CᵂwΔ = 7.520e+00, 
@@ -128,7 +180,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 5minutes,
+                                           Δt = 10minutes,
                                            grid_parameters,
                                            suite_parameters)
 
@@ -179,18 +231,24 @@ for (s, suite) in enumerate(suite_names)
         yaxisposition = c < 6 ? :left : :right
         Label(fig[1, c], titles[c], tellwidth=false)
 
-        ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy (m s⁻²)", yaxisposition, xticks=[0.0386, 0.039, 0.0394])
+        if c == 1
+            ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition, xticks=[0.0386, 0.0389, 0.0392])
+        elseif c < 5
+            ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition, xticks=[0.0386, 0.0389])
+        else
+            ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition, xticks=[0.0386, 0.0390])
+        end
         push!(ax_b, ax_bc)
 
-        xticks = suite_parameters[s].name == "6_hour_suite" ? (-0.2:0.2:0.4) : (-0.2:0.2:0.6)
-        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition, xticks)
+        xticks = [-0.2, 0.0, 0.2, 0.4]
+        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities \n (m s⁻¹)"; yaxisposition, xticks)
         push!(ax_u, ax_uc)
 
         b_init = interior(ip1.observations[c].field_time_serieses.b[1], 1, 1, :)
         b_obs  = interior(ip1.observations[c].field_time_serieses.b[Nt], 1, 1, :)
         start_time = ip1.observations[c].times[1]
 
-        lines!(ax_b[c], b_init, z1, linewidth=2, label="Initial condition at t = " * prettytime(start_time), color=LES_color, linestyle=:dot)
+        lines!(ax_b[c], b_init, z1, linewidth=2, label="Initial condition", color=LES_color, linestyle=:dot)
         lines!(ax_b[c], b_obs,  z1, linewidth=8, label=LES_str, color=LES_color)
         
         if c == 6
@@ -261,15 +319,36 @@ for (s, suite) in enumerate(suite_names)
 
     Legend(fig[3, 1], ax_b[2])
     if s == 1
-        text!(ax_u[2], +0.18, -40.0, text="u")
+        text!(ax_u[2], +0.18, -50.0, text="u")
         text!(ax_u[2], -0.2, -130.0, text="v")
     else
-        text!(ax_u[2], +0.09, -27.0, text="u")
+        text!(ax_u[2], +0.09, -35.0, text="u")
         text!(ax_u[2], -0.06, -30.0, text="v")
+    end
+
+    text!(ax_b[1], 0.03905, -185, text="(a)")
+    text!(ax_b[2], 0.03905, -185, text="(b)")
+    text!(ax_b[3], 0.03905, -185, text="(c)")
+    text!(ax_b[4], 0.03905, -185, text="(d)")
+    text!(ax_b[5], 0.03905, -185, text="(e)")
+    text!(ax_b[6], 0.03905, -185, text="(f)")
+
+    if suite == "6_hour_suite"
+        text!(ax_u[2], 0.27, -185, text="(g)")
+        text!(ax_u[3], 0.27, -185, text="(h)")
+        text!(ax_u[4], 0.27, -185, text="(i)")
+        text!(ax_u[5], 0.27, -185, text="(j)")
+        text!(ax_u[6], 0.37, -185, text="(k)")
+    else
+        text!(ax_u[2], 0.14, -185, text="(g)")
+        text!(ax_u[3], 0.14, -185, text="(h)")
+        text!(ax_u[4], 0.14, -185, text="(i)")
+        text!(ax_u[5], 0.14, -185, text="(j)")
+        text!(ax_u[6], 0.27, -185, text="(k)")
     end
 
     display(fig)
 
-    save("$(name)_$(suite)_assessment.png", fig)
+    save("$(name)_$(suite)_assessment.pdf", fig)
 end
 

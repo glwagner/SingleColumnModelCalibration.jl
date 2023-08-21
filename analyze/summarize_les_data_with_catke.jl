@@ -1,6 +1,7 @@
 using Oceananigans
 using JLD2
 using GLMakie
+#using CairoMakie
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
@@ -11,7 +12,7 @@ set_theme!(Theme(fontsize=32))
 
 suite = "24_hour_suite"
 n = 70
-ulims = (-0.15, 0.35)
+ulims = (-0.15, 0.4)
 elims = (-1e-4, 4e-3)
 linewidth = 12
 slicesdir = "/Users/gregorywagner/Projects/SingleColumnModelCalibration/data/slices/$suite/"
@@ -90,14 +91,14 @@ ax_b1 = Axis(fig[k-1:k+3, w+1]; xlabel="Buoyancy (m s⁻²)", ylabel="z (m)", xt
 ax_u1 = Axis(fig[k-1:k+3, w+2]; xlabel="Velocities (m s⁻¹)", xticks=[-0.05, 0.0, 0.05])
 ax_e1 = Axis(fig[k-1:k+3, w+3]; xlabel="Turbulent kinetic \n energy (m² s⁻²)", ylabel="z (m)", yaxisposition=:right,
                                 xticks=[0.0, 2e-4, 4e-4], ylabelpadding)
-Label(fig[k-2, w+1:w+3], text="Free convection", textsize=30)
+Label(fig[k-2, w+1:w+3], text="Free convection", fontsize=30)
 
 k2 = k = 1 + Int((h-1)/2)
 ax_b2 = Axis(fig[k-1:k+3, w+1]; xlabel="Buoyancy (m s⁻²)", ylabel="z (m)", ylabelpadding)
 ax_u2 = Axis(fig[k-1:k+3, w+2]; xlabel="Velocities (m s⁻¹)", xticks=[-0.1, 0.0, 0.1, 0.2, 0.3])
 ax_e2 = Axis(fig[k-1:k+3, w+3]; xlabel="Turbulent kinetic \n energy (m² s⁻²)", ylabel="z (m)", yaxisposition=:right,
              xticks=eticks, ylabelpadding)
-Label(fig[k-2, w+1:w+3], text="Strong wind, weak cooling", textsize=30)
+Label(fig[k-2, w+1:w+3], text="Strong wind, weak cooling", fontsize=30)
 
 colsize!(fig.layout, 1, Relative(1/2))
 colgap!(fig.layout, 1, -2200)
@@ -110,7 +111,6 @@ rowgap!(fig.layout, k1+2, 200)
 rowgap!(fig.layout, k2+2, 200)
 rowgap!(fig.layout, k1+3, -50)
 rowgap!(fig.layout, k2+3, -50)
-
 
 w_xy = interior(w_xy_t[n], :, :, 1)
 w_xz = interior(w_xz_t[n], :, 1, :)
@@ -226,7 +226,40 @@ free_parameters = FreeParameters(prior_library; names=parameter_names, dependent
 optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_parameters)
 @show optimal_parameters
 
-grid_parameters = [(size=32, z=(-256, 0))]
+names = keys(optimal_parameters)
+optimal_parameters = Dict(name => optimal_parameters[name] for name in names)
+#optimal_parameters[:Cᵂu★] = 4.0
+#optimal_parameters[:CᵂwΔ] = 0.0
+optimal_parameters[:Cᶜe] = 6.0
+#optimal_parameters[:Cʰⁱe] = 10.0
+optimal_parameters = NamedTuple(name => optimal_parameters[name] for name in names)
+
+optimal_parameters = (
+    Cˢ   = 2.4, # 0.41,
+    Cᵇ   = Inf,
+    Cᶜc  = 1.5,
+    Cᶜe  = 1.2,
+    Cᵉc  = 0.2,
+    Cᵉe  = 0.0,
+    Cˢᵖ  = 0.14,
+    Cˡᵒu = 0.19, # 0.46,
+    Cʰⁱu = 0.086, # 0.21,
+    Cˡᵒc = 0.20, # 0.49,
+    Cʰⁱc = 0.045, # 0.11,
+    Cˡᵒe = 1.9, # 4.5,
+    Cʰⁱe = 0.57, # 1.4,
+    CRiᵟ = 0.45,
+    CRi⁰ = 0.47,
+    # CˡᵒD = 2.3,
+    # CʰⁱD = 6.7,
+    CˡᵒD = 1.1, # 0.43,
+    CʰⁱD = 0.37, # 0.15,
+    CᶜD  = 0.88,
+    Cᵂu★ = 1.1,
+    CᵂwΔ = 4.0,
+)
+
+grid_parameters = [(size=64, z=(-256, 0))]
 suite_parameters = [(name = suite, resolution="1m", stop_time=24hours)]
 
 batched_ip = build_batched_inverse_problem(closure, name;
@@ -270,6 +303,27 @@ axislegend(ax_b2, position=:rb)
 axislegend(ax_b1, position=:rb)
 axislegend(ax_u2, position=:rb)
 
+text!(ax_w1, 400, -100, 50, text="(e)")
+text!(ax_b1, 0.03855, -30, text="(f)")
+text!(ax_u1, -0.1, -30, text="(g)")
+text!(ax_e1, 0.0, -30, text="(h)")
+
+text!(ax_w2, 400, -100, 50, text="(a)")
+text!(ax_b2, 0.03855, -30, text="(b)")
+text!(ax_u2, 0.2, -50, text="(c)")
+text!(ax_e2, 0.0, -30, text="(d)")
+
+xlims!(ax_w1, 0, 512)
+ylims!(ax_w1, 0, 512)
+zlims!(ax_w1, -256, 0)
+
+xlims!(ax_w2, 0, 512)
+ylims!(ax_w2, 0, 512)
+zlims!(ax_w2, -256, 0)
+
+
 display(fig)
 
+#save("les_data_summary_with_catke.pdf", fig)
 save("les_data_summary_with_catke.png", fig)
+

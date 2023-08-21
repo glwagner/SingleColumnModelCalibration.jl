@@ -161,7 +161,11 @@ function collect_calibration_data(name, suffix;
     return data
 end
 
-suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_conservative.jld2"
+#suffix = "Nens4000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_priority_wind_no_rotation.jld2"
+#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_weight_tke.jld2"
+#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_big_weight_tke.jld2"
+#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_conservative.jld2"
+suffix = "Nens4000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_wide_priors.jld2"
 dataset_filename = "calibration_summary_" * suffix
 Nrepeats = 1
 
