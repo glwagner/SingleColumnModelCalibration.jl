@@ -14,7 +14,8 @@ using GLMakie
 set_theme!(Theme(fontsize=24))
 
 name = "variable_Pr_conv_adj"
-suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
+suffix = "Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_bugfix_medium_tight_priors.jld2"
+#suffice="Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 dataset_filename = "calibration_summary_" * suffix
 
 @load dataset_filename dataset

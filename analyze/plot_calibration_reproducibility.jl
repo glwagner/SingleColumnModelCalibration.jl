@@ -13,8 +13,8 @@ using LinearAlgebra
 names = [
     #"constant_Pr_no_shear",
     #"variable_Pr",
-    #"variable_Pr_conv_adj",
-    "ri_based"
+    "variable_Pr_conv_adj",
+    #"ri_based"
 ]
 
 labels_dict = Dict(
@@ -32,7 +32,8 @@ suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_s
 #suffix = "Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 
 suffixes = [
-    "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
+    "Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_bugfix_medium_tight_priors.jld2",
+    #"Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
     #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
     #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
     #"Nens1200_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
