@@ -32,7 +32,9 @@ suffix = "Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_s
 #suffix = "Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 
 suffixes = [
-    "Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_bugfix_medium_tight_priors.jld2",
+    "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2",
+    #"Nens400_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2",
+    #"Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_bugfix_medium_tight_priors.jld2",
     #"Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
     #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
     #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
@@ -42,7 +44,7 @@ suffixes = [
     #"Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 ]
 
-Nrepeats = 5
+Nrepeats = 4
 
 # Extract best parameters
 for n = 1:length(names)
@@ -133,11 +135,11 @@ display(fig)
 
 fig2 = Figure(resolution=(1200, 800))
 
-ax1 = Axis(fig2[1, 1], ylabel="C⁻u, C⁺u", xticks=(tickindices, labels))
-ax2 = Axis(fig2[1, 2], ylabel="C⁻e, C⁺e", xticks=(tickindices, labels))
-ax3 = Axis(fig2[2, 1], ylabel="C⁻c, C⁺c", xticks=(tickindices, labels))
-ax4 = Axis(fig2[2, 2], ylabel="C⁻D, C⁺D", xticks=(tickindices, labels))
-ax5 = Axis(fig2[3, 1], ylabel="Cᵇ", xticks=(tickindices, labels))
+ax1 = Axis(fig2[1, 1], ylabel="Cˡᵒu, Cʰⁱu", xticks=(tickindices, labels))
+ax2 = Axis(fig2[1, 2], ylabel="Cˡᵒe, Cʰⁱe", xticks=(tickindices, labels))
+ax3 = Axis(fig2[2, 1], ylabel="Cˡᵒc, Cʰⁱc", xticks=(tickindices, labels))
+ax4 = Axis(fig2[2, 2], ylabel="CˡᵒD, CʰⁱD", xticks=(tickindices, labels))
+ax5 = Axis(fig2[3, 1], ylabel="Cˢ", xticks=(tickindices, labels))
 ax6 = Axis(fig2[3, 2], ylabel="Cˢ", xticks=(tickindices, labels))
 ax7 = Axis(fig2[4, 1], ylabel="Cᶜ", xticks=(tickindices, labels))
 ax8 = Axis(fig2[4, 2], ylabel="Cᵉ", xticks=(tickindices, labels))
@@ -158,20 +160,20 @@ for n = 1:length(names)
 
     color = (colors[n], 0.6)
 
-    scatter!(ax1, n * ones(Nrepeats), map(C -> C.C⁺u, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-    scatter!(ax1, n * ones(Nrepeats), map(C -> C.C⁺u, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
+    scatter!(ax1, n * ones(Nrepeats), map(C -> C.Cʰⁱu, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+    scatter!(ax1, n * ones(Nrepeats), map(C -> C.Cʰⁱu, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
 
-    scatter!(ax2, n * ones(Nrepeats), map(C -> C.C⁺e, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-    scatter!(ax2, n * ones(Nrepeats), map(C -> C.C⁺e, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
+    scatter!(ax2, n * ones(Nrepeats), map(C -> C.Cʰⁱe, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+    scatter!(ax2, n * ones(Nrepeats), map(C -> C.Cʰⁱe, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
 
-    scatter!(ax3, n * ones(Nrepeats), map(C -> C.C⁺c, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-    scatter!(ax3, n * ones(Nrepeats), map(C -> C.C⁺c, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
+    scatter!(ax3, n * ones(Nrepeats), map(C -> C.Cʰⁱc, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+    scatter!(ax3, n * ones(Nrepeats), map(C -> C.Cʰⁱc, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
 
-    scatter!(ax4, n * ones(Nrepeats), map(C -> C.C⁺D, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-    scatter!(ax4, n * ones(Nrepeats), map(C -> C.C⁺D, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
+    scatter!(ax4, n * ones(Nrepeats), map(C -> C.CʰⁱD, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+    scatter!(ax4, n * ones(Nrepeats), map(C -> C.CʰⁱD, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
 
-    scatter!(ax5, n * ones(Nrepeats), map(C -> C.Cᵇ, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-    scatter!(ax5, n * ones(Nrepeats), map(C -> C.Cᵇ, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
+    scatter!(ax5, n * ones(Nrepeats), map(C -> C.Cˢ, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+    scatter!(ax5, n * ones(Nrepeats), map(C -> C.Cˢ, d[:final_best_parameters]); color, marker=:star5, label=string(name, ", best"))
 
     try
         scatter!(ax6, n * ones(Nrepeats), map(C -> C.Cˢ, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
@@ -180,35 +182,35 @@ for n = 1:length(names)
     end
 
     try
-        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻u, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻u, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.Cˡᵒu, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.Cˡᵒu, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     catch 
-        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺u, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺u, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.Cʰⁱu, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax1, n * ones(Nrepeats) .- 0.25, map(C -> C.Cʰⁱu, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     end
 
     try
-        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻e, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻e, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.Cˡᵒe, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.Cˡᵒe, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     catch 
-        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺e, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺e, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.Cʰⁱe, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax2, n * ones(Nrepeats) .- 0.25, map(C -> C.Cʰⁱe, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     end
 
     try
-        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻c, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻c, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.Cˡᵒc, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.Cˡᵒc, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     catch 
-        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺c, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺c, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.Cʰⁱc, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax3, n * ones(Nrepeats) .- 0.25, map(C -> C.Cʰⁱc, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     end
 
     try
-        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻D, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁻D, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.CˡᵒD, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.CˡᵒD, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     catch 
-        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺D, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
-        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.C⁺D, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
+        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.CʰⁱD, d[:final_mean_parameters]); color, marker=:circle, label=string(name, ", mean"))
+        scatter!(ax4, n * ones(Nrepeats) .- 0.25, map(C -> C.CʰⁱD, d[:final_best_parameters]); color, marker=:star5,  label=string(name, ", best"))
     end
 
     try
