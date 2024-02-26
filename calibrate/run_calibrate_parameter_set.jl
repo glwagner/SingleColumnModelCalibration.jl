@@ -38,10 +38,12 @@ turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
     CᵉD   = 0.0,
     Cᵂu★  = 1.0,
     CᵂwΔ  = 1.0,
+    Cᵂϵ   = 0.0,
 )
 
 mixing_length = MixingLength(
     Cˢ   = Inf, 
+    Cᵇ   = Inf, 
     Cᶜc  = 0.0,
     Cᶜe  = 0.0,
     Cᵉc  = 0.0,
@@ -76,11 +78,11 @@ name = "variable_Pr_conv_adj"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
-architecture = CPU()
+architecture = GPU()
 resample_failure_fraction = 0.1
-stop_pseudotime = 1e3
-max_iterations = 1000
-Nensemble = 400
+stop_pseudotime = 1e4
+max_iterations = Inf
+Nensemble = 4000
 Δt = 10minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()

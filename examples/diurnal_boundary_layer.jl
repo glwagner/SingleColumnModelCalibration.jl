@@ -6,8 +6,8 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
     CATKEVerticalDiffusivity,
     MixingLength
 
-using CairoMakie
-#using GLMakie
+#using CairoMakie
+using GLMakie
 using Printf
 using Statistics
 
@@ -100,6 +100,17 @@ run!(simulation)
 
 set_theme!(Theme(fontsize=22))
 
+#####
+##### Validation against LES
+#####
+
+fig = Figure(resolution=(1400, 1200))
+
+#####
+##### Diagnostics plot
+#####
+
+#=
 fig = Figure(resolution=(1400, 1200))
 
 yticks = [-60, -30, 0]
@@ -223,6 +234,7 @@ text!(axℓt,   δ, 1-ϵ; space, align=lt, text="(j)", color=:gray)
 display(fig)
 
 save("diurnal_boundary_layer.pdf", fig)
+=#
 
 #####
 ##### Diurnal structure
