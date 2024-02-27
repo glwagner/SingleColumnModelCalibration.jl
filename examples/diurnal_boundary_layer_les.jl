@@ -8,8 +8,8 @@ using Statistics
 #=
 Lx = Ly = 256
 Lz = 128
-Nx = Ny = 256
-Nz = 128
+Nx = Ny = 128
+Nz = 64
 
 grid = RectilinearGrid(GPU(),
                        size = (Nx, Ny, Nz),
@@ -35,7 +35,7 @@ closure = AnisotropicMinimumDissipation()
 model = NonhydrostaticModel(; grid, closure,
                             timestepper = :RungeKutta3,
                             buoyancy = BuoyancyTracer(),
-                            advection = WENO(),
+                            advection = WENO(order=9),
                             tracers = :b,
                             boundary_conditions = (; u=u_bcs, b=b_bcs))
 
