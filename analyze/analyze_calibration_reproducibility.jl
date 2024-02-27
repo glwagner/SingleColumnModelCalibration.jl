@@ -167,7 +167,8 @@ end
 #suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_conservative.jld2"
 #suffix = "Nens4000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_wide_priors.jld2"
 #suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
-suffix = "Nens400_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
+#suffix = "Nens400_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
+suffix = "Nens4000_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
 dataset_filename = "calibration_summary_" * suffix
 Nrepeats = 4
 
@@ -179,7 +180,11 @@ names = [
     #"ri_based",
 ]
 
-closure = CATKEVerticalDiffusivity()
+minimum_turbulent_kinetic_energy = 1e-6
+minimum_convective_buoyancy_flux = 1e-11
+closure = CATKEVerticalDiffusivity(; minimum_turbulent_kinetic_energy,
+                                   minimum_convective_buoyancy_flux)
+
 #closure = RiBasedVerticalDiffusivity()
 
 dataset = Dict()

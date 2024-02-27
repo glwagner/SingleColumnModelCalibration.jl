@@ -96,7 +96,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "long_run_bugfix_medium_tight_priors" #"conservative"
+label = "long_run_bugfix_wide_priors" #"conservative"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)
