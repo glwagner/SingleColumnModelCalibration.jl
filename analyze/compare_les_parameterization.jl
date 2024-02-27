@@ -65,7 +65,12 @@ mixing_length = MixingLength(
     CRi⁰ = 0.0,
 )
 
-closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
+minimum_turbulent_kinetic_energy = 1e-6
+minimum_convective_buoyancy_flux = 1e-11
+closure = CATKEVerticalDiffusivity(; mixing_length,
+                                   turbulent_kinetic_energy_equation,
+                                   minimum_turbulent_kinetic_energy,
+                                   minimum_convective_buoyancy_flux)
 closure_label = "CATKE"
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -78,88 +83,14 @@ parameter_names = keys(optimal_parameters)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
 optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_parameters)
 
-optimal_parameters = (
-    Cˢ   = 2.4, # 0.41,
-    Cᵇ   = Inf,
-    Cᶜc  = 1.5,
-    Cᶜe  = 1.2,
-    Cᵉc  = 0.2,
-    Cᵉe  = 0.0,
-    Cˢᵖ  = 0.14,
-    Cˡᵒu = 0.19, # 0.46,
-    Cʰⁱu = 0.086, # 0.21,
-    Cˡᵒc = 0.20, # 0.49,
-    Cʰⁱc = 0.045, # 0.11,
-    Cˡᵒe = 1.9, # 4.5,
-    Cʰⁱe = 0.57, # 1.4,
-    CRiᵟ = 0.45,
-    CRi⁰ = 0.47,
-    # CˡᵒD = 2.3,
-    # CʰⁱD = 6.7,
-    CˡᵒD = 1.1, # 0.43,
-    CʰⁱD = 0.37, # 0.15,
-    CᶜD  = 0.88,
-    Cᵂu★ = 1.1,
-    CᵂwΔ = 4.0,
-)
-
-#=
-optimal_parameters = (
-    Cˢ   = 0.41,
-    Cᵇ   = Inf,
-    Cᶜc  = 1.5,
-    Cᶜe  = 1.2,
-    Cᵉc  = 0.085,
-    Cᵉe  = 0.0,
-    Cˢᵖ  = 0.14,
-    Cˡᵒu = 0.46,
-    Cʰⁱu = 0.21,
-    Cˡᵒc = 0.49,
-    Cʰⁱc = 0.11,
-    Cˡᵒe = 4.5,
-    Cʰⁱe = 1.4,
-    CRiᵟ = 0.45,
-    CRi⁰ = 0.47,
-    # CˡᵒD = 2.3,
-    # CʰⁱD = 6.7,
-    CˡᵒD = 0.43,
-    CʰⁱD = 0.15,
-    CᶜD  = 0.88,
-    Cᵂu★ = 1.1,
-    CᵂwΔ = 4.0,
-)
-=#
-
-#=
-optimal_parameters = (
-    CᵂwΔ = 7.520e+00, 
-    Cᵂu★ = 1.311e+00, 
-    Cʰⁱc = 9.295e-01,
-    Cʰⁱu = 9.838e-01,
-    Cʰⁱe = 3.082e-01,
-    CʰⁱD = 4.268e+00,
-      Cˢ = 8.400e-01,
-    Cˡᵒc = 5.642e-01,
-    Cˡᵒu = 8.394e-01,
-    Cˡᵒe = 1.938e+00,
-    CˡᵒD = 3.329e+00, 
-    CRi⁰ = 6.156e-01,
-    CRiᵟ = 8.687e-02,
-     Cᶜc = 1.139e+00,
-     Cᶜe = 1.596e+00,
-     CᶜD = 1.502e+00,
-     Cᵉc = 5.125e-02,
-     Cˢᵖ = 5.683e-02,
-)
-=#
-
 @show optimal_parameters
 
 # Batch the inverse problems
 grid_parameters = [
     (size=128, z=(-256, 0)),
+    (size=64,  z=(-256, 0)),
     (size=32,  z=(-256, 0)),
-    (size=16,  z=(-256, 0)),
+    #(size=16,  z=(-256, 0)),
 ]
 
 grid_colors = [
@@ -170,17 +101,17 @@ grid_colors = [
 
 suite_parameters = [
     (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
-    #(name = "12_hour_suite", resolution="1m", stop_time=12hours),
+    (name = "12_hour_suite", resolution="1m", stop_time=12hours),
 #    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
-#    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
+    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
 #    (name = "36_hour_suite", resolution="1m", stop_time=36hours),
-#    (name = "48_hour_suite", resolution="1m", stop_time=48hours),
+    (name = "48_hour_suite", resolution="1m", stop_time=48hours),
     (name = "72_hour_suite", resolution="1m", stop_time=72hours),
 ]
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 10minutes,
+                                           Δt = 1minutes,
                                            grid_parameters,
                                            suite_parameters)
 

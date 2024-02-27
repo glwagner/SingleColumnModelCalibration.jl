@@ -168,9 +168,10 @@ end
 #suffix = "Nens4000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_wide_priors.jld2"
 #suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
 #suffix = "Nens400_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
+#suffix = "Nens2000_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
 suffix = "Nens4000_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
 dataset_filename = "calibration_summary_" * suffix
-Nrepeats = 4
+Nrepeats = 1
 
 names = [
     #"constant_Pr_no_shear",

@@ -109,9 +109,9 @@ function build_ensemble_kalman_inversion(closure, name="";
                                          resampler = Resampler(; resample_failure_fraction, acceptable_failure_fraction),
                                          initial_convergence_ratio = 0.7,
                                          mark_failed_particles = ObjectiveLossThreshold(3.0),
-                                         batched_inverse_problem_kw...)
+                                         other_kw...)
 
-    batched_ip = build_batched_inverse_problem(closure, name; Ntimes, grid_parameters, suite_parameters, batched_inverse_problem_kw...)
+    batched_ip = build_batched_inverse_problem(closure, name; Ntimes, grid_parameters, suite_parameters, other_kw...)
     grids = rectilinear_grids_from_parameters(grid_parameters)
     noise_covariances = []
 
