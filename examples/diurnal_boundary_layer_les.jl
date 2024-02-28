@@ -5,11 +5,10 @@ using Oceananigans.Grids: znode
 using Printf
 using Statistics
 
-#=
 Lx = Ly = 256
-Lz = 128
+Lz = 256
 Nx = Ny = 128
-Nz = 64
+Nz = 128
 
 grid = RectilinearGrid(GPU(),
                        size = (Nx, Ny, Nz),
@@ -74,8 +73,8 @@ simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b),
                                                       overwrite_existing = true)
 
 run!(simulation)
-=#
 
+#=
 using GLMakie
 using Oceananigans.Units
 
@@ -112,4 +111,4 @@ lines!(axb0, t ./ hours, interior(Bt, 1, 1, Nz, :))
 contourf!(axb, t ./ hours, z, interior(Bt, 1, 1, :, :)')
 ylims!(ax, -65, 0)
 display(fig)
-
+=#

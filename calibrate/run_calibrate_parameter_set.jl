@@ -21,6 +21,7 @@ grid_parameters = [
     #(size=16, z=(-256, 0)),
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
+    (size=128, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -96,7 +97,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "long_run_bugfix_wide_priors" #"conservative"
+label = "high_res_tuned_priors" #"conservative"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)
