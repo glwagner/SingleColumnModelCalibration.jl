@@ -15,10 +15,7 @@ using ParameterEstimocean.Parameters: build_parameters_named_tuple
 using Printf
 using JLD2
 using LinearAlgebra
-
-#using GLMakie
 using CairoMakie
-#using ElectronDisplay
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
@@ -38,6 +35,8 @@ dir = "../parameters"
 #name = "constant_Pr_conv_adj"
 name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
+
+# suffix = ""
 
 turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
     CˡᵒD   = 1.0,
@@ -87,10 +86,10 @@ optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_param
 
 # Batch the inverse problems
 grid_parameters = [
-    (size=128, z=(-256, 0)),
+    (size=256, z=(-256, 0)),
     (size=64,  z=(-256, 0)),
-    (size=32,  z=(-256, 0)),
-    #(size=16,  z=(-256, 0)),
+    #(size=32,  z=(-256, 0)),
+    (size=16,  z=(-256, 0)),
 ]
 
 grid_colors = [
@@ -111,7 +110,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 1minutes,
+                                           Δt = 10minutes,
                                            grid_parameters,
                                            suite_parameters)
 
@@ -280,6 +279,6 @@ for (s, suite) in enumerate(suite_names)
 
     display(fig)
 
-    save("$(name)_$(suite)_assessment.pdf", fig)
+    save("$(name)_$(suite)_assessment_$(suffix)_conservative.pdf", fig)
 end
 

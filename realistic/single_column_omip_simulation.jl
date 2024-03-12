@@ -4,6 +4,7 @@ using Oceananigans.BuoyancyModels: buoyancy_frequency
 using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: MixingLength
 using Oceananigans.Fields: interpolate!
+using Oceananigans.Coriolis: Ω_Earth #fᶠᶠᵃ
 
 using ClimaOcean
 using ClimaOcean.DataWrangling.ECCO2: ecco2_column
@@ -43,10 +44,19 @@ function single_column_simulation(location;
     λ★, φ★ = locations[location]
     i★, j★, longitude, latitude = ecco2_column(λ★, φ★)
 
+    #=
     grid = LatitudeLongitudeGrid(arch; longitude, latitude,
                                  size = (1, 1, Nz),
                                  z = (-Lz, 0),
                                  topology = (Periodic, Periodic, Bounded))
+    =#
+
+    grid = RectilinearGrid(arch;
+                           size = (1, 1, Nz),
+                           x = longitude,
+                           y = latitude,
+                           z = (-Lz, 0),
+                           topology = (Periodic, Periodic, Bounded))
 
     # Build the ocean model
     top_ocean_heat_flux          = Qᵀ = Field{Center, Center, Nothing}(grid)
@@ -61,19 +71,21 @@ function single_column_simulation(location;
 
     teos10 = TEOS10EquationOfState()
     buoyancy = SeawaterBuoyancy(equation_of_state=teos10)
+    coriolis = FPlane(f = 2Ω_Earth * sind(φ★))
 
     mixing_length = MixingLength(Cᵇ=0.01)
     closure = CATKEVerticalDiffusivity(; mixing_length,
                                        minimum_turbulent_kinetic_energy = 1e-6,
                                        minimum_convective_buoyancy_flux = 1e-11)
 
-    ocean_model = HydrostaticFreeSurfaceModel(; grid, buoyancy, closure,
+    ocean_model = HydrostaticFreeSurfaceModel(; grid, buoyancy, closure, coriolis,
                                               tracers = (:T, :S, :e),
                                               tracer_advection = nothing,
                                               momentum_advection = nothing,
-                                              free_surface = SplitExplicitFreeSurface(cfl=0.7; grid),
-                                              boundary_conditions = ocean_boundary_conditions,
-                                              coriolis = HydrostaticSphericalCoriolis())
+                                              #free_surface = SplitExplicitFreeSurface(cfl=0.7; grid),
+                                              boundary_conditions = ocean_boundary_conditions)
+
+    @show ocean_model
 
     ocean = Simulation(ocean_model; Δt=2minutes, verbose=false)
 
@@ -143,21 +155,28 @@ function single_column_simulation(location;
     N² = buoyancy_frequency(ocean.model)
     κc = ocean.model.diffusivity_fields.κᶜ
 
-    fluxes = (; τx, τy, E, JS, Q, Qc, Qv)
-
+    fluxes = (; Ju, Jv, JS, JT, τx, τy, E, Q, Qc, Qv)
     auxiliary_fields = (; N², κc)
     fields = merge(ocean.model.velocities, ocean.model.tracers, auxiliary_fields)
+
+    function init(file, model)
+        file["ρₒ"] = ρₒ
+        file["cₚ"] = cₚ
+        file["f₀"] = model.coriolis.f
+        file["latitude"] = latitude
+        file["longitude"] = longitude
+    end
 
     # Slice fields at the surface
     outputs = merge(fields, fluxes)
 
     output_attributes = Dict{String, Any}(
         "κc"  => Dict("long_name" => "Tracer diffusivity",          "units" => "m^2 / s"),
-        "Q"   => Dict("long_name" => "Net heat flux",               "units" => "W / m^2", "convention" => "positive upwards"),
-        "Qv"  => Dict("long_name" => "Latent heat flux",            "units" => "W / m^2", "convention" => "positive upwards"),
-        "Qc"  => Dict("long_name" => "Sensible heat flux",          "units" => "W / m^2", "convention" => "positive upwards"),
+        "Q"   => Dict("long_name" => "Net heat flux",               "units" => "W / m^2",      "convention" => "positive upwards"),
+        "Qv"  => Dict("long_name" => "Latent heat flux",            "units" => "W / m^2",      "convention" => "positive upwards"),
+        "Qc"  => Dict("long_name" => "Sensible heat flux",          "units" => "W / m^2",      "convention" => "positive upwards"),
         "Js"  => Dict("long_name" => "Salt flux",                   "units" => "g kg⁻¹ m s⁻¹", "convention" => "positive upwards"),
-        "E"   => Dict("long_name" => "Freshwater evaporation flux", "units" => "m s⁻¹", "convention" => "positive upwards"),
+        "E"   => Dict("long_name" => "Freshwater evaporation flux", "units" => "m s⁻¹",        "convention" => "positive upwards"),
         "e"   => Dict("long_name" => "Turbulent kinetic energy",    "units" => "m^2 / s^2"),
         "τx"  => Dict("long_name" => "Zonal momentum flux",         "units" => "m^2 / s^2"),
         "τx"  => Dict("long_name" => "Meridional momentum flux",    "units" => "m^2 / s^2"),
@@ -165,7 +184,7 @@ function single_column_simulation(location;
 
     filename = "single_column_omip_$location"
 
-    coupled_simulation.output_writers[:jld2] = JLD2OutputWriter(ocean.model, outputs; filename,
+    coupled_simulation.output_writers[:jld2] = JLD2OutputWriter(ocean.model, outputs; filename, init,
                                                                 schedule = TimeInterval(1hours),
                                                                 overwrite_existing = true)
 

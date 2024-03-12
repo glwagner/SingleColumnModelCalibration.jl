@@ -14,6 +14,11 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
+#suffix = "Nens2000_Δt300_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_time_step_experiments.jld2"
+#suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_time_step_experiments.jld2"
+suffix = "Nens4000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_inverted_dissipation_stability.jld2"
+Nrepeats = 1
+
 function eki_objective(y, G, Γ⁻¹²)
     Nens = size(G, 2)
     Φ = [norm(Γ⁻¹² * (y .- view(G, :, k)))^2 / 2 for k = 1:Nens]
@@ -161,17 +166,7 @@ function collect_calibration_data(name, suffix;
     return data
 end
 
-#suffix = "Nens4000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_priority_wind_no_rotation.jld2"
-#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_weight_tke.jld2"
-#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_big_weight_tke.jld2"
-#suffix = "Nens1000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_conservative.jld2"
-#suffix = "Nens4000_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_wide_priors.jld2"
-#suffix = "Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
-#suffix = "Nens400_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
-suffix = "Nens2000_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
-suffix = "Nens4000_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2"
 dataset_filename = "calibration_summary_" * suffix
-Nrepeats = 1
 
 names = [
     #"constant_Pr_no_shear",
@@ -235,4 +230,7 @@ end
 
 # Save summary data
 @save dataset_filename dataset
+
+include("plot_calibration_reproducibility.jl")
+include("compare_les_parameterization.jl")
 

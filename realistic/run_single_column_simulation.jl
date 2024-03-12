@@ -10,12 +10,14 @@ include("single_column_omip_simulation.jl")
 #    :weddell_sea
 #    :tasman_southern_ocean
 
-simulation = single_column_simulation(:north_atlantic)
+#for location in (:north_atlantic, :ocean_station_papa)
+for location in (:ocean_station_papa,)
+    simulation = single_column_simulation(location)
+    jld2_output_writer = simulation.output_writers[:jld2]
+    jld2_filepath = jld2_output_writer.filepath
 
-jld2_output_writer = simulation.output_writers[:jld2]
-jld2_filepath = jld2_output_writer.filepath
+    @info "Writing data to $jld2_filepath"
 
-@info "Writing data to $jld2_filepath"
-
-run!(simulation)
+    run!(simulation)
+end
 

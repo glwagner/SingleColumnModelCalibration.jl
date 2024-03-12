@@ -28,23 +28,8 @@ labels_dict = Dict(
 
 labels = [labels_dict[n] for n in names]
 
-suffixes = [
-    "Nens4000_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2",
-    #"Nens2000_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2",
-    #"Nens1000_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2",                
-    #"Nens400_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2",
-    #"Nens400_Δt600_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_long_run_bugfix_medium_tight_priors.jld2",
-    #"Nens100_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_bugfix_medium_tight_priors.jld2",
-    #"Nens600_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
-    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
-    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite",
-    #"Nens1200_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
-    #"Nens400_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2",
-    #"Nens1200_Δt1200_τ1000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
-]
-
-Nrepeats = 1
+suffixes = [suffix]
+# Nrepeats = 1
 
 # Extract best parameters
 for n = 1:length(names)

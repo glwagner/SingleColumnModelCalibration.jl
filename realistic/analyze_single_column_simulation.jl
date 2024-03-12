@@ -1,12 +1,30 @@
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Utils: Time
+using ClimaOcean
+using ClimaOcean.DataWrangling.ECCO2: ecco2_column
 using GLMakie
 using Printf
 using Dates
+using JLD2
 
-location = :ocean_station_papa
+# Determine the simulation location
+locations = (
+    eastern_mediterranean = (λ =  30, φ = 32),
+    ocean_station_papa    = (λ = 215, φ = 50),
+    north_atlantic        = (λ = 325, φ = 50),
+    drake_passage         = (λ = 300, φ = -60),
+    weddell_sea           = (λ = 325, φ = -70),
+    tasman_southern_ocean = (λ = 145, φ = -55),
+)
+
+#location = :ocean_station_papa
+location = :north_atlantic
 filename = "single_column_omip_$location.jld2"
+
+file = jldopen(filename)
+ρₒ = file["ρₒ"]
+close(file)
 
 ut  = FieldTimeSeries(filename, "u")
 vt  = FieldTimeSeries(filename, "v")
@@ -27,6 +45,8 @@ Et  = FieldTimeSeries(filename, "E")
 Nz = size(Tt, 3)
 times = Qt.times
 
+λ★, φ★ = locations[location]
+i★, j★, longitude, latitude = ecco2_column(λ★, φ★)
 forcing_days = 60
 backend = JRA55NetCDFBackend(8 * forcing_days)
 atmosphere = JRA55_prescribed_atmosphere(Colon(); longitude, latitude, backend)
@@ -92,7 +112,6 @@ colors = Makie.wong_colors()
 #lines!(axu, times, uat, color=colors[1])
 #lines!(axu, times, vat, color=colors[2])
 
-ρₒ = coupled_model.fluxes.ocean_reference_density
 Jut = interior(τxt, 1, 1, 1, :) ./ ρₒ
 Jvt = interior(τyt, 1, 1, 1, :) ./ ρₒ
 u★ = @. (Jut^2 + Jvt^2)^(1/4)
