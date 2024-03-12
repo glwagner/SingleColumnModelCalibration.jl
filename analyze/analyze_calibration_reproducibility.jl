@@ -14,10 +14,25 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-#suffix = "Nens2000_Δt300_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_time_step_experiments.jld2"
-#suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_time_step_experiments.jld2"
 suffix = "Nens4000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_inverted_dissipation_stability.jld2"
 Nrepeats = 1
+
+dataset_filename = "calibration_summary_" * suffix
+
+names = [
+    #"constant_Pr_no_shear",
+    #"variable_Pr",
+    "variable_Pr_conv_adj",
+    #"fixed_Ric",
+    #"ri_based",
+]
+
+minimum_turbulent_kinetic_energy = 1e-6
+minimum_convective_buoyancy_flux = 1e-11
+closure = CATKEVerticalDiffusivity(; minimum_turbulent_kinetic_energy,
+                                   minimum_convective_buoyancy_flux)
+
+#closure = RiBasedVerticalDiffusivity()
 
 function eki_objective(y, G, Γ⁻¹²)
     Nens = size(G, 2)
@@ -166,23 +181,8 @@ function collect_calibration_data(name, suffix;
     return data
 end
 
-dataset_filename = "calibration_summary_" * suffix
-
-names = [
-    #"constant_Pr_no_shear",
-    #"variable_Pr",
-    "variable_Pr_conv_adj",
-    #"fixed_Ric",
-    #"ri_based",
-]
-
-minimum_turbulent_kinetic_energy = 1e-6
-minimum_convective_buoyancy_flux = 1e-11
-closure = CATKEVerticalDiffusivity(; minimum_turbulent_kinetic_energy,
-                                   minimum_convective_buoyancy_flux)
-#closure = RiBasedVerticalDiffusivity()
-
 dataset = Dict()
+
 for n = 1:length(names)
     name = names[n]
     data = collect_calibration_data(name, suffix; closure, Nrepeats, dir="../results")
