@@ -10,8 +10,11 @@ Lz = 256
 Nx = Ny = 128
 Nz = 128
 
+prefix = "diurnal_boundary_layer_les_Nx$(Nx)_Nz$(Nz)"
+
 grid = RectilinearGrid(GPU(),
                        size = (Nx, Ny, Nz),
+                       halo = (5, 5, 5),
                        x = (0, Lx),
                        y = (0, Ly),
                        z = (-Lz, 0),
@@ -55,7 +58,7 @@ start_time = Ref(time_ns())
 function progress(sim)
     elapsed = time_ns() - start_time[]
     msg = @sprintf("Iter: %d, time: %s, wall time: %s, max|w|: %.2e",
-                   iteration(sim), prettytime(sim), prettytime(1e-9 * elapsed), maximum(abs, w))
+                   iteration(sim), prettytime(sim), prettytime(1e-9 * elapsed), maximum(abs, interior(w)))
     start_time[] = time_ns()
     @info msg
 end
@@ -64,51 +67,13 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(10))
 
 simulation.output_writers[:avg] = JLD2OutputWriter(model, (; U, B),
                                                    schedule = TimeInterval(10minutes),
-                                                   filename = "diurnal_boundary_layer_les_averages.jld2",
+                                                   filename = prefix * "_averages.jld2",
                                                    overwrite_existing = true)
 
 simulation.output_writers[:fields] = JLD2OutputWriter(model, (; u, v, w, b),
                                                       schedule = TimeInterval(2hours),
-                                                      filename = "diurnal_boundary_layer_les_fields.jld2",
+                                                      filename = prefix * "_fields.jld2",
                                                       overwrite_existing = true)
 
 run!(simulation)
 
-#=
-using GLMakie
-using Oceananigans.Units
-
-filename = "diurnal_boundary_layer_les_averages.jld2"
-Bt = FieldTimeSeries(filename, "B")
-
-t = Bt.times
-Nt = length(t)
-x, y, z = nodes(Bt)
-Nx, Ny, Nz = size(Bt.grid)
-
-# Compute mixed layer depth
-h = zeros(Nt)
-Δb = 1e-4
-for n = 1:Nt
-    # Surface buoyancy
-    b₀ = Bt[1, 1, Nz, n]
-    for k = Nz-1:-1:1
-        bk = Bt[1, 1, k, n]
-        # b is _decreasing_ downward
-        if (b₀ - bk) >= Δb || k == 1
-            h[n] = - z[k]
-            break
-        end
-    end
-end
-
-fig = Figure()
-axh = Axis(fig[1, 1])
-axb0 = Axis(fig[2, 1])
-axb = Axis(fig[3, 1])
-lines!(axh, t ./ hours, h)
-lines!(axb0, t ./ hours, interior(Bt, 1, 1, Nz, :))
-contourf!(axb, t ./ hours, z, interior(Bt, 1, 1, :, :)')
-ylims!(ax, -65, 0)
-display(fig)
-=#
