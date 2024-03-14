@@ -1,116 +1,18 @@
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: znode
-
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
-    CATKEVerticalDiffusivity,
-    MixingLength
+using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 
 #using CairoMakie
 using GLMakie
 using Printf
 using Statistics
 
-Lz = 80
-Δz = 4
-Nz = round(Int, Lz/Δz)
-
-grid = RectilinearGrid(size=Nz, z=(-Lz, 0), topology=(Flat, Flat, Bounded))
-
-Qᵘ = -4e-5
-const ω = 2π / 1day
-Q₀ = 4e-7
-ϕ₀ = π
-Qᵇ(x, y, t) = Q₀ * min(sin(ω * t + ϕ₀), 1/4)
-
-top_b_bc = FluxBoundaryCondition(Qᵇ)
-b_bcs = FieldBoundaryConditions(top=top_b_bc)
-
-top_u_bc = FluxBoundaryCondition(Qᵘ)
-u_bcs = FieldBoundaryConditions(top=top_u_bc)
-
-closure = CATKEVerticalDiffusivity()
-
-model = HydrostaticFreeSurfaceModel(; grid, closure,
-                                    buoyancy = BuoyancyTracer(),
-                                    tracers = (:b, :e),
-                                    boundary_conditions = (; u=u_bcs, b=b_bcs))
-
-N² = 1e-5
-h₀ = 10 # initial mixed layer depth
-#bᵢ(x, y, z) = min(N² * h₀, N² * z)
-bᵢ(x, y, z) = N² * z
-set!(model, b=bᵢ, e=1e-6)
-simulation = Simulation(model, Δt=1minutes, stop_time=4.5days)
-
-include("tracer_length_scale_operations.jl")
-
-bt = []
-ut = []
-et = []
-ℓᶜsheart = []
-ℓᶜconvt = []
-ℓᶜtotalt = []
-κct = []
-N²t = []
-
-b = model.tracers.b
-e = model.tracers.e
-u = model.velocities.u
-κc = model.diffusivity_fields.κᶜ
-
-N² = Field(∂z(b))
-ℓᶜshear_op = tracer_stable_length_scale_operation(model)
-ℓᶜconv_op = tracer_convective_length_scale_operation(model)
-ℓᶜtotal_op = tracer_mixing_length_operation(model)
-
-ℓᶜshear = Field(ℓᶜshear_op)
-ℓᶜconv = Field(ℓᶜconv_op)
-ℓᶜtotal = Field(ℓᶜtotal_op)
-
-function collect_data(sim)
-    compute!(ℓᶜshear)
-    compute!(ℓᶜconv)
-    compute!(ℓᶜtotal)
-    compute!(N²)
-
-    push!(bt,  deepcopy(interior(b, 1, 1, :)))
-    push!(ut,  deepcopy(interior(u, 1, 1, :)))
-    push!(et,  deepcopy(interior(e, 1, 1, :)))
-    push!(κct, deepcopy(interior(κc, 1, 1, 2:Nz)))
-    push!(N²t, deepcopy(interior(N², 1, 1, :)))
-
-    push!(ℓᶜsheart, deepcopy(interior(ℓᶜshear, 1, 1, 2:Nz)))
-    push!(ℓᶜconvt,  deepcopy(interior(ℓᶜconv,  1, 1, 2:Nz)))
-    push!(ℓᶜtotalt, deepcopy(interior(ℓᶜtotal, 1, 1, 2:Nz)))
-
-    return nothing
-end
-
-simulation.callbacks[:dc] = Callback(collect_data, IterationInterval(1))
-
-t = 0:simulation.Δt:simulation.stop_time
-Nt = length(t)
-
-run!(simulation)
-
-#####
-##### Diurnal boundary layer
-#####
-
-set_theme!(Theme(fontsize=22))
-
-#####
-##### Validation against LES
-#####
-
-fig = Figure(resolution=(1400, 1200))
 
 #####
 ##### Diagnostics plot
 #####
 
-#=
 fig = Figure(resolution=(1400, 1200))
 
 yticks = [-60, -30, 0]
@@ -127,12 +29,12 @@ axℓ = Axis(fig[4, 3]; xlabel="Time (hours)", ylabel="z (m)", yaxisposition=:ri
 axℓt = Axis(fig[5, 3], xlabel="Time (hours)", yscale=log10, ylabel="max ℓᶜ \n (m)", yaxisposition=:right,
             yticks=([0.1, 1, 20], ["0.1", "1", "20"]))
 
-axQ1 = Axis(fig[0, 3], xlabel="Time (hours)", ylabel="Qᵇ \n (m² s⁻³)",
+axQ1 = Axis(fig[0, 3], xlabel="Time (hours)", ylabel="Jᵇ \n (m² s⁻³)",
             yticks=([-4e-7, 0, 1e-7], ["-4×10⁻⁷", "\n 0", "10⁻⁷"]),
             xticks=0:24:(6*24),
             xaxisposition=:top, yaxisposition=:right)
 
-lines!(axQ1, t ./ hour, Qᵇ.(0, 0, t))
+lines!(axQ1, t ./ hour, Jᵇ.(0, 0, t))
 
 ylims!(axℓt, 7e-2, 100)
 
@@ -163,6 +65,7 @@ zf = znodes(grid, Face())
 
 #cr = contourf!(axN, t ./ hour, zf, Nzt, levels=8, colormap=:viridis)
 #Colorbar(fig[1, 4], cr, label="N² (s⁻²)", ticks=([0, 3e-5, 6e-5], ["0", "3×10⁻⁵", "6×10⁻⁵"]))
+
 cr = contourf!(axN, t ./ hour, zc, bzt, levels=12, colormap=:viridis)
 Colorbar(fig[1, 4], cr, label="b (m s⁻²)") #, ticks=([0, 3e-5, 6e-5], ["0", "3×10⁻⁵", "6×10⁻⁵"]))
 
@@ -258,7 +161,7 @@ for c in (color1, color2, color3)
     push!(kws, kw)
 end
 
-axq = Axis(fig[1, 1]; ylabel="Qᵇ (m² s⁻³)", yticks=([0, 1e-7], ["0", "10⁻⁷"]), ylabelpadding=20, xaxisposition=:top, kws[1]...)
+axq = Axis(fig[1, 1]; ylabel="Jᵇ (m² s⁻³)", yticks=([0, 1e-7], ["0", "10⁻⁷"]), ylabelpadding=20, xaxisposition=:top, kws[1]...)
 axe = Axis(fig[2, 1]; ylabel="⟨e⟩ (m² s⁻²)", yticks=([0, 1e-4], ["0", "10⁻⁴"]), yaxisposition=:right, kws[2]...)
 axκ = Axis(fig[3, 1]; ylabel="⟨κᶜ⟩ (m² s⁻¹)", yticks=[0.0, 0.1], xaxisposition=:bottom, kws[3]...)
 
@@ -267,7 +170,7 @@ e_mean = [mean(e) for e in et]
 
 κ_max = maximum(κ_mean)
 
-lines!(axq, t ./ hour, Qᵇ.(0, 0, t), linewidth=4, color=color1)
+lines!(axq, t ./ hour, Jᵇ.(0, 0, t), linewidth=4, color=color1)
 lines!(axe, t ./ hour, e_mean,       linewidth=4, color=color2)
 lines!(axκ, t ./ hour, κ_mean,       linewidth=4, color=color3)
 
@@ -285,7 +188,7 @@ hidexdecorations!(axκ, label=false, ticklabels=false, ticks=false)
 
 #lines!(axt, t ./ hour, e_mean ./ maximum(e_mean))
 #lines!(axt, t ./ hour, κ_mean ./ maximum(κ_mean))
-#lines!(axt, t ./ hour, max.(0.0, Qᵇ.(0, 0, t) ./ 1e-7))
+#lines!(axt, t ./ hour, max.(0.0, Jᵇ.(0, 0, t) ./ 1e-7))
 
 axb = Axis(fig[3, 1])
 hidespines!(axb)
@@ -317,4 +220,3 @@ display(fig)
 
 save("diurnal_mixing_length_memory.pdf", fig)
 
-=#

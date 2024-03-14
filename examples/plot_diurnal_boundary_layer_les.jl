@@ -27,11 +27,15 @@ for n = 1:Nt
 end
 
 fig = Figure()
+
 axh = Axis(fig[1, 1])
 axb0 = Axis(fig[2, 1])
 axb = Axis(fig[3, 1])
+
 lines!(axh, t ./ hours, h)
 lines!(axb0, t ./ hours, interior(Bt, 1, 1, Nz, :))
 contourf!(axb, t ./ hours, z, interior(Bt, 1, 1, :, :)')
-ylims!(ax, -65, 0)
+
+ylims!(axb, -65, 0)
+
 display(fig)
