@@ -9,7 +9,10 @@ Lz = 512
 Nx = 256
 Nz = 512
 
-grid = RectilinearGrid(size=(Nx, Nz), x=(0, Lx), z=(-Lz/2, Lz/2), topology=(Periodic, Flat, Bounded))
+grid = RectilinearGrid(size = (Nx, Nz),
+                       x = (0, Lx),
+                       z = (-Lz/2, Lz/2),
+                       topology=(Periodic, Flat, Bounded))
 
 # Ri = N² / (U/d)^2
 # → U² = d² * N² / Ri
@@ -27,7 +30,7 @@ const c = Center()
     return (b★(z, p) - b) / p.τ
 end
 
-parameters = (; Ri, τ = 6hour, N² = 1e-6, d=50.0)
+parameters = (; Ri=0.1, τ = 6hour, N² = 1e-6, d=50.0)
 @show U₀(parameters)
 
 u_forcing = Forcing(u_restoring; field_dependencies=:u, parameters)
