@@ -83,8 +83,8 @@ architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = Inf
-Nensemble = 4000
-Δt = 10minutes
+Nensemble = 2000
+Δt = 5minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
@@ -97,7 +97,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "inverted_dissipation_stability"
+label = "generalized_stability"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)

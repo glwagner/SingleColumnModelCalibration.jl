@@ -17,6 +17,8 @@ J₀ = 4e-7
 ϕ₀ = π
 N² = 1e-5
 
+filename = "catke_diurnal_boundary_layer_dz$(Δz).jld2"
+
 grid = RectilinearGrid(size=Nz, z=(-Lz, 0), topology=(Flat, Flat, Bounded))
 
 @inline Jᵇ(t, p) = p.J₀ * min(sin(p.ω * t + p.ϕ₀), 1/4)

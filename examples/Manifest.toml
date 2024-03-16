@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "4f0d3cdd9b9fbf866f9620426f785f7c70babe39"
+project_hash = "cd2c23ba3f9b76d480e267cee0dc684ecedf2e7c"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1290,9 +1290,11 @@ version = "0.5.5"
 
 [[deps.Oceananigans]]
 deps = ["Adapt", "CUDA", "Crayons", "CubedSphere", "Dates", "Distances", "DocStringExtensions", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays"]
-git-tree-sha1 = "4672af7242405313743af45168bfce3d87b84b2c"
+git-tree-sha1 = "b96fd2c580202111fbe98343a659c311bb6d4244"
+repo-rev = "glw/k-epsilon"
+repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
-version = "0.90.11"
+version = "0.90.10"
 
     [deps.Oceananigans.extensions]
     OceananigansEnzymeExt = "Enzyme"

@@ -61,19 +61,19 @@ bounds_library[:CˡᵒD] = (0.0, 8.0)
 
 bounds_library[:Cʰⁱc] = (0.0, 4.0)
 bounds_library[:Cʰⁱu] = (0.0, 4.0)
-bounds_library[:Cʰⁱe] = (0.0, 16.0)
-bounds_library[:CʰⁱD] = (0.0, 16.0)
+bounds_library[:Cʰⁱe] = (0.0, 8.0)
+bounds_library[:CʰⁱD] = (0.0, 8.0)
 
 bounds_library[:CRi⁰] = (0.0, 1.0)
 bounds_library[:CRiᵟ] = (0.0, 1.0)
 
 # Convective adjustment parameters
-bounds_library[:Cᶜc]  = (0.0, 16.0)
-bounds_library[:Cᶜe]  = (0.0, 16.0)
-bounds_library[:CᶜD]  = (0.0, 16.0)
-bounds_library[:Cᵉc]  = (0.0, 16.0)
-bounds_library[:Cᵉe]  = (0.0, 16.0)
-bounds_library[:CᵉD]  = (0.0, 16.0)
+bounds_library[:Cᶜc]  = (0.0, 8.0)
+bounds_library[:Cᶜe]  = (0.0, 8.0)
+bounds_library[:CᶜD]  = (0.0, 8.0)
+bounds_library[:Cᵉc]  = (0.0, 8.0)
+bounds_library[:Cᵉe]  = (0.0, 8.0)
+bounds_library[:CᵉD]  = (0.0, 8.0)
 bounds_library[:Cˢᵖ]  = (0.0, 4.0)
 
 # Ri-based
