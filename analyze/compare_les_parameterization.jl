@@ -3,9 +3,9 @@ using Oceananigans.Operators: Δzᶜᶜᶜ
 using Oceananigans.Units
 using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
-    MixingLength,
-    TurbulentKineticEnergyEquation
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
+    CATKEMixingLength,
+    CATKEEquation
 
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem, inverting_forward_map
@@ -38,7 +38,7 @@ name = "variable_Pr_conv_adj"
 
 # suffix = ""
 
-turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
+turbulent_kinetic_energy_equation = CATKEEquation(
     CˡᵒD   = 1.0,
     CʰⁱD   = 1.0,
     CᶜD   = 0.0,
@@ -47,7 +47,7 @@ turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
     CᵂwΔ  = 1.0,
 )
 
-mixing_length = MixingLength(
+mixing_length = CATKEMixingLength(
     Cˢ   = 1.0, 
     Cᶜc  = 0.0,
     Cᶜe  = 0.0,
@@ -110,7 +110,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 10minutes,
+                                           Δt = 5minutes,
                                            grid_parameters,
                                            suite_parameters)
 
