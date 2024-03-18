@@ -6,9 +6,9 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
-    MixingLength,
-    TurbulentKineticEnergyEquation
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
+    CATKEMixingLength,
+    CATKEEquation
 
 using ParameterEstimocean: iterate!
 
@@ -32,7 +32,7 @@ suite_parameters = [
 
 resultsdir = "../results"
 
-turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
+turbulent_kinetic_energy_equation = CATKEEquation(
     CˡᵒD  = 1.0,
     CʰⁱD  = 1.0,
     CᶜD   = 0.0,
@@ -42,7 +42,7 @@ turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
     Cᵂϵ   = 0.0,
 )
 
-mixing_length = MixingLength(
+mixing_length = CATKEMixingLength(
     Cˢ   = Inf, 
     Cᵇ   = Inf, 
     Cᶜc  = 0.0,
@@ -83,7 +83,7 @@ architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = Inf
-Nensemble = 2000
+Nensemble = 1000
 Δt = 5minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
