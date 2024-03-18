@@ -29,6 +29,7 @@ set_theme!(Theme(fontsize=19))
 # closure = RiBasedVerticalDiffusivity()
 # closure_label = "RiBased"
 
+suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth.jld2"
 dir = "../parameters"
 #name = "constant_Pr_no_shear"
 #name = "variable_Pr"
@@ -67,9 +68,9 @@ mixing_length = CATKEMixingLength(
 minimum_turbulent_kinetic_energy = 1e-6
 minimum_convective_buoyancy_flux = 1e-11
 closure = CATKEVerticalDiffusivity(; mixing_length,
-                                   turbulent_kinetic_energy_equation,
-                                   minimum_turbulent_kinetic_energy,
-                                   minimum_convective_buoyancy_flux)
+                                   turbulent_kinetic_energy_equation)
+                                   # minimum_turbulent_kinetic_energy,
+                                   # minimum_convective_buoyancy_flux)
 closure_label = "CATKE"
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -110,7 +111,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 5minutes,
+                                           Δt = 1minutes,
                                            grid_parameters,
                                            suite_parameters)
 
@@ -140,7 +141,7 @@ suite_names = [suite_parameters[s].name for s = 1:length(suite_parameters)]
 
 for (s, suite) in enumerate(suite_names)
 
-    fig = Figure(resolution=(1200, 600))
+    fig = Figure(size=(1200, 600))
 
     i1 = Ngrids*(s-1) + 1
     ip1 = batched_ip[i1]
