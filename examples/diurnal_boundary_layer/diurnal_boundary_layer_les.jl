@@ -23,7 +23,7 @@ grid = RectilinearGrid(GPU(),
                        z = (-Lz, 0),
                        topology = (Periodic, Periodic, Bounded))
 
-Jᵘ = -4e-5
+Jᵘ = -1e-4
 const ω = 2π / 1day
 Q₀ = 4e-7
 ϕ₀ = π
@@ -36,7 +36,7 @@ top_u_bc = FluxBoundaryCondition(Jᵘ)
 u_bcs = FieldBoundaryConditions(top=top_u_bc)
 
 g = 9.81
-kᵖ = 1e-7 * g / abs(Jᵘ)
+kᵖ = 1e-6 * g / abs(Jᵘ)
 stokes_drift = ConstantFluxStokesDrift(grid, Jᵘ, kᵖ)
 #closure = AnisotropicMinimumDissipation()
 

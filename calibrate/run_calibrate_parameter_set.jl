@@ -21,7 +21,7 @@ grid_parameters = [
     (size=24, z=(-256, 0)),
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
-    (size=96, z=(-256, 0)),
+    (size=128, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -63,9 +63,9 @@ mixing_length = CATKEMixingLength(
 minimum_turbulent_kinetic_energy = 1e-6
 minimum_convective_buoyancy_flux = 1e-11
 closure = CATKEVerticalDiffusivity(; mixing_length,
-                                   turbulent_kinetic_energy_equation,
-                                   minimum_turbulent_kinetic_energy,
-                                   minimum_convective_buoyancy_flux)
+                                   turbulent_kinetic_energy_equation)
+#                                   minimum_turbulent_kinetic_energy,
+#                                   minimum_convective_buoyancy_flux)
 
 name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
@@ -83,8 +83,8 @@ architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = Inf
-Nensemble = 1000
-Δt = 5minutes
+Nensemble = 4000
+Δt = 10minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
@@ -97,7 +97,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "generalized_stability"
+label = "convective_depth_default_dimensional"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)

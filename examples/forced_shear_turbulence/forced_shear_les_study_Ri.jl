@@ -4,12 +4,14 @@ using Oceananigans.Grids: znode
 using Printf
 using Statistics
 
+arch = GPU()
 Lx = 256
 Lz = 512
 Nx = 256
 Nz = 512
 
-grid = RectilinearGrid(size = (Nx, Nz),
+grid = RectilinearGrid(arch,
+                       size = (Nx, Nz),
                        x = (0, Lx),
                        z = (-Lz/2, Lz/2),
                        topology=(Periodic, Flat, Bounded))
@@ -20,7 +22,7 @@ grid = RectilinearGrid(size = (Nx, Nz),
 @inline U₀(p) = sqrt(p.N² * p.d^2 / p.Ri)
 @inline u★(z, p) = U₀(p) * tanh(z / p.d)
 @inline b★(z, p) = p.N² * z # p.δ * p.N² * tanh(z / p.δ)
-@inline u_restoring(x, y, z, t, u, p) = (u★(z, p) - u) / p.τ
+@inline u_restoring(x, z, t, u, p) = (u★(z, p) - u) / p.τ
 
 const c = Center()
 
@@ -36,23 +38,23 @@ parameters = (; Ri=0.1, τ = 6hour, N² = 1e-6, d=50.0)
 u_forcing = Forcing(u_restoring; field_dependencies=:u, parameters)
 b_forcing = Forcing(b_restoring; discrete_form=true, parameters)
 
-model = HydrostaticFreeSurfaceModel(; grid,
-                                    advection = WENO(),
-                                    buoyancy = BuoyancyTracer(),
-                                    tracers = :b,
-                                    forcing = (; u=u_forcing, b=b_forcing))
+model = NonhydrostaticModel(; grid,
+                            timestepper = :RungeKutta3,
+                            advection = WENO(),
+                            buoyancy = BuoyancyTracer(),
+                            tracers = :b,
+                            forcing = (; u=u_forcing, b=b_forcing))
 
 
 model.clock.time = 0
 model.clock.iteration = 0
 
-bᵢ(x, y, z) = b★(z, parameters) * (1 + 1e-2 * randn())
-uᵢ(x, y, z) = u★(z, parameters)
+bᵢ(x, z) = b★(z, parameters) * (1 + 1e-2 * randn())
+uᵢ(x, z) = u★(z, parameters) * (1 + 1e-2 * randn())
 set!(model, b=bᵢ, u=uᵢ)
-simulation = Simulation(model, Δt=10.0, stop_time=1day)
+simulation = Simulation(model, Δt=10.0, stop_iteration=10000)
 
-wizard = TimeStepWizard(cfl=0.5, max_change=1.1)
-simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
+conjure_time_step_wizard!(simulation, cfl=0.5, IterationInterval(10))
 
 b = model.tracers.b
 u, v, w = model.velocities
@@ -63,7 +65,7 @@ start_time = Ref(time_ns())
 function progress(sim)
     elapsed = time_ns() - start_time[]
     msg = @sprintf("Iter: %d, time: %s, wall time: %s, max|w|: %.2e",
-                   iteration(sim), prettytime(sim), prettytime(1e-9 * elapsed), maximum(abs, w))
+                   iteration(sim), prettytime(sim), prettytime(1e-9 * elapsed), maximum(abs, interior(w)))
     start_time[] = time_ns()
     @info msg
 end

@@ -912,8 +912,8 @@ version = "3.100.1+0"
 
 [[deps.LESbrary]]
 deps = ["Adapt", "ArgParse", "CUDA", "Glob", "Interpolations", "JLD2", "KernelAbstractions", "Logging", "NCDatasets", "NLsolve", "Oceananigans", "Oceanostics", "OffsetArrays", "OrderedCollections", "Polynomials", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics"]
-git-tree-sha1 = "4c8ecd522af61bc392bf3c2bd5386b7f2fc6e8d4"
-repo-rev = "main"
+git-tree-sha1 = "499cb6bd3db0d7fe85f0218ef9291c14f0fc1bf2"
+repo-rev = "glw/update"
 repo-url = "https://github.com/CliMA/LESbrary.jl.git"
 uuid = "0d21a966-bb61-11e9-3e8e-8da3363c58dd"
 version = "0.1.0"
