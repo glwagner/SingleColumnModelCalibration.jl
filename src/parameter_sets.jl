@@ -4,7 +4,8 @@ parameter_sets = Dict(
     "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ),
 )
 
-conv_adj_names = (:Cᶜc, :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
+#conv_adj_names = (:Cᶜc, :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
+conv_adj_names = (:Cᶜc, :Cᶜe, :CᶜD, :Cˢᵖ)
 
 for set in ["constant_Pr", "variable_Pr"]
     names = parameter_sets[set]
@@ -56,24 +57,24 @@ bounds_library[:Cᵇ]   = (0.0, 4.0)
 
 bounds_library[:Cˡᵒu] = (0.0, 4.0)
 bounds_library[:Cˡᵒc] = (0.0, 4.0)
-bounds_library[:Cˡᵒe] = (0.0, 8.0)
-bounds_library[:CˡᵒD] = (0.0, 8.0)
+bounds_library[:Cˡᵒe] = (0.0, 16.0)
+bounds_library[:CˡᵒD] = (0.0, 16.0)
 
 bounds_library[:Cʰⁱc] = (0.0, 4.0)
 bounds_library[:Cʰⁱu] = (0.0, 4.0)
-bounds_library[:Cʰⁱe] = (0.0, 8.0)
-bounds_library[:CʰⁱD] = (0.0, 8.0)
+bounds_library[:Cʰⁱe] = (0.0, 16.0)
+bounds_library[:CʰⁱD] = (0.0, 16.0)
 
-bounds_library[:CRi⁰] = (0.0, 1.0)
-bounds_library[:CRiᵟ] = (0.0, 1.0)
+bounds_library[:CRi⁰] = (-1.0, 1.0)
+bounds_library[:CRiᵟ] = (0.0, 2.0)
 
 # Convective adjustment parameters
-bounds_library[:Cᶜc]  = (0.0, 8.0)
-bounds_library[:Cᶜe]  = (0.0, 8.0)
-bounds_library[:CᶜD]  = (0.0, 8.0)
-bounds_library[:Cᵉc]  = (0.0, 8.0)
-bounds_library[:Cᵉe]  = (0.0, 8.0)
-bounds_library[:CᵉD]  = (0.0, 8.0)
+bounds_library[:Cᶜc]  = (0.0, 16.0)
+bounds_library[:Cᶜe]  = (0.0, 16.0)
+bounds_library[:CᶜD]  = (0.0, 16.0)
+bounds_library[:Cᵉc]  = (0.0, 4.0)
+bounds_library[:Cᵉe]  = (0.0, 4.0)
+bounds_library[:CᵉD]  = (0.0, 4.0)
 bounds_library[:Cˢᵖ]  = (0.0, 4.0)
 
 # Ri-based
