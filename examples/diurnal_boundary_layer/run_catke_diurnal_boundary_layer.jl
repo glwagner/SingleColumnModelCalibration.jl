@@ -8,7 +8,7 @@ using GLMakie
 using Printf
 using Statistics
 
-Δz = 4
+Δz = 1
 Lz = 256
 Nz = round(Int, Lz/Δz)
 Jᵘ = -4e-5
@@ -40,7 +40,7 @@ bᵢ(z) = N² * z
 set!(model, b=bᵢ, e=1e-6)
 simulation = Simulation(model, Δt=1minutes, stop_time=4.5days)
 
-include("tracer_length_scale_operations.jl")
+include("../tracer_length_scale_operations.jl")
 
 bt = []
 ut = []
@@ -54,7 +54,7 @@ N²t = []
 b = model.tracers.b
 e = model.tracers.e
 u = model.velocities.u
-κc = model.diffusivity_fields.κᶜ
+κc = model.diffusivity_fields.κc
 
 N² = Field(∂z(b))
 ℓᶜshear = tracer_stable_length_scale_operation(model)

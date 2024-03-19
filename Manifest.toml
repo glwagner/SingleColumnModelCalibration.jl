@@ -866,9 +866,13 @@ weakdeps = ["Random", "RecipesBase", "Statistics"]
 
 [[deps.InverseFunctions]]
 deps = ["Test"]
-git-tree-sha1 = "68772f49f54b479fa88ace904f6127f0a3bb2e46"
+git-tree-sha1 = "896385798a8d49a255c398bd49162062e4a4c435"
 uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
-version = "0.1.12"
+version = "0.1.13"
+weakdeps = ["Dates"]
+
+    [deps.InverseFunctions.extensions]
+    DatesExt = "Dates"
 
 [[deps.InvertedIndices]]
 git-tree-sha1 = "0dc7b50b8d436461be01300fd8cd45aa0274b038"
@@ -1489,7 +1493,9 @@ version = "1.52.1+0"
 
 [[deps.ParameterEstimocean]]
 deps = ["BlockDiagonals", "CUDA", "DataDeps", "Distributions", "DocStringExtensions", "EnsembleKalmanProcesses", "GaussianProcesses", "JLD2", "LineSearches", "LinearAlgebra", "MPI", "Oceananigans", "OffsetArrays", "OrderedCollections", "Printf", "ProgressBars", "Random", "SpecialFunctions", "Statistics", "Suppressor"]
-path = "/home/greg/Projects/ParameterEstimocean.jl/"
+git-tree-sha1 = "1770d85a95aa09a87528227c9d3a195913cff1a8"
+repo-rev = "glw/update"
+repo-url = "https://github.com/CliMA/ParameterEstimocean.jl.git"
 uuid = "eca81dc5-87a6-4430-aec8-c76695404a43"
 version = "0.14.4"
 
@@ -2103,9 +2109,9 @@ uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 version = "0.5.23"
 
 [[deps.TranscodingStreams]]
-git-tree-sha1 = "3caa21522e7efac1ba21834a03734c57b4611c7e"
+git-tree-sha1 = "a09c933bebed12501890d8e92946bbab6a1690f1"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.10.4"
+version = "0.10.5"
 weakdeps = ["Random", "Test"]
 
     [deps.TranscodingStreams.extensions]

@@ -11,9 +11,9 @@ function batched_lesbrary_observations(regrid; times, suite,
     Nz = regrid.Nz
     zf = znodes(regrid, Face())
     kb = round(Int, Nz/3) # exclude the bottom third, ie ≈ - 170m
-    kt = findfirst(z -> z > -16, zf) - 1 # exclude the top 16 meters
-    #space = SpaceIndices(z=kb:kt)
-    space = SpaceIndices(z=kb:Nz)
+    kt = findfirst(z -> z > -8, zf) - 1 # exclude the top 8 meters
+    space = SpaceIndices(z=kb:kt)
+    #space = SpaceIndices(z=kb:Nz)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
