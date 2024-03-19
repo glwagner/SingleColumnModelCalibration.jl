@@ -11,7 +11,7 @@ using Statistics
 Δz = 1
 Lz = 256
 Nz = round(Int, Lz/Δz)
-Jᵘ = -4e-5
+Jᵘ = -1e-4
 ω = 2π / 1day
 J₀ = 4e-7
 ϕ₀ = π

@@ -25,11 +25,11 @@ grid = RectilinearGrid(GPU(),
 
 Jᵘ = -1e-4
 const ω = 2π / 1day
-Q₀ = 4e-7
+J₀ = 4e-7
 ϕ₀ = π
-@inline Jᵇ(x, y, t, p) = p.Q₀ * min(sin(p.ω * t + p.ϕ₀), 1/4)
+@inline Jᵇ(x, y, t, p) = p.J₀ * min(sin(p.ω * t + p.ϕ₀), 1/4)
 
-top_b_bc = FluxBoundaryCondition(Jᵇ, parameters=(; ω, ϕ₀, Q₀))
+top_b_bc = FluxBoundaryCondition(Jᵇ, parameters=(; ω, ϕ₀, J₀))
 b_bcs = FieldBoundaryConditions(top=top_b_bc)
 
 top_u_bc = FluxBoundaryCondition(Jᵘ)
