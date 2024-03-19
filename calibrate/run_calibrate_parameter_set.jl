@@ -21,7 +21,7 @@ grid_parameters = [
     # (size=24, z=(-256, 0)),
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
-    #(size=128, z=(-256, 0)),
+    (size=128, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -89,7 +89,7 @@ irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
 eki = build_ensemble_kalman_inversion(closure, name;
-                                      start_time = 2hours,
+                                      start_time = 1hours,
                                       architecture,
                                       Nensemble,
                                       tke_weight = 0.0,
@@ -114,7 +114,6 @@ filepath = filepath[1:end-5] * "_$label.jld2"
 
 while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
     iterate!(eki)
-    @show eki.iteration_summaries[end]
 
     if eki.iteration % 10 == 0
         open(logname, "a") do io
@@ -123,7 +122,7 @@ while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
              write(io, '\n')
         end
 
-        #@show eki.iteration_summaries[end]
+        @show eki.iteration_summaries[end]
     end
 
     if eki.iteration % 100 == 0
