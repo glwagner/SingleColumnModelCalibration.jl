@@ -8,7 +8,7 @@ using GLMakie
 using Printf
 using Statistics
 
-Δz = 1
+Δz = 16
 Lz = 256
 Nz = round(Int, Lz/Δz)
 Jᵘ = -1e-4
@@ -95,6 +95,9 @@ add_callback!(simulation, collect_data, IterationInterval(1))
 
 t = 0:simulation.Δt:simulation.stop_time
 Nt = length(t)
+
+progress(sim) = @info string("Iteration ", iteration(sim), " of ", Nt)
+add_callback!(simulation, progress, IterationInterval(10))
 
 run!(simulation)
 

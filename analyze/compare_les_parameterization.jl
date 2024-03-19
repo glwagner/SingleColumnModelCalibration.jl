@@ -29,7 +29,8 @@ set_theme!(Theme(fontsize=19))
 # closure = RiBasedVerticalDiffusivity()
 # closure_label = "RiBased"
 
-suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth.jld2"
+suffix = "Nens200_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth_default_dimensional_tight_priors.jld2"
+#suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth.jld2"
 dir = "../parameters"
 #name = "constant_Pr_no_shear"
 #name = "variable_Pr"
@@ -111,11 +112,14 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 1minutes,
+                                           Δt = 10minutes,
                                            grid_parameters,
                                            suite_parameters)
 
 forward_run!(batched_ip, [optimal_parameters])
+
+optimal_catke = batched_ip[1].simulation.model.closure[1]
+@save "optimal_catke.jld2" optimal_catke
 
 titles = [
     "Free convection",
