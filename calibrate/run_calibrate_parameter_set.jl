@@ -6,7 +6,6 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-
 using ParameterEstimocean: iterate!
 
 using SingleColumnModelCalibration:
@@ -28,40 +27,6 @@ suite_parameters = [
 ]
 
 resultsdir = "../results"
-
-#=
-using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
-    CATKEMixingLength,
-    CATKEEquation
-
-turbulent_kinetic_energy_equation = CATKEEquation(
-    CˡᵒD  = 1.0,
-    CʰⁱD  = 1.0,
-    CᶜD   = 0.0,
-    CᵉD   = 0.0,
-    Cᵂu★  = 1.0,
-    CᵂwΔ  = 1.0,
-    Cᵂϵ   = 0.0,
-)
-
-mixing_length = CATKEMixingLength(
-    Cˢ   = Inf, 
-    Cᵇ   = Inf, 
-    Cᶜc  = 0.0,
-    Cᶜe  = 0.0,
-    Cᵉc  = 0.0,
-    Cᵉe  = 0.0,
-    Cˢᵖ  = 0.0,
-    Cˡᵒu = 1.0,
-    Cʰⁱu = 1.0,
-    Cˡᵒc = 1.0,
-    Cʰⁱc = 1.0,
-    Cˡᵒe = 1.0,
-    Cʰⁱe = 1.0,
-    CRi⁰ = 0.0,
-    CRiᵟ = 1.0,
-)
-=#
 
 #closure = CATKEVerticalDiffusivity()
 closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-15,

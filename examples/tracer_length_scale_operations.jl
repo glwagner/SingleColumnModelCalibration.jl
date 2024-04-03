@@ -1,4 +1,5 @@
-using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
+#using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
+using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
     tracer_mixing_lengthᶜᶜᶠ,
     stability_functionᶜᶜᶠ,
     stable_length_scaleᶜᶜᶠ,
@@ -12,7 +13,7 @@ function tracer_convective_length_scale_operation(model, closure=model.closure)
     tracers = model.tracers
     buoyancy = model.buoyancy
     clock = model.clock
-    Jᵇ = model.diffusivity_fields.Jᵇ
+    Qᵇ = model.diffusivity_fields.Qᵇ
     top_tracer_bcs = NamedTuple(c => tracers[c].boundary_conditions.top for c in propertynames(tracers))
 
     Cᶜ = closure.mixing_length.Cᶜc
@@ -25,7 +26,7 @@ function tracer_convective_length_scale_operation(model, closure=model.closure)
                                     velocities,
                                     tracers,
                                     buoyancy,
-                                    Jᵇ)
+                                    Qᵇ)
 
     ℓᶜconv = KernelFunctionOperation{Center, Center, Face}(convective_length_scaleᶜᶜᶠ, grid, convective_length_scale_args...)
 
@@ -60,12 +61,12 @@ function tracer_mixing_length_operation(model, closure=model.closure)
     tracers = model.tracers
     buoyancy = model.buoyancy
     clock = model.clock
-    Jᵇ = model.diffusivity_fields.Jᵇ
+    Qᵇ = model.diffusivity_fields.Qᵇ
     #h = model.diffusivity_fields.h
     top_tracer_bcs = NamedTuple(c => tracers[c].boundary_conditions.top for c in propertynames(tracers))
 
     ℓᶜ = KernelFunctionOperation{Center, Center, Face}(tracer_mixing_lengthᶜᶜᶠ, grid,
-                                                       closure, velocities, tracers, buoyancy, Jᵇ)
+                                                       closure, velocities, tracers, buoyancy, Qᵇ)
 
     return ℓᶜ
 end
