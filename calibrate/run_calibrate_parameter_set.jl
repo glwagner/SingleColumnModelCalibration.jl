@@ -6,9 +6,6 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
-    CATKEMixingLength,
-    CATKEEquation
 
 using ParameterEstimocean: iterate!
 
@@ -31,6 +28,11 @@ suite_parameters = [
 ]
 
 resultsdir = "../results"
+
+#=
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
+    CATKEMixingLength,
+    CATKEEquation
 
 turbulent_kinetic_energy_equation = CATKEEquation(
     CˡᵒD  = 1.0,
@@ -56,16 +58,14 @@ mixing_length = CATKEMixingLength(
     Cʰⁱc = 1.0,
     Cˡᵒe = 1.0,
     Cʰⁱe = 1.0,
-    CRi⁰ = 1.0,
-    CRiᵟ = 0.0,
+    CRi⁰ = 0.0,
+    CRiᵟ = 1.0,
 )
+=#
 
-minimum_turbulent_kinetic_energy = 1e-9
-minimum_convective_buoyancy_flux = 1e-15
-closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
-
-#                                   minimum_turbulent_kinetic_energy,
-#                                   minimum_convective_buoyancy_flux)
+#closure = CATKEVerticalDiffusivity()
+closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-15,
+                                   minimum_convective_buoyancy_flux = 1e-15)
 
 name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
@@ -79,11 +79,11 @@ name = "variable_Pr_conv_adj"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
-architecture = CPU()
+architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = Inf
-Nensemble = 400
+Nensemble = 4000
 Δt = 5minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
@@ -98,7 +98,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "convective_depth_default_dimensional_tight_priors"
+label = "negative_Ri"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)
@@ -115,7 +115,7 @@ filepath = filepath[1:end-5] * "_$label.jld2"
 while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
     iterate!(eki)
 
-    if eki.iteration % 10 == 0
+    if eki.iteration % 5 == 0
         open(logname, "a") do io
              show(io, "text/plain", eki.iteration_summaries[end])
              write(io, '\n')
@@ -140,4 +140,4 @@ end
 elapsed = 1e-9 * (time_ns() - start_time)
 
 @info "Calibrating $name parameters took " * prettytime(elapsed)
-=#
+
