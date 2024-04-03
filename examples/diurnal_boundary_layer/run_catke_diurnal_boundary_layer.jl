@@ -7,8 +7,9 @@ using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 using GLMakie
 using Printf
 using Statistics
+using JLD2
 
-Δz = 16
+Δz = 8
 Lz = 256
 Nz = round(Int, Lz/Δz)
 Jᵘ = -1e-4
@@ -29,7 +30,12 @@ b_bcs = FieldBoundaryConditions(top=top_b_bc)
 top_u_bc = FluxBoundaryCondition(Jᵘ)
 u_bcs = FieldBoundaryConditions(top=top_u_bc)
 
-closure = CATKEVerticalDiffusivity()
+#filename = "optimal_catke.jld2"
+@load "optimal_catke.jld2" optimal_catke
+closure = optimal_catke
+#closure = CATKEVerticalDiffusivity()
+
+@show closure
 
 model = HydrostaticFreeSurfaceModel(; grid, closure,
                                     buoyancy = BuoyancyTracer(),
@@ -37,7 +43,7 @@ model = HydrostaticFreeSurfaceModel(; grid, closure,
                                     boundary_conditions = (; u=u_bcs, b=b_bcs))
 
 bᵢ(z) = N² * z
-set!(model, b=bᵢ, e=1e-6)
+set!(model, b=bᵢ, e=1e-9)
 simulation = Simulation(model, Δt=1minutes, stop_time=4.5days)
 
 include("../tracer_length_scale_operations.jl")
@@ -54,7 +60,7 @@ N²t = []
 b = model.tracers.b
 e = model.tracers.e
 u = model.velocities.u
-κc = model.diffusivity_fields.κc
+κc = model.diffusivity_fields.κᶜ
 
 N² = Field(∂z(b))
 ℓᶜshear = tracer_stable_length_scale_operation(model)

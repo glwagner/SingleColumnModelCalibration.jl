@@ -3,9 +3,6 @@ using Oceananigans.Operators: Δzᶜᶜᶜ
 using Oceananigans.Units
 using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 
-using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
-    CATKEMixingLength,
-    CATKEEquation
 
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem, inverting_forward_map
@@ -29,8 +26,6 @@ set_theme!(Theme(fontsize=19))
 # closure = RiBasedVerticalDiffusivity()
 # closure_label = "RiBased"
 
-suffix = "Nens200_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth_default_dimensional_tight_priors.jld2"
-#suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth.jld2"
 dir = "../parameters"
 #name = "constant_Pr_no_shear"
 #name = "variable_Pr"
@@ -39,6 +34,11 @@ name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
 
 # suffix = ""
+
+#=
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
+    CATKEMixingLength,
+    CATKEEquation
 
 turbulent_kinetic_energy_equation = CATKEEquation(
     CˡᵒD   = 1.0,
@@ -65,13 +65,10 @@ mixing_length = CATKEMixingLength(
     CRiᵟ = 1.0,
     CRi⁰ = 0.0,
 )
+=#
 
-minimum_turbulent_kinetic_energy = 1e-6
-minimum_convective_buoyancy_flux = 1e-11
-closure = CATKEVerticalDiffusivity(; mixing_length,
-                                   turbulent_kinetic_energy_equation)
-                                   # minimum_turbulent_kinetic_energy,
-                                   # minimum_convective_buoyancy_flux)
+#closure = CATKEVerticalDiffusivity()
+closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy=1e-15)
 closure_label = "CATKE"
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -112,7 +109,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 10minutes,
+                                           Δt = 1minutes,
                                            grid_parameters,
                                            suite_parameters)
 

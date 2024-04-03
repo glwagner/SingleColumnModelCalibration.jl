@@ -14,13 +14,8 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-#suffix = "Nens4000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_inverted_dissipation_stability.jld2"
-#suffix = "Nens2000_Δt300_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_generalized_stability.jld2"
-#suffix = "Nens2000_Δt300_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_generalized_stability.jld2"
-#suffix = "Nens4000_Δt300_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_generalized_stability_wide_priors.jld2"
-#suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz96_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth.jld2"
-#suffix = "Nens2000_Δt600_τ10000_Nz24_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth_default_dimensional.jld2"
-suffix = "Nens200_Δt600_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_convective_depth_default_dimensional_tight_priors.jld2"
+#suffix = "Nens4000_Δt120_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_negative_Ri.jld2"
+suffix = "Nens2000_Δt300_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_orig_min_tke.jld2"
 Nrepeats = 1
 
 dataset_filename = "calibration_summary_" * suffix
@@ -34,13 +29,6 @@ names = [
 ]
 
 closure = CATKEVerticalDiffusivity()
-
-# minimum_turbulent_kinetic_energy = 1e-6
-# minimum_convective_buoyancy_flux = 1e-11
-# closure = CATKEVerticalDiffusivity(; minimum_turbulent_kinetic_energy,
-#                                    minimum_convective_buoyancy_flux)
-
-#closure = RiBasedVerticalDiffusivity()
 
 function eki_objective(y, G, Γ⁻¹²)
     Nens = size(G, 2)

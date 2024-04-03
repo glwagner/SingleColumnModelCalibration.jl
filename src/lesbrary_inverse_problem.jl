@@ -64,9 +64,9 @@ end
 function lesbrary_inverse_problem(regrid;
                                   free_parameters,
                                   times = [48hours - 10minutes, 48hours],
-                                  Nensemble = 500,
+                                  Nensemble = 100,
                                   observations_resolution = "1m",
-                                  Δt = 10minutes,
+                                  Δt = 5minutes,
                                   field_names = (:b, :e, :u, :v),
                                   closure = CATKEVerticalDiffusivity(),
                                   non_ensemble_closure = nothing,
