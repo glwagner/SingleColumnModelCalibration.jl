@@ -10,8 +10,8 @@ using LESbrary.IdealizedExperiments: ConstantFluxStokesDrift
 
 Lx = Ly = 256
 Lz = 256
-Nx = Ny = 256
-Nz = 256
+Nx = Ny = 128
+Nz = 128
 
 prefix = "wave_averaged_diurnal_boundary_layer_les_Nx$(Nx)_Nz$(Nz)"
 
@@ -36,11 +36,23 @@ top_u_bc = FluxBoundaryCondition(Jᵘ)
 u_bcs = FieldBoundaryConditions(top=top_u_bc)
 
 g = 9.81
-kᵖ = 1e-6 * g / abs(Jᵘ)
+kᵖ = 5e-7 * g / abs(Jᵘ)
 stokes_drift = ConstantFluxStokesDrift(grid, Jᵘ, kᵖ)
 #closure = AnisotropicMinimumDissipation()
 
 @info "Whipping up the Stokes drift..."
+
+a★ = stokes_drift.air_friction_velocity
+ρʷ = stokes_drift.water_density
+ρᵃ = stokes_drift.air_density
+u★ = a★ * sqrt(ρᵃ / ρʷ)
+# La = sqrt(u★ / uˢ)
+#   → uˢ = u★ / La²
+La² = 0.3^2
+uˢ₀ = CUDA.@allowscalar stokes_drift.uˢ[1, 1, grid.Nz]
+ϵ = u★ / (La² * uˢ₀)
+stokes_drift.uˢ    .*= ϵ
+stokes_drift.∂z_uˢ .*= ϵ
 
 uˢ₀ = CUDA.@allowscalar stokes_drift.uˢ[1, 1, grid.Nz]
 a★ = stokes_drift.air_friction_velocity
@@ -48,6 +60,7 @@ a★ = stokes_drift.air_friction_velocity
 ρᵃ = stokes_drift.air_density
 u★ = a★ * sqrt(ρᵃ / ρʷ)
 La = sqrt(u★ / uˢ₀)
+
 @info @sprintf("Air u★: %.4f, water u★: %.4f, λᵖ: %.4f, La: %.3f, Surface Stokes drift: %.4f m s⁻¹",
                 a★, u★, 2π/kᵖ, La, uˢ₀)
 
@@ -63,7 +76,7 @@ bᵢ(x, y, z) = N² * z + 1e-3 * rand() * N² * Lz
 set!(model, b=bᵢ)
 simulation = Simulation(model, Δt=1.0, stop_time=4.5days)
 
-wizard = TimeStepWizard(cfl=0.5, max_change=1.1)
+wizard = TimeStepWizard(cfl=0.3, max_Δt=5.0)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 b = model.tracers.b
@@ -76,7 +89,11 @@ function progress(sim)
     elapsed = time_ns() - start_time[]
     msg = @sprintf("Iter: %d, time: %s, wall time: %s, max|w|: %.2e",
                    iteration(sim), prettytime(sim), prettytime(1e-9 * elapsed), maximum(abs, interior(w)))
+
+    msg *= @sprintf(", Δt: %s", prettytime(sim.Δt))
+
     start_time[] = time_ns()
+
     @info msg
 end
 

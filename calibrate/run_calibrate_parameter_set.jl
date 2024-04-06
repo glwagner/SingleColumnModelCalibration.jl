@@ -63,7 +63,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "negative_Ri"
+label = "conservative"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)
