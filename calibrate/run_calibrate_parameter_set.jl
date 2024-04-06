@@ -28,45 +28,9 @@ suite_parameters = [
 
 resultsdir = "../results"
 
-#=
-using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
-    CATKEMixingLength,
-    CATKEEquation
-
-MixingLength = CATKEMixingLength
-TurbulentKineticEnergyEquation = CATKEEquation
-
-turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(
-    CˡᵒD  = 1.0,
-    CʰⁱD  = 1.0,
-    CᶜD   = 0.0,
-    CᵉD   = 0.0,
-    Cᵂu★  = 1.0,
-    CᵂwΔ  = 1.0,
-    Cᵂϵ   = 0.0,
-)
-
-mixing_length = MixingLength(
-    Cˢ   = Inf, 
-    Cᵇ   = Inf, 
-    Cᶜc  = 0.0,
-    Cᶜe  = 0.0,
-    Cᵉc  = 0.0,
-    Cᵉe  = 0.0,
-    Cˢᵖ  = 0.0,
-    Cˡᵒu = 1.0,
-    Cʰⁱu = 1.0,
-    Cˡᵒc = 1.0,
-    Cʰⁱc = 1.0,
-    Cˡᵒe = 1.0,
-    Cʰⁱe = 1.0,
-    CRi⁰ = 1.0,
-    CRiᵟ = 0.0,
-)
-=#
-
 #closure = CATKEVerticalDiffusivity()
-closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy=1e-15)
+closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-15,
+                                   minimum_convective_buoyancy_flux = 1e-15)
 
 name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
@@ -80,11 +44,11 @@ name = "variable_Pr_conv_adj"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
-architecture = CPU()
+architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
-max_iterations = 1000
-Nensemble = 400
+max_iterations = Inf
+Nensemble = 4000
 Δt = 5minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
@@ -99,7 +63,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "orig"
+label = "negative_Ri"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)
