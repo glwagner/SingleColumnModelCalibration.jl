@@ -29,8 +29,9 @@ suite_parameters = [
 resultsdir = "../results"
 
 #closure = CATKEVerticalDiffusivity()
-closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-15,
-                                   minimum_convective_buoyancy_flux = 1e-15)
+closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-9)
+#closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-15,
+#                                   minimum_convective_buoyancy_flux = 1e-15)
 
 name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
@@ -49,7 +50,7 @@ resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = Inf
 Nensemble = 4000
-Δt = 5minutes
+Δt = 20.0
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
@@ -63,7 +64,7 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "conservative"
+label = "convective_momentum_mixing_min_tke"
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 filename = string(name, "_", irepeat)
