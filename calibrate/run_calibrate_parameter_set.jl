@@ -1,6 +1,7 @@
 using Oceananigans
 using Oceananigans.Units
 using JLD2
+using Printf
 
 using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
@@ -14,7 +15,6 @@ using SingleColumnModelCalibration:
     parameter_sets
 
 grid_parameters = [
-    # (size=24, z=(-256, 0)),
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
     (size=128, z=(-256, 0)),
@@ -28,13 +28,8 @@ suite_parameters = [
 
 resultsdir = "../results"
 
-#closure = CATKEVerticalDiffusivity()
-closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-9)
-#closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy = 1e-15,
-#                                   minimum_convective_buoyancy_flux = 1e-15)
-
-name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
+#
 
 # Other names:
 # "variable_Pr"
@@ -45,17 +40,19 @@ name = "variable_Pr_conv_adj"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
+name = "variable_Pr_conv_adj"
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=10)
 architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = Inf
-Nensemble = 4000
-Δt = 20.0
+Nensemble = 2000
+Δt = 10minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
 eki = build_ensemble_kalman_inversion(closure, name;
-                                      start_time = 1hours,
+                                      start_time = 10minutes,
                                       architecture,
                                       Nensemble,
                                       tke_weight = 0.0,
@@ -64,17 +61,23 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       suite_parameters,
                                       resample_failure_fraction)
 
-label = "convective_momentum_mixing_min_tke"
+Δτ = closure.turbulent_kinetic_energy_time_step
+if isnothing(Δτ)
+    label = "nonsplit_tke_stepping_conservative"
+else
+    label = @sprintf("split_tke_stepping_conservative_dt%d", closure.turbulent_kinetic_energy_time_step)
+end
+
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
-filename = string(name, "_", irepeat)
+prefix = string(name, "_", irepeat)
 filepath = generate_filepath(; Δt,
                              dir = resultsdir,
                              suite_parameters,
                              grid_parameters,
                              stop_pseudotime,
                              Nensemble,
-                             filename)
+                             filename=prefix)
     
 filepath = filepath[1:end-5] * "_$label.jld2"
 
@@ -91,7 +94,7 @@ while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
         @show eki.iteration_summaries[end]
     end
 
-    if eki.iteration % 100 == 0
+    if eki.iteration % 5 == 0
         rm(filepath; force=true)
         
         @info "Saving data to $filepath..."
