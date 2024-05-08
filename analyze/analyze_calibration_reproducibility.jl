@@ -14,8 +14,9 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-#suffix = "Nens4000_Δt120_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_negative_Ri.jld2"
-suffix = "Nens2000_Δt300_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_orig_min_tke.jld2"
+#suffix = "Nens2000_Δt600_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_split_tke_stepping_dt10.jld2"
+#suffix = "Nens100_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_nonsplit_tke_stepping_conservative.jld2"
+suffix = "Nens200_Δt1200_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_48_hour_suite_nonsplit_tke_stepping_conservative.jld2"
 Nrepeats = 1
 
 dataset_filename = "calibration_summary_" * suffix
@@ -28,7 +29,8 @@ names = [
     #"ri_based",
 ]
 
-closure = CATKEVerticalDiffusivity()
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
+#closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy=1e-15)
 
 function eki_objective(y, G, Γ⁻¹²)
     Nens = size(G, 2)

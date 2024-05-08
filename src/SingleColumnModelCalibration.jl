@@ -44,9 +44,9 @@ ecco_vertical_grid = [-256.0,
                          0.0]
 
 cases = ["free_convection",
-         "strong_wind_weak_cooling",
-         "med_wind_med_cooling",
          "weak_wind_strong_cooling",
+         "med_wind_med_cooling",
+         "strong_wind_weak_cooling",
          "strong_wind",
          "strong_wind_no_rotation"]
 

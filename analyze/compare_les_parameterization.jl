@@ -33,42 +33,9 @@ dir = "../parameters"
 name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
 
-# suffix = ""
-
-#=
-using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
-    CATKEMixingLength,
-    CATKEEquation
-
-turbulent_kinetic_energy_equation = CATKEEquation(
-    CˡᵒD   = 1.0,
-    CʰⁱD   = 1.0,
-    CᶜD   = 0.0,
-    CᵉD   = 0.0,
-    Cᵂu★  = 1.0,
-    CᵂwΔ  = 1.0,
-)
-
-mixing_length = CATKEMixingLength(
-    Cˢ   = 1.0, 
-    Cᶜc  = 0.0,
-    Cᶜe  = 0.0,
-    Cᵉc  = 0.0,
-    Cᵉe  = 0.0,
-    Cˢᵖ  = 0.0,
-    Cˡᵒu  = 1.0,
-    Cʰⁱu  = 1.0,
-    Cˡᵒc  = 1.0,
-    Cʰⁱc  = 1.0,
-    Cˡᵒe  = 1.0,
-    Cʰⁱe  = 1.0,
-    CRiᵟ = 1.0,
-    CRi⁰ = 0.0,
-)
-=#
-
-#closure = CATKEVerticalDiffusivity()
-closure = CATKEVerticalDiffusivity(minimum_turbulent_kinetic_energy=1e-15)
+# suffix = "Nens2000_Δt20_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_convective_momentum_mixing_min_tke.jld2"
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=5minute)
+#closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
 closure_label = "CATKE"
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -85,7 +52,8 @@ optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_param
 
 # Batch the inverse problems
 grid_parameters = [
-    (size=256, z=(-256, 0)),
+    #(size=256, z=(-256, 0)),
+    (size=128, z=(-256, 0)),
     (size=64,  z=(-256, 0)),
     #(size=32,  z=(-256, 0)),
     (size=16,  z=(-256, 0)),
@@ -109,7 +77,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 1minutes,
+                                           Δt = 20minutes,
                                            grid_parameters,
                                            suite_parameters)
 

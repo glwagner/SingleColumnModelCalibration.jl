@@ -17,7 +17,7 @@ using SingleColumnModelCalibration:
 grid_parameters = [
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
-    (size=128, z=(-256, 0)),
+    #(size=128, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -41,13 +41,13 @@ resultsdir = "../results"
 # name = "ri_based"
 
 name = "variable_Pr_conv_adj"
-closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=10)
-architecture = GPU()
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing) #1minute)
+architecture = CPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
-max_iterations = Inf
-Nensemble = 2000
-Δt = 10minutes
+max_iterations = 1000
+Nensemble = 200
+Δt = 20minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
@@ -82,7 +82,7 @@ filepath = generate_filepath(; Δt,
 filepath = filepath[1:end-5] * "_$label.jld2"
 
 while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
-    iterate!(eki)
+    @time iterate!(eki)
 
     if eki.iteration % 5 == 0
         open(logname, "a") do io
