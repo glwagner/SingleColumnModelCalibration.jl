@@ -33,9 +33,8 @@ dir = "../parameters"
 name = "variable_Pr_conv_adj"
 #name = "fixed_Ric"
 
-# suffix = "Nens2000_Δt20_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_convective_momentum_mixing_min_tke.jld2"
-closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=5minute)
-#closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
+suffix = "Nens1000_Δt1200_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_split_tke_stepping_conservative_dt60.jld2"
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=1minute)
 closure_label = "CATKE"
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -52,10 +51,8 @@ optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_param
 
 # Batch the inverse problems
 grid_parameters = [
-    #(size=256, z=(-256, 0)),
     (size=128, z=(-256, 0)),
     (size=64,  z=(-256, 0)),
-    #(size=32,  z=(-256, 0)),
     (size=16,  z=(-256, 0)),
 ]
 
@@ -68,9 +65,7 @@ grid_colors = [
 suite_parameters = [
     (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
     (name = "12_hour_suite", resolution="1m", stop_time=12hours),
-#    (name = "18_hour_suite", resolution="1m", stop_time=18hours),
     (name = "24_hour_suite", resolution="1m", stop_time=24hours),
-#    (name = "36_hour_suite", resolution="1m", stop_time=36hours),
     (name = "48_hour_suite", resolution="1m", stop_time=48hours),
     (name = "72_hour_suite", resolution="1m", stop_time=72hours),
 ]

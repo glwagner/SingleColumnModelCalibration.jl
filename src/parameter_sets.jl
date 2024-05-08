@@ -52,31 +52,30 @@ bounds_library[:CᵂwΔ] = (0.0, 8.0)
 bounds_library[:Cᵂu★] = (0.0, 8.0)
 
 # Mixing length parameters
-bounds_library[:Cˢ]   = (0.0, 1.0)
-bounds_library[:Cᵇ]   = (0.0, 1.0)
+bounds_library[:Cˢ]   = (0.0, 2.0)
+bounds_library[:Cᵇ]   = (0.0, 2.0)
 
-bounds_library[:Cˡᵒu] = (0.0, 1.0)
-bounds_library[:Cˡᵒc] = (0.0, 1.0)
+bounds_library[:Cˡᵒu] = (0.0, 2.0)
+bounds_library[:Cˡᵒc] = (0.0, 2.0)
 bounds_library[:Cˡᵒe] = (0.0, 8.0)
 bounds_library[:CˡᵒD] = (0.0, 8.0)
-
-bounds_library[:Cʰⁱc] = (0.0, 1.0)
-bounds_library[:Cʰⁱu] = (0.0, 1.0)
+bounds_library[:Cʰⁱc] = (0.0, 2.0)
+bounds_library[:Cʰⁱu] = (0.0, 2.0)
 bounds_library[:Cʰⁱe] = (0.0, 8.0)
 bounds_library[:CʰⁱD] = (0.0, 8.0)
 
-bounds_library[:CRi⁰] = (0.0, 1.0)
-bounds_library[:CRiᵟ] = (0.0, 1.0)
+bounds_library[:CRi⁰] = (0.0, 2.0)
+bounds_library[:CRiᵟ] = (0.0, 2.0)
 
 # Convective adjustment parameters
 bounds_library[:Cᶜu]  = (0.0, 8.0)
 bounds_library[:Cᶜc]  = (0.0, 8.0)
 bounds_library[:Cᶜe]  = (0.0, 8.0)
 bounds_library[:CᶜD]  = (0.0, 8.0)
-bounds_library[:Cᵉc]  = (0.0, 1.0)
-bounds_library[:Cᵉe]  = (0.0, 1.0)
-bounds_library[:CᵉD]  = (0.0, 1.0)
-bounds_library[:Cˢᵖ]  = (0.0, 1.0)
+bounds_library[:Cᵉc]  = (0.0, 2.0)
+bounds_library[:Cᵉe]  = (0.0, 2.0)
+bounds_library[:CᵉD]  = (0.0, 2.0)
+bounds_library[:Cˢᵖ]  = (0.0, 2.0)
 
 # Ri-based
 bounds_library[:ν₀]  = (0.0, 1.0)

@@ -17,7 +17,7 @@ using SingleColumnModelCalibration:
 grid_parameters = [
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
-    #(size=128, z=(-256, 0)),
+    (size=128, z=(-256, 0)),
 ]
 
 suite_parameters = [
@@ -41,12 +41,12 @@ resultsdir = "../results"
 # name = "ri_based"
 
 name = "variable_Pr_conv_adj"
-closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing) #1minute)
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=1minute)
 architecture = CPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = 1000
-Nensemble = 200
+Nensemble = 100
 Δt = 20minutes
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
