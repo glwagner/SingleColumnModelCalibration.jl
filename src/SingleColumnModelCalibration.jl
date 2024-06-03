@@ -48,7 +48,8 @@ cases = ["free_convection",
          "med_wind_med_cooling",
          "strong_wind_weak_cooling",
          "strong_wind",
-         "strong_wind_no_rotation"]
+         "strong_wind_no_rotation",
+         "strong_wind_and_sunny"]
 
 # Weight by number of fields, excluding TKE
 observation_weights = Dict(
@@ -58,6 +59,7 @@ observation_weights = Dict(
     "weak_wind_strong_cooling" => 1/3,
     "strong_wind"              => 1/3,
     "strong_wind_no_rotation"  => 1/2,
+    "strong_wind_and_sunny"    => 1/2,
 )
 
 include("parameter_sets.jl")

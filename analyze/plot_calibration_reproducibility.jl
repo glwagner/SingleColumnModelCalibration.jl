@@ -13,7 +13,8 @@ using LinearAlgebra
 names = [
     #"constant_Pr_no_shear",
     #"variable_Pr",
-    "variable_Pr_conv_adj",
+    #"variable_Pr_conv_adj",
+    "extended_stability_conv_adj",
     #"ri_based"
 ]
 
@@ -23,6 +24,7 @@ labels_dict = Dict(
     "variable_Pr" => "Variable \n Pr",
     "constant_Pr_no_shear_simple_conv_adj" => "Conv. adj. \n Constant \n Pr",
     "variable_Pr_conv_adj" => "Conv. Adj. \n Variable \n Pr",
+    "extended_stability_conv_adj" => "Conv. Adj. \n Extended \n Stab",
     "ri_based" => "Ri based",
 )
 

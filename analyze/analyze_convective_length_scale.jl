@@ -13,7 +13,7 @@ using SingleColumnModelCalibration:
 
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity, tracer_mixing_lengthᶜᶜᶠ
 
-set_theme!(Theme(fontsize=32))
+set_theme!(Theme(fontsize=32, linewidth=4))
 
 n = 70
 ulims = (-0.15, 0.35)
@@ -21,25 +21,26 @@ elims = (-1e-4, 4e-4)
 linewidth = 12
 prefix = "free_convection"
 
-fig = Figure(resolution=(1600, 600))
+fig = Figure(size=(1600, 600))
 
-ax_b = Axis(fig[1, 1]; xlabel="Buoyancy (m s⁻²)", ylabel="z (m)", xticks=[0.0386, 0.0388])
+xticks = ([0, 1e-4, 2e-4, 3e-4], ["0", "1", "2", "3"])
+ax_b = Axis(fig[1, 1]; xlabel="Buoyancy \n (10⁻⁴ × m s⁻²)", ylabel="z (m)", xticks)
 ax_e = Axis(fig[1, 2]; xlabel="Turbulent kinetic \n energy (m² s⁻²)", xticks=[0, 1e-3, 2e-3]) #, yaxisposition=:right)
 ax_l = Axis(fig[1, 3]; xlabel="Tracer \n mixing length (m)")
 ax_κ = Axis(fig[1, 4]; xlabel="Eddy \n diffusivity (m² s⁻¹)", ylabel="z (m)", yaxisposition=:right)
 
-xlims!(ax_b, 0.0386, 0.03885)
-xlims!(ax_κ, -0.1, 3.5)
+xlims!(ax_b, 1e-4, 3.4e-4)
+xlims!(ax_κ, -0.1, 8.8)
 
 ylims!(ax_b, -192, 0)
 ylims!(ax_e, -192, 0)
 ylims!(ax_l, -192, 0)
 ylims!(ax_κ, -192, 0)
 
-text!(ax_b, 0.03881, -185, text="(a)")
-text!(ax_e, 0.0012, -185, text="(b)")
-text!(ax_l, 50, -185, text="(c)")
-text!(ax_κ, 2.0, -185, text="(d)")
+text!(ax_b, 0.03, 0.98, text="(a)", align=(:left, :top), space=:relative)
+text!(ax_e, 0.03, 0.98, text="(b)", align=(:left, :top), space=:relative)
+text!(ax_l, 0.03, 0.98, text="(c)", align=(:left, :top), space=:relative)
+text!(ax_κ, 0.03, 0.98, text="(d)", align=(:left, :top), space=:relative)
 
 hidespines!(ax_b, :t, :r)
 hidespines!(ax_e, :t, :l, :r)
@@ -50,24 +51,23 @@ hideydecorations!(ax_e, grid=false)
 hideydecorations!(ax_l, grid=false)
 
 suite_parameters = [
-    (name = "6_hour_suite", resolution="0.75m", stop_time=6hours),
-    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
-    (name = "72_hour_suite", resolution="1m", stop_time=66hours),
+    (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
+    (name = "24_hour_suite", resolution="1m",    stop_time=24hours),
+    (name = "72_hour_suite", resolution="1m",    stop_time=66hours),
 ]   
 
-suite_names = [
-    "Qᵇ = 9.6 × 10⁻⁷",
-    "Qᵇ = 2.4 × 10⁻⁷",
-    "Qᵇ = 8.8 × 10⁻⁸",
-]
+suite_names = [L"J_b = 9.6 × 10^{-7} \, \mathrm{m^2 \, s^{-3}}",
+               L"J_b = 2.4 × 10^{-7} \, \mathrm{m^2 \, s^{-3}}",
+               L"J_b = 8.8 × 10^{-8} \, \mathrm{m^2 \, s^{-3}}"]
 
-name = "variable_Pr_conv_adj"
+name = "extended_stability_conv_adj"
 dir = "../parameters/"
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
 file = jldopen(filepath)
 optimal_parameters = file["optimal_parameters"]
 close(file)
 
+#=
 dependent_parameters = dependent_parameter_sets[string(name)]
 parameter_names = keys(optimal_parameters)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
@@ -105,8 +105,13 @@ optimal_parameters = (
     Cᵂu★ = 1.1,
     CᵂwΔ = 4.0,
 )
+=#
 
-
+parameters = (;
+#    Cᶜc = 0.1,
+#    Cᵘⁿc = 0.1,
+#    Cʰⁱe = 0.01,
+)
 
 colors = [
     :royalblue1,
@@ -125,11 +130,12 @@ for (n, p) in enumerate(suite_parameters)
     
     batched_ip = build_batched_inverse_problem(closure, name;
                                                Nensemble = 1,
-                                               Δt = 1minutes,
+                                               Δt = 5minutes,
                                                grid_parameters,
                                                suite_parameters = [p])
     
-    forward_run!(batched_ip, [optimal_parameters])
+    #forward_run!(batched_ip, [optimal_parameters])
+    forward_run!(batched_ip, [parameters])
 
     @show s = p.name
 
@@ -146,17 +152,18 @@ for (n, p) in enumerate(suite_parameters)
 
     model = ip.simulation.model
     b, e = model.tracers
-    @show b.boundary_conditions.top.condition[1, c]
+    b.boundary_conditions.top.condition[1, c]
 
     z = znodes(b)
     b_CATKE = interior(b, 1, c, :)
     e_CATKE = interior(e, 1, c, :)
+    b₀ = b_CATKE[1]
 
     ss = suite_names[n]
-    lines!(ax_b, b_CATKE, z; linewidth=4, color=(colors[n], 1), label="$ss")
+    lines!(ax_b, b_CATKE .- b₀, z; linewidth=4, color=(colors[n], 1), label="$ss")
     lines!(ax_e, e_CATKE, z; linewidth=4, color=(colors[n], 1), label="$ss")
 
-    κ = model.diffusivity_fields.κᶜ
+    κ = model.diffusivity_fields.κc
     κ_CATKE = interior(κ, 1, c, :)
     z = znodes(κ)
     κ_CATKE[Nz+1] = NaN
@@ -179,7 +186,7 @@ for (n, p) in enumerate(suite_parameters)
     top_tracer_bcs = NamedTuple(c => tracers[c].boundary_conditions.top for c in propertynames(tracers))
    
     ℓᶜ = KernelFunctionOperation{Center, Center, Face}(tracer_mixing_lengthᶜᶜᶠ, grid,
-                                                       closure, velocities, tracers, buoyancy, diffusivities.Qᵇ)
+                                                       closure, velocities, tracers, buoyancy, diffusivities.Jᵇ)
 
     l_CATKE = interior(compute!(Field(ℓᶜ)), 1, c, :)
     l_CATKE[Nz+1] = NaN
@@ -200,7 +207,7 @@ for (n, p) in enumerate(suite_parameters)
     =#
 end
 
-axislegend(ax_b, position=:lt, labelsize=30)
+Legend(fig[0, 1:4], ax_b, nbanks=3, tellheight=true, framevisible=false)
 # axislegend(ax_e)
 # axislegend(ax_κ)
 

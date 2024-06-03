@@ -3,7 +3,6 @@ using Oceananigans.Operators: Δzᶜᶜᶜ
 using Oceananigans.Units
 using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 
-
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem, inverting_forward_map
 using ParameterEstimocean.PseudoSteppingSchemes: Kovachki2018InitialConvergenceRatio
@@ -27,14 +26,10 @@ set_theme!(Theme(fontsize=19))
 # closure_label = "RiBased"
 
 dir = "../parameters"
-#name = "constant_Pr_no_shear"
-#name = "variable_Pr"
-#name = "constant_Pr_conv_adj"
-name = "variable_Pr_conv_adj"
-#name = "fixed_Ric"
+name = "extended_stability_conv_adj"
 
-suffix = "Nens1000_Δt1200_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_split_tke_stepping_conservative_dt60.jld2"
-closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=1minute)
+suffix = "Nens100_Δt60_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_72_hour_suite_new_sp_plus_scale_nonsplit_tke_stepping.jld2"
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
 closure_label = "CATKE"
 
 filepath = joinpath(dir, string(name) * "_best_parameters.jld2")
@@ -47,13 +42,46 @@ parameter_names = keys(optimal_parameters)
 free_parameters = FreeParameters(prior_library; names=parameter_names, dependent_parameters)
 optimal_parameters = build_parameters_named_tuple(free_parameters, optimal_parameters)
 
-@show optimal_parameters
+Cˡᵒc = optimal_parameters.Cˡᵒc
+Cˡᵒu = optimal_parameters.Cˡᵒu
+Cˡᵒe = optimal_parameters.Cˡᵒe
+CˡᵒD = optimal_parameters.CˡᵒD
+Cʰⁱc = optimal_parameters.Cʰⁱc
+Cʰⁱu = optimal_parameters.Cʰⁱu
+Cʰⁱe = optimal_parameters.Cʰⁱe
+Cᶜc = optimal_parameters.Cᶜc
+Cᶜu = optimal_parameters.Cᶜu
+Cᶜe = optimal_parameters.Cᶜe
+Cᵘⁿc = optimal_parameters.Cᵘⁿc
+Cᵘⁿu = optimal_parameters.Cᵘⁿu
+Cᵘⁿe = optimal_parameters.Cᵘⁿe
+Cˢ = optimal_parameters.Cˢ
+
+derived_parameters = (
+    Pr₀ = Cˡᵒu / Cˡᵒc,
+    Pr∞ = Cʰⁱu / Cʰⁱc,
+    Pr⁻ = Cᵘⁿu / Cᵘⁿc,
+    Prᶜ = Cᶜu / Cᶜc,
+    Sc₀ = Cˡᵒu / Cˡᵒe,
+    Sc∞ = Cʰⁱu / Cʰⁱe,
+    Sc⁻ = Cᵘⁿu / Cᵘⁿe,
+    Scᶜ = Cᶜu / Cᶜe,
+    Ri★ = Cˡᵒu / (Cˡᵒc + CˡᵒD),
+    ϰvk = Cˡᵒu * Cˢ,
+)
+
+all_parameters = merge(optimal_parameters, derived_parameters)
+
+for name in keys(all_parameters)
+    C = all_parameters[name]
+    print(@sprintf("% 4s: %6.3f", name, C), '\n')
+end
 
 # Batch the inverse problems
 grid_parameters = [
     (size=128, z=(-256, 0)),
     (size=64,  z=(-256, 0)),
-    (size=16,  z=(-256, 0)),
+    #(size=16,  z=(-256, 0)),
 ]
 
 grid_colors = [
@@ -63,7 +91,7 @@ grid_colors = [
 ]
 
 suite_parameters = [
-    (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
+    (name = "6_hour_suite",  resolution="1m", stop_time=6hours),
     (name = "12_hour_suite", resolution="1m", stop_time=12hours),
     (name = "24_hour_suite", resolution="1m", stop_time=24hours),
     (name = "48_hour_suite", resolution="1m", stop_time=48hours),
@@ -72,7 +100,7 @@ suite_parameters = [
 
 batched_ip = build_batched_inverse_problem(closure, name;
                                            Nensemble = 1,
-                                           Δt = 20minutes,
+                                           Δt = 1minutes,
                                            grid_parameters,
                                            suite_parameters)
 
@@ -105,7 +133,7 @@ suite_names = [suite_parameters[s].name for s = 1:length(suite_parameters)]
 
 for (s, suite) in enumerate(suite_names)
 
-    fig = Figure(size=(1200, 600))
+    fig = Figure(size=(1800, 1200))
 
     i1 = Ngrids*(s-1) + 1
     ip1 = batched_ip[i1]
@@ -114,6 +142,7 @@ for (s, suite) in enumerate(suite_names)
 
     ax_b = []
     ax_u = []
+    ax_c = []
 
     LES_str = string("LES at t = ", prettytime(times[end]))
 
@@ -126,41 +155,33 @@ for (s, suite) in enumerate(suite_names)
         yaxisposition = c < 6 ? :left : :right
         Label(fig[1, c], titles[c], tellwidth=false)
 
-        if c == 1
-            ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition, xticks=[0.0386, 0.0389, 0.0392])
-        elseif c < 5
-            ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition, xticks=[0.0386, 0.0389])
-        else
-            ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition, xticks=[0.0386, 0.0390])
-        end
+        ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition)
         push!(ax_b, ax_bc)
 
         xticks = [-0.2, 0.0, 0.2, 0.4]
         ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities \n (m s⁻¹)"; yaxisposition, xticks)
         push!(ax_u, ax_uc)
 
+        ax_cc = Axis(fig[4, c]; ylabel="z (m)", xlabel="Passive \n tracer", yaxisposition)
+        push!(ax_c, ax_cc)
+
         b_init = interior(ip1.observations[c].field_time_serieses.b[1], 1, 1, :)
         b_obs  = interior(ip1.observations[c].field_time_serieses.b[Nt], 1, 1, :)
+        c_obs  = interior(ip1.observations[c].field_time_serieses.c[Nt], 1, 1, :)
         start_time = ip1.observations[c].times[1]
 
-        lines!(ax_b[c], b_init, z1, linewidth=2, label="Initial condition", color=LES_color, linestyle=:dot)
-        lines!(ax_b[c], b_obs,  z1, linewidth=8, label=LES_str, color=LES_color)
+        #lines!(ax_b[c], b_init, z1, linewidth=2, label="Initial condition", color=LES_color, linestyle=:dot)
         
-        if c == 6
-            if s == 1
-                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.1, 0.6)
-            else
-                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.1, 0.4)
-            end
-        else
-            if s == 1
-                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.25, 0.4)
-            else
-                !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.07, 0.2)
-            end
-        end
+        lines!(ax_b[c], b_obs,  z1, linewidth=8, label=LES_str, color=LES_color)
+        lines!(ax_c[c], c_obs,  z1, linewidth=8, label=LES_str, color=LES_color)
+        
+        c == 6 && s == 1 && !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.10, 0.6)
+        c == 6 && s != 1 && !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.10, 0.4)
+        c != 6 && s == 1 && !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.25, 0.4)
+        c != 6 && s != 1 && !isnothing(ax_u[c]) && xlims!(ax_u[c], -0.07, 0.2)
 
-        xlims!(ax_b[c], 0.0386, maximum(b_init) + 2e-5)
+        #xlims!(ax_b[c], 0.0386, maximum(b_init) + 2e-5)
+        xlims!(ax_b[c], -6e-4, -1e-4)
         ylims!(ax_b[c], zlim, 0)
 
         if c > 1
@@ -175,12 +196,16 @@ for (s, suite) in enumerate(suite_names)
         end
 
         hidespines!(ax_b[c], :t)
-        c != 1 && hidespines!(ax_u[c], :t)
 
         c != 1 && hidespines!(ax_b[c], :l)
-        c != 1 && c != 6 && hideydecorations!(ax_b[c], grid=false)
         c != 6 && hidespines!(ax_b[c], :r)
+        c != 1 && c != 6 && hideydecorations!(ax_b[c], grid=false)
 
+        c != 1 && hidespines!(ax_c[c], :l)
+        c != 6 && hidespines!(ax_c[c], :r)
+        c != 1 && c != 6 && hideydecorations!(ax_c[c], grid=false)
+
+        c != 1 && hidespines!(ax_u[c], :t)
         c > 2 && hidespines!(ax_u[c], :l)
         c != 1 && c != 6 && hidespines!(ax_u[c], :r)
         c > 2 && c != 6 && hideydecorations!(ax_u[c], grid=false)
@@ -200,6 +225,9 @@ for (s, suite) in enumerate(suite_names)
             b = interior(ip.time_series_collector.field_time_serieses.b[Nt], k★, c, :)
             lines!(ax_b[c], b, z, linewidth=3; label="$closure_label, Δz = $Δz_str m", color)
 
+            C = interior(ip.time_series_collector.field_time_serieses.c[Nt], k★, c, :)
+            lines!(ax_c[c], C, z, linewidth=3; label="$closure_label, Δz = $Δz_str m", color)
+
             if c > 1
                 u = interior(ip.time_series_collector.field_time_serieses.u[Nt], k★, c, :)
                 lines!(ax_u[c], u, z, linewidth=3; label="u, $closure_label, Δz = $Δz_str m", color)
@@ -213,6 +241,7 @@ for (s, suite) in enumerate(suite_names)
     end
 
     Legend(fig[3, 1], ax_b[2])
+
     if s == 1
         text!(ax_u[2], +0.18, -50.0, text="u")
         text!(ax_u[2], -0.2, -130.0, text="v")
@@ -221,12 +250,12 @@ for (s, suite) in enumerate(suite_names)
         text!(ax_u[2], -0.06, -30.0, text="v")
     end
 
-    text!(ax_b[1], 0.03905, -185, text="(a)")
-    text!(ax_b[2], 0.03905, -185, text="(b)")
-    text!(ax_b[3], 0.03905, -185, text="(c)")
-    text!(ax_b[4], 0.03905, -185, text="(d)")
-    text!(ax_b[5], 0.03905, -185, text="(e)")
-    text!(ax_b[6], 0.03905, -185, text="(f)")
+    # text!(ax_b[1], 0.03905, -185, text="(a)")
+    # text!(ax_b[2], 0.03905, -185, text="(b)")
+    # text!(ax_b[3], 0.03905, -185, text="(c)")
+    # text!(ax_b[4], 0.03905, -185, text="(d)")
+    # text!(ax_b[5], 0.03905, -185, text="(e)")
+    # text!(ax_b[6], 0.03905, -185, text="(f)")
 
     if suite == "6_hour_suite"
         text!(ax_u[2], 0.27, -185, text="(g)")
@@ -244,6 +273,6 @@ for (s, suite) in enumerate(suite_names)
 
     display(fig)
 
-    save("$(name)_$(suite)_assessment_$(suffix)_conservative.pdf", fig)
+    # save("$(name)_$(suite)_assessment_$(suffix)_conservative.pdf", fig)
 end
 

@@ -14,20 +14,21 @@ using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
-suffix = "Nens1000_Δt1200_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_split_tke_stepping_conservative_dt60.jld2"
+#suffix = "Nens1000_Δt300_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_nonsplit_tke_stepping_tight_priors.jld2"
+#suffix = "Nens1000_Δt300_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_nonsplit_tke_stepping.jld2"
+#suffix = "Nens1000_Δt300_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_nonsplit_tke_stepping_surface.jld2"
+suffix = "Nens100_Δt60_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_72_hour_suite_new_sp_plus_scale_nonsplit_tke_stepping.jld2"
 Nrepeats = 1
 
 dataset_filename = "calibration_summary_" * suffix
 
 names = [
-    #"constant_Pr_no_shear",
-    #"variable_Pr",
-    "variable_Pr_conv_adj",
-    #"fixed_Ric",
+    "extended_stability_conv_adj",
+    #"variable_Pr_conv_adj",
     #"ri_based",
 ]
 
-closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=1minute)
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
 
 function eki_objective(y, G, Γ⁻¹²)
     Nens = size(G, 2)
