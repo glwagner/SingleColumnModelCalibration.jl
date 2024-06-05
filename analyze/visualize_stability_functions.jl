@@ -9,6 +9,8 @@ set_theme!(Theme(fontsize=20, linewidth=3))
 
 @load "optimal_catke.jld2"
 
+@show optimal_catke
+
 Cˡᵒc = optimal_catke.mixing_length.Cˡᵒc
 Cˡᵒu = optimal_catke.mixing_length.Cˡᵒu
 Cˡᵒe = optimal_catke.mixing_length.Cˡᵒe
@@ -59,6 +61,8 @@ derived_parameters = (
     Scᶜ = Cᶜu / Cᶜe,
     Ri★ = Cˡᵒu / (Cˡᵒc + CˡᵒD),
     ϰvk = Cˢ * (Cˡᵒu^3 / CˡᵒD)^(1/4),
+    Γ₀ = Cˡᵒc / CˡᵒD,
+    Γ∞ = Cʰⁱc / CʰⁱD,
     Ri⁺ = CRi⁰ + CRiᵟ
 )
 
@@ -76,19 +80,14 @@ fig = Figure(size=(1200, 400))
 axSt = Axis(fig[1, 1], xlabel="Richardson number, N² / |∂z u|²", ylabel="Stability functions")
 axPr = Axis(fig[1, 2], xlabel="Richardson number, N² / |∂z u|²", ylabel="Prandtl and TKE Schmidt numbers")
 
-Ri = -1:0.0001:2
+Ri = -1:1e-5:2
 
-function 𝕊(Ri, un, lo, hi)
-    ϵ = (Ri - CRi⁰) / CRiᵟ
-    if Ri < 0
-        return un
-    elseif Ri < CRi⁰
-        return lo
-    elseif Ri < CRi⁰ + CRiᵟ
-        return lo + (hi - lo) * ϵ * Ri
-    elseif Ri >= CRi⁰ + CRiᵟ
-        return hi
-    end
+@inline step(x, c, w) = max(zero(x), min(one(x), (x - c) / w))
+
+@inline function 𝕊(Ri, σ⁻, σ⁰, σ∞, c=CRi⁰, w=CRiᵟ)
+    σ⁺ = σ⁰ + (σ∞ - σ⁰) * step(Ri, c, w)
+    σ = σ⁻ * (Ri < 0) + σ⁺ * (Ri ≥ 0)
+    return σ
 end
 
 lines!(axSt, Ri, 𝕊.(Ri, Cᵘⁿc, Cˡᵒc, Cʰⁱc), label="Tracers") 

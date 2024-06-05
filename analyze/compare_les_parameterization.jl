@@ -28,7 +28,8 @@ set_theme!(Theme(fontsize=19))
 dir = "../parameters"
 name = "extended_stability_conv_adj"
 
-suffix = "Nens100_Δt60_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_72_hour_suite_new_sp_plus_scale_nonsplit_tke_stepping.jld2"
+suffix = "Nens1000_Δt60_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_with_tracer.jld2"
+#suffix = "Nens100_Δt60_τ10000_Nz32_Nz64_12_hour_suite_24_hour_suite_72_hour_suite_new_sp_plus_scale_nonsplit_tke_stepping.jld2"
 closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
 closure_label = "CATKE"
 

@@ -3,11 +3,10 @@ using Oceananigans.Units
 using Oceananigans.Grids: znode
 using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity, ExplicitTimeDiscretization
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: MixingLength, TurbulentKineticEnergyEquation
-using ParameterEstimocean
 using CairoMakie
 using Printf
 
-set_theme!(Theme(fontsize=18))
+set_theme!(Theme(fontsize=22))
 
 Δz = 5
 Lz = 500 + Δz/2
@@ -23,7 +22,7 @@ closure = CATKEVerticalDiffusivity()
 @inline U₀(p) = sqrt(p.N² * p.d^2 / p.Ri)
 @inline u★(z, p) = U₀(p) * tanh(z / p.d)
 @inline b★(z, p) = p.N² * z # p.δ * p.N² * tanh(z / p.δ)
-@inline u_restoring(x, y, z, t, u, p) = (u★(z, p) - u) / p.τ
+@inline u_restoring(z, t, u, p) = (u★(z, p) - u) / p.τ
 
 const c = Center()
 
@@ -42,16 +41,16 @@ model = HydrostaticFreeSurfaceModel(; grid, closure,
                                     tracers = (:b, :e),
                                     forcing = (; u=u_forcing, b=b_forcing))
 
-include("tracer_length_scale_operations.jl")         
+include("../tracer_length_scale_operations.jl")         
 
 function evolve_forced_shear!(model)
     model.clock.time = 0
     model.clock.iteration = 0
 
-    bᵢ(x, y, z) = b★(z, parameters)
-    uᵢ(x, y, z) = u★(z, parameters)
+    bᵢ(z) = b★(z, parameters)
+    uᵢ(z) = u★(z, parameters)
     set!(model, b=bᵢ, u=uᵢ, e=1e-6)
-    simulation = Simulation(model, Δt=10minute, stop_time=2day)
+    simulation = Simulation(model, Δt=1minute, stop_time=2day)
 
     bt = []
     ut = []
@@ -68,8 +67,8 @@ function evolve_forced_shear!(model)
     b = model.tracers.b
     u = model.velocities.u
     e = model.tracers.e
-    κc = model.diffusivity_fields.κᶜ
-    κe = model.diffusivity_fields.κᵉ
+    κc = model.diffusivity_fields.κc
+    κe = model.diffusivity_fields.κe
     N² = Field(∂z(b))
     Ri = Field(∂z(b) / ∂z(u)^2)
     S = Field(∂z(u))
@@ -114,7 +113,7 @@ function evolve_forced_shear!(model)
     return timeseries
 end
 
-fig = Figure(resolution=(1100, 900))
+fig = Figure(size=(1100, 900))
 
 axR0 = Axis(fig[1, 1], xlabel="Ri", ylabel="z (m)", xticks=([0, 0.25, 0.5, 1.0], ["0", "0.25", "0.5", "1"]))
 axu0 = Axis(fig[2, 1], xlabel="u (m s⁻¹)", ylabel="z (m)")

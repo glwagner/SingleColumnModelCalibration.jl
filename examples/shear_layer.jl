@@ -38,8 +38,8 @@ N² = 1e-6
 Ri = 0.1 # N² / S²
 dUdz = sqrt(N² / Ri)
 @show U = dUdz * Δ
-uᵢ(x, y, z) = U * tanh(z / Δ)
-bᵢ(x, y, z) = N² * z
+uᵢ(z) = U * tanh(z / Δ)
+bᵢ(z) = N² * z
 set!(model, u=uᵢ, b=bᵢ, e=1e-6)
 
 u = model.velocities.u
