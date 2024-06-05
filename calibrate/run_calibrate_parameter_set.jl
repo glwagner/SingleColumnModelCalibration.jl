@@ -24,30 +24,30 @@ suite_parameters = [
     (name = "12_hour_suite", stop_time=12hours),
     (name = "24_hour_suite", stop_time=24hours),
     (name = "48_hour_suite", stop_time=48hours),
-    #(name = "72_hour_suite", stop_time=72hours),
 ]
 
 resultsdir = "../results"
 
-#name = "fixed_Ric"
-
 # Other names:
 # "variable_Pr"
-# "constant_Pr"
-# "constant_Pr_conv_adj"
+# "variable_Pr_conv_adj"
+# "extended_stability"
 #
 # Another closure:
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
+closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
 name = "extended_stability_conv_adj"
-closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing) #1minute)
-architecture = CPU()
+#name = "extended_stability"
+label = "with_tracer"
+
+architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = 1000
-Nensemble = 100
-Δt = 1minutes
+Nensemble = 1000
+Δt = 1minute
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
@@ -56,18 +56,11 @@ eki = build_ensemble_kalman_inversion(closure, name;
                                       architecture,
                                       Nensemble,
                                       tke_weight = 0.0,
+                                      Ntimes = 2,
                                       Δt,
                                       grid_parameters,
                                       suite_parameters,
                                       resample_failure_fraction)
-
-Δτ = closure.turbulent_kinetic_energy_time_step
-if isnothing(Δτ)
-    label = "new_sp_plus_scale_nonsplit_tke_stepping"
-else
-    label = @sprintf("new_sp_plus_scale_split_tke_stepping_dt%d",
-                     closure.turbulent_kinetic_energy_time_step)
-end
 
 logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 

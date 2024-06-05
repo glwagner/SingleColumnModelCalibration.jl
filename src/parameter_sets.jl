@@ -24,7 +24,16 @@ for set in ["constant_Pr", "variable_Pr", "extended_stability"]
     dependent_parameter_sets[set] = NamedTuple()
 end
 
-# Functions for constant Pr versions
+# Neutralize convective mixing length
+CᶜD(θ) = 0
+Cᶜu(θ) = 0
+Cᶜc(θ) = 0
+Cᶜe(θ) = 0
+Cᵉc(θ) = 0
+Cˢᵖ(θ) = 0
+
+dependent_parameter_sets["extended_stability"] = (; CᶜD, Cᶜu, Cᶜc, Cᶜe, Cᵉc, Cˢᵖ)
+
 CˡᵒD(θ) = θ.CʰⁱD
 Cˡᵒu(θ) = θ.Cʰⁱu
 Cˡᵒc(θ) = θ.Cʰⁱc
@@ -133,3 +142,4 @@ end
 
 get_free_parameters(name) = FreeParameters(prior_library, names = parameter_sets[name],
                                            dependent_parameters = dependent_parameter_sets[name])
+

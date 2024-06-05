@@ -63,6 +63,8 @@ function build_batched_inverse_problem(closure, name="";
         suite = p.name
         stop_time = p.stop_time
         times = Ntimes == 2 ? [start_time, stop_time] :
+                Ntimes == 3 ? [start_time, 2stop_time/3, stop_time] :
+                Ntimes == 4 ? [start_time, stop_time/3, 2stop_time/3, stop_time] :
                               collect(range(start_time, stop=stop_time, length=Ntimes))
         observations_resolution = :resolution ∈ keys(p) ? p.resolution : "1m" 
 
