@@ -51,9 +51,9 @@ hideydecorations!(ax_e, grid=false)
 hideydecorations!(ax_l, grid=false)
 
 suite_parameters = [
-    (name = "6_hour_suite",  resolution="0.75m", stop_time=6hours),
-    (name = "24_hour_suite", resolution="1m",    stop_time=24hours),
-    (name = "72_hour_suite", resolution="1m",    stop_time=66hours),
+    (name = "6_hour_suite",  resolution="1m", stop_time=6hours),
+    (name = "24_hour_suite", resolution="1m", stop_time=24hours),
+    (name = "72_hour_suite", resolution="1m", stop_time=66hours),
 ]   
 
 suite_names = [L"J_b = 9.6 × 10^{-7} \, \mathrm{m^2 \, s^{-3}}",
@@ -134,8 +134,8 @@ for (n, p) in enumerate(suite_parameters)
                                                grid_parameters,
                                                suite_parameters = [p])
     
-    #forward_run!(batched_ip, [optimal_parameters])
-    forward_run!(batched_ip, [parameters])
+    forward_run!(batched_ip, [optimal_parameters])
+    #forward_run!(batched_ip, [parameters])
 
     @show s = p.name
 
@@ -144,7 +144,7 @@ for (n, p) in enumerate(suite_parameters)
     c = 1 #free convection
     obs = ip.observations[c]
     bt = obs.field_time_serieses.b
-    et = obs.field_time_serieses.e
+    #et = obs.field_time_serieses.e
     t = bt.times
     grid = bt.grid
     Nt = length(t)
@@ -197,7 +197,7 @@ for (n, p) in enumerate(suite_parameters)
     # LES data
     z = znodes(bt)
     b_LES = interior(bt[Nt], 1, 1, :)
-    e_LES = interior(et[Nt], 1, 1, :)
+    # e_LES = interior(et[Nt], 1, 1, :)
 
     #=
     if n == 3

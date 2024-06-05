@@ -14,7 +14,7 @@ Nz = length(z) - 1
 grid = RectilinearGrid(size=Nz, z=z, topology=(Flat, Flat, Bounded))
 closure = CATKEVerticalDiffusivity()
 
-@inline tke_source(x, y, z, t, p) = p.q * exp(-z^2 / (2 * p.d^2)) * exp(-(t - p.τ)^2 / (2 * p.τ^2))
+@inline tke_source(z, t, p) = p.q * exp(-z^2 / (2 * p.d^2)) * exp(-(t - p.τ)^2 / (2 * p.τ^2))
 parameters = (q = 1e-2 / hour, d = 16.0, τ = 6hours)
 e_forcing = Forcing(tke_source; parameters)
 
@@ -31,7 +31,7 @@ function evolve_turbulent_source!(model, N²ᵢ = 1e-5)
     model.clock.iteration = 0
 
     δ = 20
-    bᵢ(x, y, z) = N²ᵢ * z
+    bᵢ(z) = N²ᵢ * z
     set!(model, b=bᵢ, e=1e-6)
     simulation = Simulation(model, Δt=10minute, stop_time=1day)
 
@@ -46,8 +46,8 @@ function evolve_turbulent_source!(model, N²ᵢ = 1e-5)
     b = model.tracers.b
     u = model.velocities.u
     e = model.tracers.e
-    κc = model.diffusivity_fields.κᶜ
-    κe = model.diffusivity_fields.κᵉ
+    κc = model.diffusivity_fields.κc
+    κe = model.diffusivity_fields.κe
     N² = Field(∂z(b))
 
     etd = ExplicitTimeDiscretization()
@@ -85,10 +85,12 @@ function evolve_turbulent_source!(model, N²ᵢ = 1e-5)
     return timeseries
 end
 
-fig = Figure(resolution=(1200, 800))
+set_theme!(Theme(fontsize=24))
 
-axN0 = Axis(fig[1:2, 2], xlabel="N² (s⁻²)", ylabel="z (m)", xticks=([1e-7, 1e-6, 2e-6], ["10⁻⁷", "10⁻⁶", "2×10⁻⁶"]))
-axe0 = Axis(fig[3:4, 2], xlabel="e (m² s⁻²)", ylabel="z (m)", xticks=[0, 0.002])
+fig = Figure(size=(1200, 800))
+
+axN0 = Axis(fig[1:2, 2], xlabel="N² (s⁻²)", ylabel="z (m)", xticks=([1e-6, 1e-5], ["10⁻⁶", "10⁻⁵"]))
+axe0 = Axis(fig[3:4, 2], xlabel="e (m² s⁻²)", ylabel="z (m)", xticks=[0, 0.001])
 
 axN = Axis(fig[1:2, 3], xlabel="Time (hours)", ylabel="z (m)", xaxisposition=:top, yaxisposition=:right)
 axe = Axis(fig[3:4, 3], xlabel="Time (hours)", ylabel="z (m)", yaxisposition=:right)
@@ -108,7 +110,7 @@ t, bt, wbt, ϵt, N²t, et, κct, κet = evolve_turbulent_source!(model, 1e-6)
 Nt = length(t)
 
 # For diagnostics
-tke_source(x, y, z) = tke_source(x, y, z, t[73], parameters)
+tke_source(z) = tke_source(z, t[73], parameters)
 P = CenterField(grid)
 set!(P, tke_source)
 Pi = interior(P, 1, 1, :)
@@ -117,7 +119,7 @@ colors = Makie.wong_colors()
 lines!(axb, wbt[37], zc, color=colors[4], linewidth=3, label="Buoyancy flux")
 lines!(axb, -ϵt[37], zc, color=colors[5], linewidth=3, label="Dissipation")
 lines!(axb, Pi,       zc, color=colors[6], linewidth=3, label="Production")
-Legend(fig[1, 1], axb)
+Legend(fig[1, 1], axb, framevisible=false)
 
 for n = (4, 37, 145)
     @show tn = t[n] / hour
@@ -151,7 +153,7 @@ for ax in (axN, axe)
     xlims!(ax, 0, 1 * 24)
 end
 
-xlims!(axN0, 1e-7, 2.1e-6)
+xlims!(axN0, -2e-7, 1e-5)
 xlims!(axb, -1e-6, 2e-6)
 
 #colgap!(fig.layout, 1, -20)
