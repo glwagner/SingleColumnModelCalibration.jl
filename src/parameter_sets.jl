@@ -1,31 +1,36 @@
-parameter_sets = Dict(
-    "ri_based"    => (:ν₀, :κ₀, :κᶜᵃ, :Cᵉⁿ, :Cᵃᵛ, :Ri₀, :Riᵟ),
-    "constant_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ),
-    "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ),
-    "extended_stability" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ, :Cᵘⁿc, :Cᵘⁿu, :Cᵘⁿe, :CᵘⁿD),
-                             
-)
+######
+###### Some utilities
+######
+
+parameter_sets = Dict()
+dependent_parameter_sets = Dict()
+bounds_library = Dict()
+
+#####
+##### CATKE
+#####
+
+parameter_sets["constant_Pr"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ)
+parameter_sets["variable_Pr"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ)
+parameter_sets["extended_stability"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD,
+                                        :CRi⁰, :CRiᵟ, :Cᵘⁿc, :Cᵘⁿu, :Cᵘⁿe, :CᵘⁿD)
 
 conv_adj_names = (:Cᶜc, :Cᶜu, :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
-#conv_adj_names = (:Cᶜc, :Cᶜe, :CᶜD, :Cˢᵖ)
 
 for set in ["constant_Pr", "variable_Pr", "extended_stability"]
     names = parameter_sets[set]
     conv_adj_set = set * "_conv_adj"
     parameter_sets[conv_adj_set] =  tuple(names..., conv_adj_names...)
-end
-
-# Some dependent parameters
-dependent_parameter_sets = Dict()
-for (set, names) in parameter_sets
     dependent_parameter_sets[set] = NamedTuple()
 end
 
+# Functions for constant Pr versions
 CˡᵒD(θ) = θ.CʰⁱD
 Cˡᵒu(θ) = θ.Cʰⁱu
 Cˡᵒc(θ) = θ.Cʰⁱc
 Cˡᵒe(θ) = θ.Cʰⁱe
 
+# Functions for the "unstable" branch of the stability functions
 CᵘⁿD(θ) = θ.CˡᵒD
 Cᵘⁿu(θ) = θ.Cˡᵒu
 Cᵘⁿc(θ) = θ.Cˡᵒc
@@ -51,12 +56,6 @@ function CˡᵒD_fixed_Riᶜ(θ)
 end
 
 dependent_parameter_sets["fixed_Ric"] = (; CˡᵒD = CˡᵒD_fixed_Riᶜ)
-
-#####
-##### Bounds and priors
-#####
-
-bounds_library = Dict()
 
 # Turbulent kinetic energy parameters
 bounds_library[:CᵂwΔ] = (0.0, 8.0)
@@ -92,7 +91,12 @@ bounds_library[:Cᵉe]  = (0.0, 1.0)
 bounds_library[:CᵉD]  = (0.0, 1.0)
 bounds_library[:Cˢᵖ]  = (0.0, 1.0)
 
-# Ri-based
+#####
+##### Ri-based
+#####
+
+parameter_sets["ri_based"] = (:ν₀, :κ₀, :κᶜᵃ, :Cᵉⁿ, :Cᵃᵛ, :Ri₀, :Riᵟ)
+
 bounds_library[:ν₀]  = (0.0, 1.0)
 bounds_library[:κ₀]  = (0.0, 1.0)
 bounds_library[:κᶜᵃ] = (0.0, 2.0)
@@ -101,12 +105,31 @@ bounds_library[:Cᵃᵛ] = (0.0, 2.0)
 bounds_library[:Ri₀] = (0.0, 2.0)
 bounds_library[:Riᵟ] = (0.0, 2.0)
 
-prior_library = Dict()
+#####
+##### TKEDissipation
+#####
 
+parameter_sets["constant_stabilities"] = (:Cσe, :Cσϵ, :Cu₀, :Cc₀, :Cᵋϵ, :Cᴾϵ, :Cᵇϵ, :Cᵂu★, :CᵂwΔ, :Cμ⁰)
+dependent_parameter_sets["constant_stabilities"] = NamedTuple()
+
+parameter_sets["variable_stabilities"] = (:Cσe, :Cσϵ)
+dependent_parameter_sets["variable_stabilities"] = NamedTuple()
+
+bounds_library[:Cσe] = (0.0, 8.0)      
+bounds_library[:Cσϵ] = (0.0, 8.0)
+bounds_library[:Cu₀] = (0.0, 2.0)
+bounds_library[:Cc₀] = (0.0, 2.0)
+bounds_library[:Cᵋϵ] = (0.0, 2.0)
+bounds_library[:Cᴾϵ] = (0.0, 2.0)
+bounds_library[:Cᵇϵ] = (-2.0, 2.0)
+bounds_library[:Cᵂu] = (0.0, 8.0)
+bounds_library[:Cᵂw] = (0.0, 8.0)
+bounds_library[:Cμ⁰] = (0.0, 2.0)
+
+prior_library = Dict()
 for p in keys(bounds_library)
     prior_library[p] = ScaledLogitNormal(; bounds=bounds_library[p])
 end
 
 get_free_parameters(name) = FreeParameters(prior_library, names = parameter_sets[name],
                                            dependent_parameters = dependent_parameter_sets[name])
-

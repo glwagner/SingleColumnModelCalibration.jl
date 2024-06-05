@@ -93,7 +93,7 @@ function lesbrary_inverse_problem(regrid;
                                                   non_ensemble_closure,
                                                   verbose = false,
                                                   forced_fields = (:b, :c),
-                                                  tracers = (:b, :e, :c))
+                                                  tracers = (:b, :e, :ϵ, :c))
 
     simulation.Δt = Δt    
 
