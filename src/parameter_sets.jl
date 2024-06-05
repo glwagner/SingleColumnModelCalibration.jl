@@ -21,6 +21,16 @@ for (set, names) in parameter_sets
     dependent_parameter_sets[set] = NamedTuple()
 end
 
+# Neutralize convective mixing length
+CᶜD(θ) = 0
+Cᶜu(θ) = 0
+Cᶜc(θ) = 0
+Cᶜe(θ) = 0
+Cᵉc(θ) = 0
+Cˢᵖ(θ) = 0
+
+dependent_parameter_sets["extended_stability"] = (; CᶜD, Cᶜu, Cᶜc, Cᶜe, Cᵉc, Cˢᵖ)
+
 CˡᵒD(θ) = θ.CʰⁱD
 Cˡᵒu(θ) = θ.Cʰⁱu
 Cˡᵒc(θ) = θ.Cʰⁱc
