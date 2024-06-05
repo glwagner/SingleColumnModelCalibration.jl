@@ -15,7 +15,6 @@ function batched_lesbrary_observations(regrid; times, suite,
     k4 = findfirst(z -> z > -4, zf) - 1 # exclude the top 8 meters
     kt = min(Nz-1, k4) # exclude the top 4 meters, or top grid point --- whichever is larger
     space = SpaceIndices(z=kb:kt)
-    #space = SpaceIndices(z=kb:Nz)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
@@ -123,7 +122,7 @@ function lesbrary_inverse_problem(regrid;
         set!(c_forcing, c_forcing_func)
 
         I₀ = obs.metadata.parameters.penetrating_buoyancy_flux
-        # Not saved in file now (but they should be)
+        # Not saved in file now (but they will / might be)
         ϵ₁ = 0.6
         λ₁ = 1.0
         λ₂ = 20.0
