@@ -37,16 +37,15 @@ resultsdir = "../results"
 # closure = RiBasedVerticalDiffusivity()
 # name = "ri_based"
 
-closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=nothing)
+closure = CATKEVerticalDiffusivity(tke_time_step=nothing)
 name = "extended_stability_conv_adj"
-#name = "extended_stability"
-label = "with_tracer"
+label = "adding_scales"
 
-architecture = GPU()
+architecture = CPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = 1000
-Nensemble = 1000
+Nensemble = 100
 Δt = 1minute
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()

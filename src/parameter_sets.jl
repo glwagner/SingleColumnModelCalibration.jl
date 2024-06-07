@@ -11,10 +11,13 @@ bounds_library = Dict()
 #####
 
 parameter_sets["constant_Pr"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ)
-parameter_sets["variable_Pr"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ)
-parameter_sets["extended_stability"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD,
-                                        :CRi⁰, :CRiᵟ, :Cᵘⁿc, :Cᵘⁿu, :Cᵘⁿe, :CᵘⁿD)
+parameter_sets["variable_Pr"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ,
+                                 :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ)
 
+parameter_sets["extended_stability"] = (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ,
+                                        :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ,
+                                        :Cᵘⁿc, :Cᵘⁿu, :Cᵘⁿe, :CᵘⁿD)
+                                        
 conv_adj_names = (:Cᶜc, :Cᶜu, :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
 
 for set in ["constant_Pr", "variable_Pr", "extended_stability"]
@@ -22,6 +25,7 @@ for set in ["constant_Pr", "variable_Pr", "extended_stability"]
     conv_adj_set = set * "_conv_adj"
     parameter_sets[conv_adj_set] =  tuple(names..., conv_adj_names...)
     dependent_parameter_sets[set] = NamedTuple()
+    dependent_parameter_sets[conv_adj_set] = NamedTuple()
 end
 
 # Neutralize convective mixing length

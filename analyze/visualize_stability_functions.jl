@@ -5,7 +5,7 @@ using Printf
 using JLD2
 using CairoMakie
 
-set_theme!(Theme(fontsize=20, linewidth=3))
+set_theme!(Theme(fontsize=24, linewidth=3))
 
 @load "optimal_catke.jld2"
 
@@ -76,9 +76,11 @@ for name in keys(derived_parameters)
     println(name, ": ", derived_parameters[name])
 end
 
-fig = Figure(size=(1200, 400))
+fig = Figure(size=(1200, 500))
 axSt = Axis(fig[1, 1], xlabel="Richardson number, N² / |∂z u|²", ylabel="Stability functions")
 axPr = Axis(fig[1, 2], xlabel="Richardson number, N² / |∂z u|²", ylabel="Prandtl and TKE Schmidt numbers")
+
+xlims!(axSt, -1, 2)
 
 Ri = -1:1e-5:2
 
