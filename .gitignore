@@ -32,4 +32,4 @@ docs/site/
 *.pdf
 *.nc
 
-comparison/
+comparison/gotm*

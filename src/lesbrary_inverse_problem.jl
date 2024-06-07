@@ -92,7 +92,7 @@ function lesbrary_inverse_problem(regrid;
                                                   non_ensemble_closure,
                                                   verbose = false,
                                                   forced_fields = (:b, :c),
-                                                  tracers = (:b, :e, :c))
+                                                  tracers = (:b, :e, :ϵ, :c))
 
     simulation.Δt = Δt    
 
@@ -122,7 +122,7 @@ function lesbrary_inverse_problem(regrid;
         set!(c_forcing, c_forcing_func)
 
         I₀ = obs.metadata.parameters.penetrating_buoyancy_flux
-        # Not saved in file now (but they should be)
+        # Not saved in file now (but they will / might be)
         ϵ₁ = 0.6
         λ₁ = 1.0
         λ₂ = 20.0
