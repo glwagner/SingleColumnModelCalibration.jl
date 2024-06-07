@@ -5,6 +5,7 @@ using Printf
 
 using Oceananigans.TurbulenceClosures:
     RiBasedVerticalDiffusivity,
+    TKEDissipationVerticalDiffusivity,
     CATKEVerticalDiffusivity
 
 using ParameterEstimocean: iterate!
@@ -41,12 +42,16 @@ closure = CATKEVerticalDiffusivity(tke_time_step=nothing)
 name = "extended_stability_conv_adj"
 label = "adding_scales"
 
+closure = TKEDissipationVerticalDiffusivity()
+name = "variable_stabilities"
+label = "k_epsilon"
+
 architecture = CPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = 1000
 Nensemble = 100
-Δt = 1minute
+Δt = 30seconds
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
 
