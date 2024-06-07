@@ -3,7 +3,6 @@ parameter_sets = Dict(
     "constant_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ),
     "variable_Pr" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ),
     "extended_stability" => (:CᵂwΔ, :Cᵂu★, :Cʰⁱc, :Cʰⁱu, :Cʰⁱe, :CʰⁱD, :Cˢ, :Cˡᵒc, :Cˡᵒu, :Cˡᵒe, :CˡᵒD, :CRi⁰, :CRiᵟ, :Cᵘⁿc, :Cᵘⁿu, :Cᵘⁿe, :CᵘⁿD),
-                             
 )
 
 conv_adj_names = (:Cᶜc, :Cᶜu, :Cᶜe, :CᶜD, :Cᵉc, :Cˢᵖ)
@@ -22,12 +21,12 @@ for (set, names) in parameter_sets
 end
 
 # Neutralize convective mixing length
-CᶜD(θ) = 0
-Cᶜu(θ) = 0
-Cᶜc(θ) = 0
-Cᶜe(θ) = 0
-Cᵉc(θ) = 0
-Cˢᵖ(θ) = 0
+CᶜD(θ) = 0.0 
+Cᶜu(θ) = 0.0
+Cᶜc(θ) = 0.0
+Cᶜe(θ) = 0.0
+Cᵉc(θ) = 0.0
+Cˢᵖ(θ) = 0.0
 
 dependent_parameter_sets["extended_stability"] = (; CᶜD, Cᶜu, Cᶜc, Cᶜe, Cᵉc, Cˢᵖ)
 
@@ -76,20 +75,20 @@ bounds_library[:Cᵂu★] = (0.0, 8.0)
 bounds_library[:Cˢ]   = (0.0, 2.0)
 bounds_library[:Cᵇ]   = (0.0, 2.0)
 
-bounds_library[:Cˡᵒu] = (0.0, 1.0)
-bounds_library[:Cˡᵒc] = (0.0, 1.0)
-bounds_library[:Cˡᵒe] = (0.0, 8.0)
-bounds_library[:CˡᵒD] = (0.0, 8.0)
-bounds_library[:Cʰⁱc] = (0.0, 1.0)
-bounds_library[:Cʰⁱu] = (0.0, 1.0)
-bounds_library[:Cʰⁱe] = (0.0, 8.0)
-bounds_library[:CʰⁱD] = (0.0, 8.0)
+bounds_library[:Cˡᵒu] = (0.0, 2.0)
+bounds_library[:Cˡᵒc] = (0.0, 2.0)
+bounds_library[:Cˡᵒe] = (0.0, 10.0)
+bounds_library[:CˡᵒD] = (0.0, 10.0)
+bounds_library[:Cʰⁱc] = (0.0, 2.0)
+bounds_library[:Cʰⁱu] = (0.0, 2.0)
+bounds_library[:Cʰⁱe] = (0.0, 10.0)
+bounds_library[:CʰⁱD] = (0.0, 10.0)
 bounds_library[:Cᵘⁿc] = (0.0, 2.0)
 bounds_library[:Cᵘⁿu] = (0.0, 2.0)
-bounds_library[:Cᵘⁿe] = (0.0, 8.0)
-bounds_library[:CᵘⁿD] = (0.0, 8.0)
+bounds_library[:Cᵘⁿe] = (0.0, 10.0)
+bounds_library[:CᵘⁿD] = (0.0, 10.0)
 
-bounds_library[:CRi⁰] = (0.0, 1.0)
+bounds_library[:CRi⁰] = (0.0, 2.0)
 bounds_library[:CRiᵟ] = (0.0, 2.0)
 
 # Convective adjustment parameters

@@ -15,7 +15,6 @@ function batched_lesbrary_observations(regrid; times, suite,
     k4 = findfirst(z -> z > -4, zf) - 1 # exclude the top 8 meters
     kt = min(Nz-1, k4) # exclude the top 4 meters, or top grid point --- whichever is larger
     space = SpaceIndices(z=kb:kt)
-    #space = SpaceIndices(z=kb:Nz)
 
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
