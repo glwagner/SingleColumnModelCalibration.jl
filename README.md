@@ -2,11 +2,4 @@
 
 Calibration of models for convective- and wind-driven mixing in the ocean surface boundary layer
 
-To download the LES profile data:
-
-```
-wget https://www.dropbox.com/s/q0kgdey59uc6pcq/horizontally_averaged_LES_data.tar
-tar xvf horizontally_averaged_LES_data.tar
-```
-
-To download LES slices for visualization:
+To download the LES profile data use this link: https://www.dropbox.com/scl/fo/gpxz01em3kmjcwuoafhnm/ABdBWTxkqSTbEycw9z2cbhc?rlkey=py5x1i7qvcmcjya0cue23k9tz&e=1&dl=0
