@@ -5,10 +5,12 @@ using Printf
 using JLD2
 using CairoMakie
 
-set_theme!(Theme(fontsize=24, linewidth=3))
+set_theme!(Theme(fontsize=24, linewidth=4, alpha=0.6))
+
+d = 4
+dash = Linestyle([0.0, d, 1.6d, 2.6d])
 
 @load "optimal_catke.jld2"
-
 @show optimal_catke
 
 Cˡᵒc = optimal_catke.mixing_length.Cˡᵒc
@@ -77,12 +79,16 @@ for name in keys(derived_parameters)
 end
 
 fig = Figure(size=(1200, 500))
-axSt = Axis(fig[1, 1], xlabel="Richardson number, N² / |∂z u|²", ylabel="Stability functions")
-axPr = Axis(fig[1, 2], xlabel="Richardson number, N² / |∂z u|²", ylabel="Prandtl and TKE Schmidt numbers")
 
-xlims!(axSt, -1, 2)
+#xlabel = L"Richardson number, $N^2 / | \partial_z u |^2$"
+xlabel = "Richardson number"
 
-Ri = -1:1e-5:2
+axSt = Axis(fig[1, 1]; xlabel, ylabel="Stability \n functions")
+axSte = Axis(fig[2, 1]; xlabel, ylabel="TKE stability \n function")
+axPr = Axis(fig[1:2, 2]; xlabel, yaxisposition=:right, ylabel="Prandtl and TKE Schmidt numbers")
+
+
+Ri = -1:1e-3:2
 
 @inline step(x, c, w) = max(zero(x), min(one(x), (x - c) / w))
 
@@ -92,15 +98,33 @@ Ri = -1:1e-5:2
     return σ
 end
 
-lines!(axSt, Ri, 𝕊.(Ri, Cᵘⁿc, Cˡᵒc, Cʰⁱc), label="Tracers") 
-lines!(axSt, Ri, 𝕊.(Ri, Cᵘⁿu, Cˡᵒu, Cʰⁱu), label="Momentum") 
-lines!(axSt, Ri, 𝕊.(Ri, Cᵘⁿe, Cˡᵒe, Cʰⁱe), label="TKE") 
-lines!(axSt, Ri, 1 ./ 𝕊.(Ri, CᵘⁿD, CˡᵒD, CʰⁱD), label="Dissipation (1/𝕊ᴰ)") 
+alpha = 0.6
+tkecolor = :tomato
 
-lines!(axPr, Ri, 𝕊.(Ri, Cᵘⁿu, Cˡᵒu, Cʰⁱu) ./ 𝕊.(Ri, Cᵘⁿc, Cˡᵒc, Cʰⁱc), label="Prandtl number")
-lines!(axPr, Ri, 𝕊.(Ri, Cᵘⁿu, Cˡᵒu, Cʰⁱu) ./ 𝕊.(Ri, Cᵘⁿe, Cˡᵒe, Cʰⁱe), label="Schmidt number for TKE")
+lines!(axSt, Ri, 𝕊.(Ri, Cᵘⁿc, Cˡᵒc, Cʰⁱc); alpha, label="Tracers") 
+lines!(axSt, Ri, 𝕊.(Ri, Cᵘⁿu, Cˡᵒu, Cʰⁱu); alpha, label="Momentum") 
+lines!(axSt, Ri, 1 ./ 𝕊.(Ri, CᵘⁿD, CˡᵒD, CʰⁱD); alpha, label="Dissipation (1/𝕊ᴰ)") 
 
-axislegend(axSt, position=:rt)
+lne = lines!(axSt, Ri, NaN .* 𝕊.(Ri, Cᵘⁿe, Cˡᵒe, Cʰⁱe), color=tkecolor, label="TKE") 
+lines!(axSte, Ri, 𝕊.(Ri, Cᵘⁿe, Cˡᵒe, Cʰⁱe), color=lne.color, label="TKE") 
+
+lines!(axPr, Ri, 𝕊.(Ri, Cᵘⁿu, Cˡᵒu, Cʰⁱu) ./ 𝕊.(Ri, Cᵘⁿc, Cˡᵒc, Cʰⁱc),
+       color=:black, label="Prandtl number")
+lines!(axPr, Ri, 𝕊.(Ri, Cᵘⁿu, Cˡᵒu, Cʰⁱu) ./ 𝕊.(Ri, Cᵘⁿe, Cˡᵒe, Cʰⁱe),
+       color=:black, linestyle=:dot, label="Schmidt number for TKE")
+
+#axislegend(axSt, position=:lt)
+Legend(fig[0, 1:2], axSt, framevisible=false, nbanks=4, tellheight=true)
 axislegend(axPr, position=:lt)
+
+hidexdecorations!(axSt, grid=false)
+hidespines!(axSt, :t, :r, :b)
+hidespines!(axPr, :t, :l)
+hidespines!(axSte, :t, :r)
+
+#xlims!(axSt, -1, 2)
+ylims!(axSt, 0, 2.0)
+
+display(fig)
 
 save("stability_Prandtl_Schmidt_numbers.pdf", fig)
