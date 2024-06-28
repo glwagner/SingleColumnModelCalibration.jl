@@ -4,7 +4,7 @@ vectorize(a::Vector) = a
 rectilinear_grids_from_parameters(grid_parameters) =
     [RectilinearGrid(; p..., topology=(Flat, Flat, Bounded)) for p in grid_parameters]
 
-default_start_time = 1hour
+default_start_time = 10minutes
 default_Ntimes = 2
 
 function generate_filepath(; suite_parameters,
@@ -29,6 +29,7 @@ function generate_filepath(; suite_parameters,
 
     prefix = @sprintf("%s_Nens%d_Δt%d_τ%d_%s", filename, Nensemble,
                       Δt, stop_pseudotime, gridstr)
+
     filepath = joinpath(dir, string(prefix, "_", suitestr, ".jld2"))
 
     return filepath
@@ -105,7 +106,7 @@ function build_ensemble_kalman_inversion(closure, name="";
                                          tke_weight = 0.0,
                                          # EnsembleKalmanInverion parameters
                                          noise_covariance = nothing,
-                                         resample_failure_fraction = 0.2,
+                                         resample_failure_fraction = 0.1,
                                          acceptable_failure_fraction = 1.0,
                                          forward_map_output = nothing,
                                          resampler = Resampler(; resample_failure_fraction, acceptable_failure_fraction),

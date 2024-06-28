@@ -29,15 +29,6 @@ suite_parameters = [
 
 resultsdir = "../results"
 
-# Other names:
-# "variable_Pr"
-# "variable_Pr_conv_adj"
-# "extended_stability"
-#
-# Another closure:
-# closure = RiBasedVerticalDiffusivity()
-# name = "ri_based"
-
 closure = CATKEVerticalDiffusivity(tke_time_step=nothing)
 name = "extended_stability_conv_adj"
 label = "adding_scales"

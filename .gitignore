@@ -31,5 +31,6 @@ docs/site/
 *.mp4
 *.pdf
 *.nc
+*.zip
 
 comparison/gotm*
