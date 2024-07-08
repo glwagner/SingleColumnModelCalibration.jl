@@ -34,3 +34,4 @@ docs/site/
 *.zip
 
 comparison/gotm*
+*.ipynb_checkpoints
