@@ -1,8 +1,10 @@
 using Oceananigans
 using Oceananigans.Operators: Δzᶜᶜᶜ
 using Oceananigans.Units
-using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
-#using Oceananigans.TurbulenceClosures: TKEDissipationVerticalDiffusivity
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities:
+    CATKEVerticalDiffusivity,
+    TKEDissipationVerticalDiffusivity,
+    TKEDissipationEquations
 
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem, inverting_forward_map
@@ -13,7 +15,7 @@ using Printf
 using JLD2
 using NCDatasets
 using LinearAlgebra
-using CairoMakie
+using GLMakie
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
@@ -22,25 +24,28 @@ using SingleColumnModelCalibration:
 
 set_theme!(Theme(fontsize=22))
 
-#@load "optimal_catke.jld2" optimal_catke
-#closure = optimal_catke
-closure = CATKEVerticalDiffusivity()
-#closure = TKEDissipationVerticalDiffusivity()
+catke = CATKEVerticalDiffusivity()
+tke_dissipation_equations = TKEDissipationEquations(Cᵂu★ = 3.2)
+k_epsilon = TKEDissipationVerticalDiffusivity(; tke_dissipation_equations)
+resolution = "1m"
+kecolor = (:royalblue1, 0.8)
+catkecolor = (:black, 0.9)
+LEScolor = (:seagreen, 0.6)
 
 cases = ["free_convection",
          "weak_wind_strong_cooling",
          "med_wind_med_cooling",
          "strong_wind_weak_cooling",
          "strong_wind",
-         "strong_wind_no_rotation",
-         "strong_wind_and_sunny"]
+         "strong_wind_no_rotation"]
+         #"strong_wind_and_sunny"]
 
 titles = [
           "6 hour simulation \n (extreme forcing)",
           "12 hour simulation \n (strong forcing)",
           "24 hour simulation \n (medium forcing)",
           "48 hour simulation \n (weak forcing)",
-          "72 hour simulation \n (very weak forcing)",
+          #"72 hour simulation \n (very weak forcing)",
 ]
 
 labels = Dict(
@@ -51,7 +56,8 @@ labels = Dict(
 
 grid_parameters = [(size=128, z=(-256, 0))]
 k₀ = 28
-cc = 6
+#for cc = 1:6
+cc = 5
 
 #####
 ##### Figure
@@ -62,6 +68,7 @@ fig = Figure(size=(1200, 500))
 d = 4
 dash = Linestyle([0.0, d, 1.6d, 2.6d])
 ax_b = []
+ax_e = []
 
 suites = [6, 12, 24, 48, 72]
 resolutions = ["1m" for c = 1:5]
@@ -79,23 +86,19 @@ xticks = [([1e-4, 2e-4, 3e-4, 4e-4, 5e-4], ["1", "2", "3", "4", "5"]) for c = 1:
 
 zlim = zlims[cc]
 
-for c = 1:5
+for c = 1:4
     resolution = resolutions[c]
     suitehrs = suites[c]
 
     # Batch the inverse problems
     suite = "$(suitehrs)_hour_suite"
-    resolution = "1m"
-    #catkecolor = (:royalblue1, 0.8)
-    catkecolor = (:black, 0.9)
-    LEScolor = (:seagreen, 0.6)
     suite_parameters = (; name=suite, resolution, stop_time=suitehrs*hours)
 
-    batched_ip = build_batched_inverse_problem(closure,
+    batched_ip = build_batched_inverse_problem(catke,
                                                "extended_stability_conv_adj";
                                                #"variable_stabilities";
                                                Nensemble = 1,
-                                               Δt = 10.0, #minutes,
+                                               Δt = 1minutes,
                                                start_time = 10minutes,
                                                grid_parameters,
                                                suite_parameters)
@@ -118,47 +121,66 @@ for c = 1:5
     Label(fig[2, c], titles[c], tellwidth=false)
 
     ax_bc = Axis(fig[3, c]; ylabel="z (m)", xlabel="Buoyancy \n (10⁻⁴ × m s⁻²)", yaxisposition, xticks=xticks[cc])
+    ax_ec = Axis(fig[4, c]; ylabel="z (m)", yaxisposition)
+
     push!(ax_b, ax_bc)
+    push!(ax_e, ax_ec)
     ylims!(ax_b[c], zlim, 5)
+    ylims!(ax_e[c], zlim, 5)
 
     b_init = interior(ip.observations[cc].field_time_serieses.b[1], 1, 1, :)
     b_obs  = interior(ip.observations[cc].field_time_serieses.b[Nt], 1, 1, :)
+    e_obs  = interior(ip.observations[cc].field_time_serieses.e[Nt], 1, 1, :)
     b₀ = b_init[k₀]
 
-    #lines!(ax_b[c], b_init .- b₀, z, linewidth=2, label="Initial condition", color=LEScolor)
-    lines!(ax_b[c], b_obs  .- b₀, z, linewidth=8, label=LES_str, color=LEScolor)
+    lines!(ax_b[c], b_obs .- b₀, z, linewidth=8, label=LES_str, color=LEScolor)
+    lines!(ax_e[c], e_obs, z, linewidth=8, label=LES_str, color=LEScolor)
 
     b = interior(ip.time_series_collector.field_time_serieses.b[Nt], 1, cc, :)
-    lines!(ax_b[c], b .- b₀, z, linewidth=2; label="CATKE (0.91.1)", color=catkecolor)
-    #lines!(ax_b[c], b .- b₀, z, linewidth=2; label="k-ϵ", color=catkecolor)
+    e = interior(ip.simulation.model.tracers.e, 1, cc, :)
+    lines!(ax_b[c], b .- b₀, z, linewidth=2; label="CATKE", color=catkecolor)
+    lines!(ax_e[c], e, z, linewidth=2; label="CATKE", color=catkecolor)
+    
+    batched_ip = build_batched_inverse_problem(k_epsilon,
+                                               "variable_stabilities";
+                                               Nensemble = 1,
+                                               Δt = 1minutes,
+                                               start_time = 10minutes,
+                                               grid_parameters,
+                                               suite_parameters)
 
-    #=
-    gotm_closures = ["SMCLT", "KPP-CVMix"]
-    gotm_tsteps = [1, 120]
-    for (parameterization_str, tstep) in zip(gotm_closures, gotm_tsteps)
-        basedir = "/Users/gregorywagner/Projects/SingleColumnModelCalibration/comparison/gotm-new"
-        casedir = string(case, "_", suitehrs, "hours_model_", parameterization_str, "_tstep", tstep)
-        filename = "gotm_output_file.nc"
-        filepath = joinpath(basedir, casedir, filename)
-        ds = Dataset(filepath)
-        α = 2e-4
-        g = 9.81
-        T_gotm = ds["temp"][1, 1, :, :]
-        b_gotm = ds["buoy"][1, 1, :, :]
-        z_gotm = ds["z"][1, 1, :, 1]
-        label = labels[parameterization_str]
-        lines!(ax_b[c], b_gotm[:, end] .- b_gotm[k₀, 1], z_gotm; linestyle=dash, linewidth=2, label)
-    end
-    =#
+    parameters = NamedTuple()
+    forward_run!(batched_ip, [parameters])
+    ip = batched_ip[1]
+    b = interior(ip.time_series_collector.field_time_serieses.b[Nt], 1, cc, :)
+    e = interior(ip.simulation.model.tracers.e, 1, cc, :)
+    lines!(ax_b[c], b .- b₀, z, linewidth=2; label="k-ϵ", color=kecolor)
+    lines!(ax_e[c], e, z, linewidth=2; label="k-ϵ", color=kecolor)
+
+    parameterization_str = "SMCLT"
+    tstep = 1
+    basedir = "/Users/gregorywagner/Projects/SingleColumnModelCalibration/comparison/gotm-new"
+    casedir = string(case, "_", suitehrs, "hours_model_", parameterization_str, "_tstep", tstep)
+    filename = "gotm_output_file.nc"
+    filepath = joinpath(basedir, casedir, filename)
+    ds = Dataset(filepath)
+    α = 2e-4
+    g = 9.81
+    T_gotm = ds["temp"][1, 1, :, :]
+    b_gotm = ds["buoy"][1, 1, :, :]
+    z_gotm = ds["z"][1, 1, :, 1]
+    label = labels[parameterization_str]
+    lines!(ax_b[c], b_gotm[:, end] .- b_gotm[k₀, 1], z_gotm; linestyle=dash, linewidth=2, label)
 
     hidespines!(ax_b[c], :t)
-    c != 1 && hidespines!(ax_b[c], :l)
-    c != 1 && c != 5 && hideydecorations!(ax_b[c], grid=false)
-    c != 5 && hidespines!(ax_b[c], :r)
+    c != c₁ && hidespines!(ax_b[c], :l)
+    c != c₁ && c != cᴺ && hideydecorations!(ax_b[c], grid=false)
+    c != cᴺ && hidespines!(ax_b[c], :r)
 
     Legend(fig[1, 1:5], ax_b[1], nbanks=5, framevisible=false)
 end
 
+#=
 if cc == 1 # free_convection
     xlims!(ax_b[1], 9e-5, 2.3e-4)
     xlims!(ax_b[2], 9e-5, 2.3e-4)
@@ -209,13 +231,14 @@ elseif cc == 7 # strong wind, no rotation
     xlims!(ax_b[5], 9e-5, 8.3e-4)
     xtxt, ztxt = 1e-4, -3
 end
+=#
 
 txts = ["(a)", "(b)", "(c)", "(d)", "(e)"]
 for a = 1:4
     ax = ax_b[a]
     txt = txts[a]
-    #xlims!(ax, 3e-5, 3e-4)
-    text!(ax, xtxt, ztxt, text=txt, align=(:left, :top))
+    #text!(ax, xtxt, ztxt, text=txt, align=(:left, :top))
+    xlims!(ax, 3e-5, 6e-4)
 end
 
 rowsize!(fig.layout, 1, Relative(0.1))

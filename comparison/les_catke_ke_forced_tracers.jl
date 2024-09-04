@@ -13,7 +13,7 @@ using Printf
 using JLD2
 using NCDatasets
 using LinearAlgebra
-using CairoMakie
+using GLMakie
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
@@ -23,10 +23,13 @@ using SingleColumnModelCalibration:
 set_theme!(Theme(fontsize=22))
 
 closure_label = "CATKE"
+catke = CATKEVerticalDiffusivity()
+k_epsilon = TKEDissipationVerticalDiffusivity()
 
-closure = CATKEVerticalDiffusivity()
-#@load "optimal_catke.jld2" optimal_catke
-#closure = optimal_catke
+resolution = "1m"
+catkecolor = (:black, 0.9)
+kecolor = (:blue, 0.9)
+LEScolor = (:seagreen, 0.6)
 
 cases = ["free_convection",
          "weak_wind_strong_cooling",
@@ -54,7 +57,7 @@ grid_parameters = [(size=128, z=(-256, 0))]
 k₀ = 28
 
 #for cc = 1:7
-cc = 1
+cc = 7
 
 #####
 ##### Figure
@@ -86,14 +89,9 @@ for c = 1:5
 
     # Batch the inverse problems
     suite = "$(suitehrs)_hour_suite"
-    resolution = "1m"
-    #catkecolor = (:royalblue1, 0.8)
-    catkecolor = (:black, 0.9)
-    LEScolor = (:seagreen, 0.6)
     suite_parameters = (; name=suite, resolution, stop_time=suitehrs*hours)
 
-    batched_ip = build_batched_inverse_problem(closure,
-                                               #"variable_Pr_conv_adj";
+    batched_ip = build_batched_inverse_problem(catke,
                                                "extended_stability_conv_adj";
                                                Nensemble = 1,
                                                Δt = 1minutes,
@@ -128,6 +126,21 @@ for c = 1:5
     c_catke = interior(ip.time_series_collector.field_time_serieses.c[Nt], 1, cc, :)
     lines!(ax_c[c], c_catke, z, linewidth=2; label="CATKE", color=catkecolor)
 
+    batched_ip = build_batched_inverse_problem(k_epsilon,
+                                               "variable_stabilities";
+                                               Nensemble = 1,
+                                               Δt = 1minutes,
+                                               start_time = 10minutes,
+                                               grid_parameters,
+                                               suite_parameters)
+
+    parameters = NamedTuple()
+    forward_run!(batched_ip, [parameters])
+
+    ip = batched_ip[1]
+    c_ke = interior(ip.time_series_collector.field_time_serieses.c[Nt], 1, cc, :)
+    lines!(ax_c[c], c_ke, z, linewidth=2; label="k-ϵ", color=kecolor)
+
     hidespines!(ax_c[c], :t)
     c != 1 && hidespines!(ax_c[c], :l)
     c != 1 && c != 5 && hideydecorations!(ax_c[c], grid=false)
@@ -136,6 +149,7 @@ for c = 1:5
     Legend(fig[1, 1:5], ax_c[1], nbanks=5, framevisible=false)
 end
 
+#=
 if cc == 1 # free_convection
     [xlims!(ax, -2.5, 5.5) for ax in ax_c]
 elseif cc == 2 # weak wind, strong cooling
@@ -151,6 +165,11 @@ elseif cc == 6 # weak wind, strong cooling
 elseif cc == 7 # weak wind, strong cooling
     [xlims!(ax, -2.5, 9.0) for ax in ax_c]
 end
+=#
+
+for ax in ax_c
+    xlims!(ax, -2.5, 14.0)
+end
 
 xtxt = -2
 ztxt = -3
@@ -165,7 +184,7 @@ rowsize!(fig.layout, 1, Relative(0.1))
 
 display(fig)
 case = cases[cc]
-save("les_catke_forced_tracer_$case.pdf", fig)
+#save("les_catke_forced_tracer_$case.pdf", fig)
 
 #end
 
