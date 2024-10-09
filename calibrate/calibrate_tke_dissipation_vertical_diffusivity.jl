@@ -21,7 +21,7 @@ closure         = TKEDissipationVerticalDiffusivity()
 architecture    = CPU()
 Nensemble       = 100
 simulation_Δt   = 1minute
-stop_pseudotime = 1e4
+stop_pseudotime = 1e2
 
 # Choose the parameter set to calibrate.
 # There must be corresponding entries in the following dictionaries, which
@@ -31,7 +31,7 @@ stop_pseudotime = 1e4
 #   * SingleColumnModelCalibration.dependent_parameter_sets
 #   * SingleColumnModelCalibration.boundary_library
 #
-parameter_set   = "variable_stabilities"
+parameter_set = "dissipation_and_transport"
 
 # Data to calibrate against
 suite_parameters = [
@@ -44,7 +44,7 @@ suite_parameters = [
 grid_parameters = [
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
-    (size=128, z=(-256, 0)),
+    #(size=128, z=(-256, 0)),
 ]
 
 filename = "TKEDissipationVerticalDiffusivity_$parameter_set"
@@ -83,7 +83,6 @@ while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
         
         @info "Saving data to $filepath..."
         file = jldopen(filepath, "a+")
-        file["resample_failure_fraction"] = resample_failure_fraction
         file["stop_pseudotime"] = stop_pseudotime
         file["iteration_summaries"] = eki.iteration_summaries
         close(file)

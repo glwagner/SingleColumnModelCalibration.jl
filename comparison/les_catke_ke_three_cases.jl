@@ -56,14 +56,14 @@ labels = Dict(
 
 grid_parameters = [(size=128, z=(-256, 0))]
 k₀ = 28
-cc = 1
+cc = 5
 case = cases[cc]
 
 #####
 ##### Figure
 #####
 
-fig = Figure(size=(600, 800))
+fig = Figure(size=(1000, 800))
 
 d = 4
 dash = Linestyle([0.0, d, 1.6d, 2.6d])
@@ -86,7 +86,7 @@ xticks = [([1e-4, 2e-4, 3e-4, 4e-4, 5e-4], ["1", "2", "3", "4", "5"]) for c = 1:
 
 zlim = zlims[cc]
 
-for (ic, c) in enumerate((1, 4))
+for (ic, c) in enumerate((1, 3, 4))
     resolution = resolutions[c]
     suitehrs = suites[c]
 
@@ -177,11 +177,11 @@ for (ic, c) in enumerate((1, 4))
     for ax in (ax_b, ax_e)
         hidespines!(ax[ic], :t)
         ic != 1 && hidespines!(ax[ic], :l)
-        ic != 1 && ic != 2 && hideydecorations!(ax[ic], grid=false)
-        ic != 2 && hidespines!(ax[ic], :r)
+        ic != 1 && ic != 3 && hideydecorations!(ax[ic], grid=false)
+        ic != 3 && hidespines!(ax[ic], :r)
     end
 
-    Legend(fig[1, 1:2], ax_b[1], nbanks=2, framevisible=false)
+    Legend(fig[1, 1:3], ax_b[1], nbanks=4, framevisible=false)
 end
 
 for ax in ax_b

@@ -128,10 +128,11 @@ parameter_sets["variable_stabilities"] = (:Cσe, :Cσϵ,
                                           :Cd₁, :Cd₂, :Cd₃, :Cd₄, :Cd₅, 
                                           :Cᵋϵ, :Cᴾϵ, :Cᵇϵ, :Cᵂu★, :CᵂwΔ)
 
-dependent_parameter_sets["variable_stabilities"] = NamedTuple()
+parameter_sets["dissipation_and_transport"] = (:Cσe, :Cσϵ, :Cᵋϵ, :Cᴾϵ, :Cᵇϵ, :Cᵂu★, :CᵂwΔ)
+dependent_parameter_sets["dissipation_and_transport"] = NamedTuple()
 
-bounds_library[:Cσe] = (0.0, 4.0)      
-bounds_library[:Cσϵ] = (0.0, 4.0)
+bounds_library[:Cσe] = (0.0, 10.0)      
+bounds_library[:Cσϵ] = (0.0, 10.0)
 bounds_library[:Cu₀] = (0.0, 1.0)
 bounds_library[:Cu₁] = (-0.1, 0.1)
 bounds_library[:Cu₂] = (-0.1, 0.1)
@@ -143,9 +144,9 @@ bounds_library[:Cd₂] = (-0.1, 0.1)
 bounds_library[:Cd₃] = (-0.1, 0.1)
 bounds_library[:Cd₄] = (-0.1, 0.1)
 bounds_library[:Cd₅] = (-0.1, 0.1)
-bounds_library[:Cᵋϵ] = (0.0, 2.0)
-bounds_library[:Cᴾϵ] = (0.0, 2.0)
-bounds_library[:Cᵇϵ] = (-2.0, 2.0)
+bounds_library[:Cᵋϵ] = (0.0, 4.0)
+bounds_library[:Cᴾϵ] = (0.0, 4.0)
+bounds_library[:Cᵇϵ] = (-4.0, 4.0)
 bounds_library[:𝕊u₀] = (0.0, 2.0)
 
 prior_library = Dict()

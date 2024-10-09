@@ -19,12 +19,12 @@ function batched_lesbrary_observations(regrid; times, suite,
     transformation = NamedTuple(n => Transformation(; space, normalization=normalizations[n])
                                 for n in keys(normalizations))
 
+    field_names = (:b, :c, :u, :v)
     case_path(case) = joinpath("..", "data", "profiles", suite, resolution,
                                case * "_with_tracer_instantaneous_statistics.jld2")
+                               #case * "_instantaneous_statistics.jld2")
 
     observation_library = Dict()
-
-    field_names = (:b, :c, :u, :v)
 
     # Don't optimize u, v for free_convection
     free_convection_names = filter(n -> n ∈ (:b, :c, :e), field_names)
@@ -34,7 +34,8 @@ function batched_lesbrary_observations(regrid; times, suite,
                                                                     
     # Don't optimize v for non-rotating cases
     no_rotation_names = filter(n -> n ∈ (:b, :c, :e, :u), field_names)
-    for case in ["strong_wind_no_rotation", "strong_wind_and_sunny"]
+    #for case in ["strong_wind_no_rotation", "strong_wind_and_sunny"]
+    for case in ["strong_wind_no_rotation"]
         observation_library[case] =
             SyntheticObservations(case_path(case); transformation, times, regrid,
                                   field_names = no_rotation_names)
@@ -73,7 +74,7 @@ function lesbrary_inverse_problem(regrid;
                                   Nensemble = 100,
                                   observations_resolution = "1m",
                                   Δt = 5minutes,
-                                  field_names = (:b, :e, :u, :v),
+                                  field_names = (:b, :c, :u, :v),
                                   closure = CATKEVerticalDiffusivity(),
                                   non_ensemble_closure = nothing,
                                   suite = "one_day_suite",
@@ -112,6 +113,7 @@ function lesbrary_inverse_problem(regrid;
         view(N², :, case) .= obs.metadata.parameters.N²_deep
         view(simulation.model.coriolis, :, case) .= Ref(FPlane(f=f))
 
+        #=
         τ = obs.metadata.parameters.tracer_forcing_timescale
         z₀ = - obs.metadata.parameters.tracer_forcing_depth
         λ = obs.metadata.parameters.tracer_forcing_width
@@ -135,6 +137,7 @@ function lesbrary_inverse_problem(regrid;
             compute!(dIdz)
             interior(Fᵇ, :, case, :) .= interior(dIdz, :, 1, :)
         end
+        =#
     end
 
     ip = InverseProblem(batched_observations, simulation, free_parameters)
