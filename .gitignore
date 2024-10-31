@@ -35,3 +35,4 @@ docs/site/
 
 comparison/gotm*
 *.ipynb_checkpoints
+core.*

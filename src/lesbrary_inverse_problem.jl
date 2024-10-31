@@ -12,7 +12,7 @@ function batched_lesbrary_observations(regrid; times, suite,
     Nz = regrid.Nz
     zf = znodes(regrid, Face())
     kb = round(Int, Nz/3) # exclude the bottom third, ie ≈ - 170m
-    k4 = findfirst(z -> z > -4, zf) - 1 # exclude the top 8 meters
+    k4 = findfirst(z -> z > -4, zf) - 1 # exclude the top 4 meters
     kt = min(Nz-1, k4) # exclude the top 4 meters, or top grid point --- whichever is larger
     space = SpaceIndices(z=kb:kt)
 
@@ -34,8 +34,8 @@ function batched_lesbrary_observations(regrid; times, suite,
                                                                     
     # Don't optimize v for non-rotating cases
     no_rotation_names = filter(n -> n ∈ (:b, :c, :e, :u), field_names)
-    #for case in ["strong_wind_no_rotation", "strong_wind_and_sunny"]
-    for case in ["strong_wind_no_rotation"]
+    for case in ["strong_wind_no_rotation", "strong_wind_and_sunny"]
+    #for case in ["strong_wind_no_rotation"]
         observation_library[case] =
             SyntheticObservations(case_path(case); transformation, times, regrid,
                                   field_names = no_rotation_names)
@@ -113,7 +113,6 @@ function lesbrary_inverse_problem(regrid;
         view(N², :, case) .= obs.metadata.parameters.N²_deep
         view(simulation.model.coriolis, :, case) .= Ref(FPlane(f=f))
 
-        #=
         τ = obs.metadata.parameters.tracer_forcing_timescale
         z₀ = - obs.metadata.parameters.tracer_forcing_depth
         λ = obs.metadata.parameters.tracer_forcing_width
@@ -137,7 +136,6 @@ function lesbrary_inverse_problem(regrid;
             compute!(dIdz)
             interior(Fᵇ, :, case, :) .= interior(dIdz, :, 1, :)
         end
-        =#
     end
 
     ip = InverseProblem(batched_observations, simulation, free_parameters)
