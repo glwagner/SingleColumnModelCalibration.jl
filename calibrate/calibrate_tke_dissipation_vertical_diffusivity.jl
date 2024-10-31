@@ -18,10 +18,10 @@ using SingleColumnModelCalibration:
 
 # Parameters of the calibration problem
 closure         = TKEDissipationVerticalDiffusivity()
-architecture    = CPU()
-Nensemble       = 100
+architecture    = GPU()
+Nensemble       = 1000
 simulation_Δt   = 1minute
-stop_pseudotime = 1e2
+stop_pseudotime = 1e4
 
 # Choose the parameter set to calibrate.
 # There must be corresponding entries in the following dictionaries, which
@@ -32,6 +32,7 @@ stop_pseudotime = 1e2
 #   * SingleColumnModelCalibration.boundary_library
 #
 parameter_set = "dissipation_and_transport"
+label = "_double_ceb"
 
 # Data to calibrate against
 suite_parameters = [
@@ -44,10 +45,10 @@ suite_parameters = [
 grid_parameters = [
     (size=32, z=(-256, 0)),
     (size=64, z=(-256, 0)),
-    #(size=128, z=(-256, 0)),
+    (size=128, z=(-256, 0)),
 ]
 
-filename = "TKEDissipationVerticalDiffusivity_$parameter_set"
+filename = "TKEDissipationVerticalDiffusivity_$(parameter_set)$(label)"
 filepath = generate_filepath(; filename,
                              Nensemble,
                              suite_parameters,
