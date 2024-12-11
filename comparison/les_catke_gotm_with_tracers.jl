@@ -14,13 +14,15 @@ using JLD2
 using NCDatasets
 using LinearAlgebra
 using CairoMakie
+using MathTeXEngine
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
     build_batched_inverse_problem,
     prior_library
 
-set_theme!(Theme(fontsize=22))
+fonts = (; regular=texfont())
+set_theme!(Theme(fontsize=22; fonts))
 
 #@load "optimal_catke.jld2" optimal_catke
 #closure = optimal_catke
@@ -51,17 +53,18 @@ labels = Dict(
 
 grid_parameters = [(size=128, z=(-256, 0))]
 k₀ = 28
-cc = 6
+cc = 4
 
 #####
 ##### Figure
 #####
 
-fig = Figure(size=(1200, 500))
+fig = Figure(size=(1200, 800))
 
 d = 4
 dash = Linestyle([0.0, d, 1.6d, 2.6d])
 ax_b = []
+ax_c = []
 
 suites = [6, 12, 24, 48, 72]
 resolutions = ["1m" for c = 1:5]
@@ -117,7 +120,8 @@ for c = 1:5
     yaxisposition = c < 5 ? :left : :right
     Label(fig[2, c], titles[c], tellwidth=false)
 
-    ax_bc = Axis(fig[3, c]; ylabel="z (m)", xlabel="Buoyancy \n (10⁻⁴ × m s⁻²)", yaxisposition, xticks=xticks[cc])
+    xlabel = "Buoyancy \n (10⁻⁴ × m s⁻²)"
+    ax_bc = Axis(fig[3, c]; ylabel="z (m)", xlabel, yaxisposition, xticks=xticks[cc])
     push!(ax_b, ax_bc)
     ylims!(ax_b[c], zlim, 5)
 
@@ -149,10 +153,34 @@ for c = 1:5
         lines!(ax_b[c], b_gotm[:, end] .- b_gotm[k₀, 1], z_gotm; linestyle=dash, linewidth=2, label)
     end
 
+    xlabel = "Passive tracer"
+    ax_cc = Axis(fig[4, c]; ylabel="z (m)", xlabel, yaxisposition, xticks=[-2, 0, 2, 4, 6, 8])
+    push!(ax_c, ax_cc)
+    ylims!(ax_c[c], zlim, 5)
+
+    c_obs = interior(ip.observations[cc].field_time_serieses.c[Nt], 1, 1, :)
+    lines!(ax_c[c], c_obs, z, linewidth=8, label=LES_str, color=LEScolor)
+
+    c_catke = interior(ip.time_series_collector.field_time_serieses.c[Nt], 1, cc, :)
+    lines!(ax_c[c], c_catke, z, linewidth=2; label="CATKE", color=catkecolor)
+
     hidespines!(ax_b[c], :t)
-    c != 1 && hidespines!(ax_b[c], :l)
-    c != 1 && c != 5 && hideydecorations!(ax_b[c], grid=false)
-    c != 5 && hidespines!(ax_b[c], :r)
+    hidespines!(ax_c[c], :t)
+
+    if c != 1
+        hidespines!(ax_b[c], :l)
+        hidespines!(ax_c[c], :l)
+    end
+
+    if c != 1 && c != 5
+        hideydecorations!(ax_b[c], grid=false)
+        hideydecorations!(ax_c[c], grid=false)
+    end
+
+    if c != 5
+        hidespines!(ax_b[c], :r)
+        hidespines!(ax_c[c], :r)
+    end
 
     Legend(fig[1, 1:5], ax_b[1], nbanks=5, framevisible=false)
 end
@@ -163,7 +191,7 @@ if cc == 1 # free_convection
     xlims!(ax_b[3], 9e-5, 2.3e-4)
     xlims!(ax_b[4], 9e-5, 2.2e-4)
     xlims!(ax_b[5], 9e-5, 2.1e-4)
-    xtxt, ztxt = 1e-4, -10
+    xtxt, ztxt = 1.1e-4, -10
 elseif cc == 2 # weak wind, strong cooling
     xlims!(ax_b[1], 9e-5, 2.7e-4)
     xlims!(ax_b[2], 9e-5, 2.6e-4)
@@ -208,11 +236,35 @@ elseif cc == 7 # strong wind, no rotation
     xtxt, ztxt = 1e-4, -3
 end
 
+if cc == 1 # free_convection
+    [xlims!(ax, -2.5, 5.5) for ax in ax_c]
+elseif cc == 2 # weak wind, strong cooling
+    [xlims!(ax, -2.5, 4.5) for ax in ax_c]
+elseif cc == 3 # weak wind, strong cooling
+    [xlims!(ax, -2.5, 3.8) for ax in ax_c]
+elseif cc == 4 # weak wind, strong cooling
+    [xlims!(ax, -2.5, 3.8) for ax in ax_c]
+elseif cc == 5 # weak wind, strong cooling
+    [xlims!(ax, -2.5, 4.8) for ax in ax_c]
+elseif cc == 6 # weak wind, strong cooling
+    [xlims!(ax, -2.5, 6.2) for ax in ax_c]
+elseif cc == 7 # weak wind, strong cooling
+    [xlims!(ax, -2.5, 9.0) for ax in ax_c]
+end
+
 txts = ["(a)", "(b)", "(c)", "(d)", "(e)"]
 for a = 1:5
     ax = ax_b[a]
     txt = txts[a]
-    #xlims!(ax, 3e-5, 3e-4)
+    text!(ax, xtxt, ztxt, text=txt, align=(:left, :top))
+end
+
+xtxt = -2
+ztxt = -3
+txts = ["(f)", "(g)", "(h)", "(g)", "(i)"]
+for a = 1:5
+    ax = ax_c[a]
+    txt = txts[a]
     text!(ax, xtxt, ztxt, text=txt, align=(:left, :top))
 end
 
@@ -220,6 +272,6 @@ rowsize!(fig.layout, 1, Relative(0.1))
 
 display(fig)
 case = cases[cc]
-#save("gotm_catke_forcing_comparison_$case.pdf", fig)
+save("gotm_catke_forcing_comparison_$case.pdf", fig)
 #save("gotm_k_epsilon_forcing_comparison_$case.pdf", fig)
 

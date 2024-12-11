@@ -13,13 +13,15 @@ using JLD2
 using NCDatasets
 using LinearAlgebra
 using CairoMakie
+using MathTeXEngine
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
     build_batched_inverse_problem,
     prior_library
 
-set_theme!(Theme(fontsize=19))
+fonts = (; regular=texfont())
+set_theme!(Theme(fontsize=19; fonts))
 
 @load "optimal_catke.jld2" optimal_catke
 closure = optimal_catke

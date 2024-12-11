@@ -3,6 +3,7 @@ using JLD2
 using CairoMakie
 using ParameterEstimocean
 using Oceananigans.Units
+using MathTeXEngine
 
 using ParameterEstimocean.Parameters: build_parameters_named_tuple
 
@@ -11,9 +12,10 @@ using SingleColumnModelCalibration:
     build_batched_inverse_problem,
     prior_library
 
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity, tracer_mixing_lengthᶜᶜᶠ
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities: CATKEVerticalDiffusivity, tracer_mixing_lengthᶜᶜᶠ
 
-set_theme!(Theme(fontsize=32, linewidth=4))
+fonts = (; regular=texfont())
+set_theme!(Theme(fontsize=32, linewidth=4; fonts))
 
 n = 70
 ulims = (-0.15, 0.35)

@@ -33,9 +33,9 @@ closure = CATKEVerticalDiffusivity(tke_time_step=nothing)
 name = "extended_stability_conv_adj"
 label = "adding_scales"
 
-closure = TKEDissipationVerticalDiffusivity()
-name = "variable_stabilities"
-label = "k_epsilon"
+# closure = TKEDissipationVerticalDiffusivity()
+# name = "variable_stabilities"
+# label = "k_epsilon"
 
 architecture = CPU()
 resample_failure_fraction = 0.1
@@ -72,6 +72,14 @@ filepath = filepath[1:end-5] * "_$label.jld2"
 
 while (eki.pseudotime < stop_pseudotime) && (eki.iteration < max_iterations)
     @time iterate!(eki)
+end
+
+# resample all parameters
+# estimate μ
+new_distribution = MvNormal(μ, σ)
+X = rand(new_distribution)
+eki.pseudotime = 0
+
 
     if eki.iteration % 5 == 0
         open(logname, "a") do io
