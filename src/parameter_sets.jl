@@ -41,10 +41,10 @@ Cˡᵒc(θ) = θ.Cʰⁱc
 Cˡᵒe(θ) = θ.Cʰⁱe
 
 # Functions for the "unstable" branch of the stability functions
-CᵘⁿD(θ) = θ.CˡᵒD
-Cᵘⁿu(θ) = θ.Cˡᵒu
-Cᵘⁿc(θ) = θ.Cˡᵒc
-Cᵘⁿe(θ) = θ.Cˡᵒe
+CᵘⁿD(θ) = θ.CʰⁱD
+Cᵘⁿu(θ) = θ.Cʰⁱu
+Cᵘⁿc(θ) = θ.Cʰⁱc
+Cᵘⁿe(θ) = θ.Cʰⁱe
 
 for set in ["constant_Pr", "constant_Pr_conv_adj"]
     dependent_parameter_sets[set] = (; Cˡᵒu, Cˡᵒc, Cˡᵒe, CˡᵒD, Cᵘⁿu, Cᵘⁿc, Cᵘⁿe, CᵘⁿD) 
@@ -128,23 +128,43 @@ parameter_sets["variable_stabilities"] = (:Cσe, :Cσϵ,
                                           :Cd₁, :Cd₂, :Cd₃, :Cd₄, :Cd₅, 
                                           :Cᵋϵ, :Cᴾϵ, :Cᵇϵ, :Cᵂu★, :CᵂwΔ)
 
-parameter_sets["dissipation_and_transport"] = (:Cσe, :Cσϵ, :Cᵋϵ, :Cᴾϵ, :Cᵇϵ, :Cᵂu★, :CᵂwΔ)
+parameter_sets["dissipation_and_transport"] = (:Cσe, :Cσϵ, :Cᵋϵ, :Cᴾϵ, :Cᵇϵ⁺, :Cᵇϵ⁻, :Cᵂu★, :CᵂwΔ)
 dependent_parameter_sets["dissipation_and_transport"] = NamedTuple()
+
+
+# Neutralize convective mixing length
+Cd₃(θ) = 0.0 
+Cd₄(θ) = 0.0 
+Cd₅(θ) = 0.0 
+Cu₁(θ) = 0.0
+Cu₂(θ) = 0.0
+Cc₁(θ) = 0.0
+Cc₂(θ) = 0.0
+
+parameter_sets["very_simple_stabilities"] = (:Cσe, :Cσϵ, :Cᵋϵ, :Cᴾϵ, :Cᵇϵ⁺, :Cᵇϵ⁻, :Cᵂu★, :CᵂwΔ,
+                                             :Cu₀, :Cc₀, :Cd₁, :Cd₂)
+dependent_parameter_sets["very_simple_stabilities"] = (; Cd₃, Cd₄, Cd₅, Cu₁, Cu₂, Cc₁, Cc₂)
+
+parameter_sets["pretty_simple_stabilities"] = (:Cσe, :Cσϵ, :Cᵋϵ, :Cᴾϵ, :Cᵇϵ⁺, :Cᵇϵ⁻, :Cᵂu★, :CᵂwΔ,
+                                               :Cu₀, :Cu₁, :Cu₂, :Cc₀, :Cc₁, :Cc₂, :Cd₁, :Cd₂)
+dependent_parameter_sets["pretty_simple_stabilities"] = (; Cd₃, Cd₄, Cd₅, Cu₁, Cu₂, Cc₁, Cc₂)
 
 bounds_library[:Cσe] = (0.0, 10.0)      
 bounds_library[:Cσϵ] = (0.0, 10.0)
 bounds_library[:Cᵋϵ] = (0.0, 10.0)
 bounds_library[:Cᴾϵ] = (0.0, 10.0)
 bounds_library[:Cᵇϵ] = (-10.0, 0.0)
+bounds_library[:Cᵇϵ⁻] = (-10.0, 0.0)
+bounds_library[:Cᵇϵ⁺] = (0.0, 10.0)
 
-bounds_library[:Cu₀] = (0.0, 1.0)
-bounds_library[:Cu₁] = (-0.1, 0.1)
-bounds_library[:Cu₂] = (-0.1, 0.1)
-bounds_library[:Cc₀] = (0.0, 1.0)
-bounds_library[:Cc₁] = (-0.1, 0.1)
-bounds_library[:Cc₂] = (-0.1, 0.1)
-bounds_library[:Cd₁] = (-0.1, 0.1)
-bounds_library[:Cd₂] = (-0.1, 0.1)
+bounds_library[:Cu₀] = (0.0, 0.2)
+bounds_library[:Cu₁] = (0.0, 0.04)
+bounds_library[:Cu₂] = (-0.001, 0.001)
+bounds_library[:Cc₀] = (0.0, 0.2)
+bounds_library[:Cc₁] = (0.0, 0.008)
+bounds_library[:Cc₂] = (0.0, 0.01)
+bounds_library[:Cd₁] = (0.0, 0.4)
+bounds_library[:Cd₂] = (0.0, 0.05)
 bounds_library[:Cd₃] = (-0.1, 0.1)
 bounds_library[:Cd₄] = (-0.1, 0.1)
 bounds_library[:Cd₅] = (-0.1, 0.1)
