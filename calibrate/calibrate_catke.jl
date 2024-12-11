@@ -27,21 +27,19 @@ suite_parameters = [
     (name = "48_hour_suite", stop_time=48hours),
 ]
 
-resultsdir = "../results"
-
 closure = CATKEVerticalDiffusivity(tke_time_step=nothing)
-name = "extended_stability_conv_adj"
-label = "adding_scales"
+name = "extended_stability"
+label = "no_convection"
 
 # closure = TKEDissipationVerticalDiffusivity()
 # name = "variable_stabilities"
 # label = "k_epsilon"
 
-architecture = CPU()
+architecture = GPU()
 resample_failure_fraction = 0.1
 stop_pseudotime = 1e4
 max_iterations = 1000
-Nensemble = 100
+Nensemble = 1000
 Δt = 30seconds
 irepeat = try ARGS[1]; catch; 1; end
 start_time = time_ns()
@@ -61,11 +59,11 @@ logname = string(name, "_Nens", Nensemble, "_", irepeat, "_", label, ".txt")
 
 prefix = string(name, "_", irepeat)
 filepath = generate_filepath(; Δt,
-                             dir = resultsdir,
                              suite_parameters,
                              grid_parameters,
                              stop_pseudotime,
                              Nensemble,
+                             dir = ".",
                              filename=prefix)
     
 filepath = filepath[1:end-5] * "_$label.jld2"

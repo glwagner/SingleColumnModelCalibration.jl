@@ -12,7 +12,7 @@ function batched_lesbrary_observations(regrid; times, suite,
     Nz = regrid.Nz
     zf = znodes(regrid, Face())
     kb = round(Int, Nz/3) # exclude the bottom third, ie ≈ - 170m
-    k4 = findfirst(z -> z > -4, zf) - 1 # exclude the top 8 meters
+    k4 = findfirst(z -> z > -4, zf) - 1 # exclude the top 4 meters
     kt = min(Nz-1, k4) # exclude the top 4 meters, or top grid point --- whichever is larger
     space = SpaceIndices(z=kb:kt)
 
