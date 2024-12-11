@@ -1,10 +1,11 @@
+authors = ["Gregory Wagner <wagner.greg@gmail.com>"]
 name = "SingleColumnModelCalibration"
 uuid = "3ef4119f-b09a-4363-836a-de82504835cf"
-authors = ["Gregory Wagner <wagner.greg@gmail.com>"]
 version = "0.1.0"
 
 [deps]
 BlockDiagonals = "0a1fb500-61f7-11e9-3c65-f5ef3456f9f0"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
@@ -18,3 +19,6 @@ ParameterEstimocean = "eca81dc5-87a6-4430-aec8-c76695404a43"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SeawaterPolynomials = "d496a93d-167e-4197-9f49-d3af4ff8fe40"
 Thermodynamics = "b60c26fb-14c3-4610-9d3e-2d17fe7ff00c"
+
+[extras]
+CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"

@@ -20,8 +20,8 @@ using SingleColumnModelCalibration:
 closure         = TKEDissipationVerticalDiffusivity()
 architecture    = GPU()
 Nensemble       = 1000
-simulation_Δt   = 1minute
-stop_pseudotime = 1e4
+simulation_Δt   = 30.0
+stop_pseudotime = 1e3
 
 # Choose the parameter set to calibrate.
 # There must be corresponding entries in the following dictionaries, which
@@ -31,8 +31,8 @@ stop_pseudotime = 1e4
 #   * SingleColumnModelCalibration.dependent_parameter_sets
 #   * SingleColumnModelCalibration.boundary_library
 #
-parameter_set = "dissipation_and_transport"
-label = "_double_ceb"
+parameter_set = "pretty_simple_stabilities"
+label = ""
 
 # Data to calibrate against
 suite_parameters = [
