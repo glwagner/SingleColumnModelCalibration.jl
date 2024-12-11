@@ -1,10 +1,7 @@
 using Oceananigans
 using Oceananigans.Operators: Δzᶜᶜᶜ
 using Oceananigans.Units
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
-    CATKEVerticalDiffusivity,
-    MixingLength,
-    TurbulentKineticEnergyEquation
+using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 
 using ParameterEstimocean
 using ParameterEstimocean.InverseProblems: BatchedInverseProblem, inverting_forward_map
@@ -16,20 +13,22 @@ using JLD2
 using NCDatasets
 using LinearAlgebra
 using CairoMakie
+using MathTeXEngine
 
 using SingleColumnModelCalibration:
     dependent_parameter_sets,
     build_batched_inverse_problem,
     prior_library
 
-set_theme!(Theme(fontsize=22))
+fonts = (; regular=texfont())
+set_theme!(Theme(fontsize=22; fonts))
 
 closure_label = "CATKE"
 
 @load "optimal_catke.jld2" optimal_catke
 closure = optimal_catke
 #closure = CATKEVerticalDiffusivity(turbulent_kinetic_energy_time_step=1minute)
-#closure = CATKEVerticalDiffusivity()
+closure = CATKEVerticalDiffusivity()
 
 cases = ["free_convection",
          "weak_wind_strong_cooling",
@@ -135,7 +134,7 @@ for c = 1:5
     yaxisposition = c < 5 ? :left : :right
     Label(fig[2, c], titles[c], tellwidth=false)
 
-    ax_bc = Axis(fig[3, c]; ylabel="z (m)", xlabel="Buoyancy \n (10⁻⁴ × m s⁻²)", yaxisposition, xticks=xticks[cc])
+    ax_bc = Axis(fig[3, c]; ylabel=L"z \, \mathrm{(m)}", xlabel="Buoyancy \n (10⁻⁴ × m s⁻²)", yaxisposition, xticks=xticks[cc])
     push!(ax_b, ax_bc)
     ylims!(ax_b[c], zlim, 5)
 
@@ -148,7 +147,8 @@ for c = 1:5
     for n = 1:length(grid_sizes)
         Nz = grid_sizes[n]
         Δz = 256 / Nz
-        label = @sprintf("Δz = %d meters", Δz)
+        Δz_str = string(Int(Δz))
+        label = L"\Delta z = %$Δz_str \, \mathrm{meters}"
         ip = ips[n]
         b = interior(ip.time_series_collector.field_time_serieses.b[Nt], 1, cc, :)
         grid = ip.simulation.model.grid

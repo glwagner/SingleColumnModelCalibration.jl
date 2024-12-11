@@ -15,9 +15,15 @@ using SingleColumnModelCalibration:
 dir = joinpath("..", "results")
 closure = TKEDissipationVerticalDiffusivity()
 closure_label = "k-ϵ"
-name = "variable_stabilities"
-filename = "variable_stabilities_1_Nens2000_Δt60_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_k_epsilon.jld2"
+runname = "double_ceb_switch_sign"
+name = "dissipation_and_transport"
+figdir = joinpath("figs", "TKEDissipationVerticalDiffusivity_" * name * "_" * runname)
+filename = "TKEDissipationVerticalDiffusivity_very_simple_stabilities_Nens1000_Δt30_τ1000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite.jld2"
 filepath = joinpath(dir, filename)
+try
+    mkdir(figdir)
+catch
+end
 
 file = jldopen(filepath)
 summaries = file["iteration_summaries"]
@@ -49,7 +55,8 @@ default_parameters = (
      Cd₅ = closure.stability_functions.Cd₅,
      Cᵋϵ = closure.tke_dissipation_equations.Cᵋϵ,
      Cᴾϵ = closure.tke_dissipation_equations.Cᴾϵ,
-     Cᵇϵ = closure.tke_dissipation_equations.Cᵇϵ,
+    Cᵇϵ⁺ = closure.tke_dissipation_equations.Cᵇϵ⁺,
+    Cᵇϵ⁻ = closure.tke_dissipation_equations.Cᵇϵ⁻,
     Cᵂu★ = closure.tke_dissipation_equations.Cᵂu★,
     CᵂwΔ = closure.tke_dissipation_equations.CᵂwΔ,
 )
@@ -83,7 +90,8 @@ forward_run!(batched_ip, [optimal_parameters, NamedTuple()])
 #####
 
 LES_color = (:seagreen, 0.6)
-grid_colors = (:black, 0.8)
+color★ = (:black, 0.8)
+color₀ = (:blue, 0.8)
 
 zlim    = -192
 Ngrids  = length(grid_parameters)
@@ -96,6 +104,7 @@ for (s, suite) in enumerate(suite_names)
     fig = Figure(size=(1800, 1200))
 
     i1 = Ngrids*(s-1) + 1
+
     ip1 = batched_ip[i1]
     grid1 = ip1.simulation.model.grid
     z1 = znodes(grid1, Center())
@@ -110,16 +119,15 @@ for (s, suite) in enumerate(suite_names)
     iᵇ = Ngrids*(s-1)
 
     for c = 1:7
-        yaxisposition = c < 7 ? :left : :right
-        # Label(fig[1, c], titles[c], tellwidth=false)
+        yaxisposition = c < 8 ? :left : :right
 
-        ax_bc = Axis(fig[2, c]; ylabel="z (m)", xlabel="Buoyancy \n (m s⁻²)", yaxisposition)
+        ax_bc = Axis(fig[1, c]; ylabel="z (m)", xlabel="Buoyancy (m s⁻²)", yaxisposition)
         push!(ax_b, ax_bc)
 
-        ax_uc = c == 1 ? nothing : Axis(fig[3, c], ylabel="z (m)", xlabel="Velocities \n (m s⁻¹)"; yaxisposition)
+        ax_uc = c == 1 ? nothing : Axis(fig[2, c], ylabel="z (m)", xlabel="Velocities (m s⁻¹)"; yaxisposition)
         push!(ax_u, ax_uc)
 
-        ax_cc = Axis(fig[4, c]; ylabel="z (m)", xlabel="Passive \n tracer", yaxisposition)
+        ax_cc = Axis(fig[3, c]; ylabel="z (m)", xlabel="Passive tracer", yaxisposition)
         push!(ax_c, ax_cc)
 
         b_obs = interior(ip1.observations[c].field_time_serieses.b[Nt], 1, 1, :)
@@ -131,11 +139,11 @@ for (s, suite) in enumerate(suite_names)
 
         if c > 1
             u_obs = interior(ip1.observations[c].field_time_serieses.u[Nt], 1, 1, :)
-            lines!(ax_u[c], u_obs, z1, linewidth=8, label="u, LES",  color=LES_color)
+            lines!(ax_u[c], u_obs, z1, linewidth=8, label="u",  color=LES_color)
 
             if :v ∈ keys(ip1.observations[c].field_time_serieses)
                 v_obs = interior(ip1.observations[c].field_time_serieses.v[Nt], 1, 1, :)
-                lines!(ax_u[c], v_obs, z1, color=LES_color, linewidth=4, linestyle=:dash)
+                lines!(ax_u[c], v_obs, z1, color=LES_color, label="v", linewidth=4, linestyle=:dash)
             end
 
             ylims!(ax_u[c], zlim, 0)
@@ -147,32 +155,59 @@ for (s, suite) in enumerate(suite_names)
             z = znodes(grid, Center())
             Δz = Δzᶜᶜᶜ(1, 1, grid.Nz, grid)
             Δz_str = @sprintf("%d", Δz)
-            color = grid_colors[iᵍ]
 
-            b = interior(ip.time_series_collector.field_time_serieses.b[Nt], 1, c, :)
-            lines!(ax_b[c], b, z, linewidth=3; label="$closure_label, Δz = $Δz_str m", color)
+            b★ = interior(ip.time_series_collector.field_time_serieses.b[Nt], 1, c, :)
+            b₀ = interior(ip.time_series_collector.field_time_serieses.b[Nt], 2, c, :)
+            lines!(ax_b[c], b★, z, linewidth=3; label="Calibrated $closure_label", color=color★)
+            lines!(ax_b[c], b₀, z, linewidth=3; label="Original $closure_label",   color=color₀)
 
-            C = interior(ip.time_series_collector.field_time_serieses.c[Nt], 1, c, :)
-            lines!(ax_c[c], C, z, linewidth=3; label="$closure_label, Δz = $Δz_str m", color)
+            C★ = interior(ip.time_series_collector.field_time_serieses.c[Nt], 1, c, :)
+            C₀ = interior(ip.time_series_collector.field_time_serieses.c[Nt], 2, c, :)
+            lines!(ax_c[c], C★, z, linewidth=3; label="Calibrated $closure_label", color=color★)
+            lines!(ax_c[c], C₀, z, linewidth=3; label="Original $closure_label",   color=color₀)
 
             if c > 1
-                u = interior(ip.time_series_collector.field_time_serieses.u[Nt], 1, c, :)
-                lines!(ax_u[c], u, z, linewidth=3; label="u, $closure_label, Δz = $Δz_str m", color)
+                u★ = interior(ip.time_series_collector.field_time_serieses.u[Nt], 1, c, :)
+                u₀ = interior(ip.time_series_collector.field_time_serieses.u[Nt], 2, c, :)
+                lines!(ax_u[c], u★, z, linewidth=3; color=color★)
+                lines!(ax_u[c], u₀, z, linewidth=3; color=color₀)
 
                 if :v ∈ keys(ip1.observations[c].field_time_serieses)
-                    v = interior(ip.time_series_collector.field_time_serieses.v[Nt], 1, c, :)
-                    lines!(ax_u[c], v, z; color, linewidth=2, linestyle=:dash, label="v")
+                    v★ = interior(ip.time_series_collector.field_time_serieses.v[Nt], 1, c, :)
+                    v₀ = interior(ip.time_series_collector.field_time_serieses.v[Nt], 2, c, :)
+                    lines!(ax_u[c], v★, z; color=color★, linewidth=2, linestyle=:dash, label="v")
+                    lines!(ax_u[c], v₀, z; color=color₀, linewidth=2, linestyle=:dash)
                 end
             end
         end
 
         ylims!(ax_b[c], zlim, 0)
-        hidespines!(ax_b[c], :t)
+        ylims!(ax_c[c], zlim, 0)
+
+        if c == 1
+            hidespines!(ax_b[c], :t, :r)
+            hidespines!(ax_c[c], :t, :r)
+        elseif c == 7 
+            hidespines!(ax_b[c], :t, :l)
+            hidespines!(ax_u[c], :t, :l)
+            hidespines!(ax_c[c], :t, :l)
+        else
+            hidespines!(ax_b[c], :t, :l, :r)
+            hidespines!(ax_c[c], :t, :l, :r)
+
+            if c == 2
+                hidespines!(ax_u[c], :t, :r)
+            else
+                hidespines!(ax_u[c], :t, :l, :r)
+            end
+        end
     end
 
-    Legend(fig[3, 1], ax_b[2])
+    Legend(fig[0, 1:7], ax_b[2], nbanks=10, tellheight=true)
+    Legend(fig[2, 1], ax_u[2], tellwidth=false)
 
     display(fig)
+    figpath = joinpath(figdir, suite * ".png")
+    save(figpath, fig)
 end
-
 

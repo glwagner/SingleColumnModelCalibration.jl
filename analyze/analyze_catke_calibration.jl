@@ -12,9 +12,17 @@ using SingleColumnModelCalibration:
 
 dir = joinpath("..", "results")
 closure = CATKEVerticalDiffusivity()
-name = "extended_stability_conv_adj"
-filename = "extended_stability_conv_adj_1_Nens1000_Δt60_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_with_tracer.jld2"
+closure_label = "CATKE"
+name = "extended_stability"
+figdir = joinpath("figs", "CATKE_" * name)
+#filename = "extended_stability_conv_adj_1_Nens1000_Δt60_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_with_tracer.jld2"
+filename = "extended_stability_1_Nens1000_Δt30_τ10000_Nz32_Nz64_Nz128_12_hour_suite_24_hour_suite_48_hour_suite_no_convection.jld2"
 filepath = joinpath(dir, filename)
+
+try
+    mkdir(figdir)
+catch; end
+
 
 file = jldopen(filepath)
 summaries = file["iteration_summaries"]
@@ -37,9 +45,9 @@ CˡᵒD = optimal_parameters.CˡᵒD
 Cʰⁱc = optimal_parameters.Cʰⁱc
 Cʰⁱu = optimal_parameters.Cʰⁱu
 Cʰⁱe = optimal_parameters.Cʰⁱe
-Cᶜc = optimal_parameters.Cᶜc
-Cᶜu = optimal_parameters.Cᶜu
-Cᶜe = optimal_parameters.Cᶜe
+# Cᶜc = optimal_parameters.Cᶜc
+# Cᶜu = optimal_parameters.Cᶜu
+# Cᶜe = optimal_parameters.Cᶜe
 Cᵘⁿc = optimal_parameters.Cᵘⁿc
 Cᵘⁿu = optimal_parameters.Cᵘⁿu
 Cᵘⁿe = optimal_parameters.Cᵘⁿe
@@ -49,11 +57,11 @@ derived_parameters = (
     Pr₀ = Cˡᵒu / Cˡᵒc,
     Pr∞ = Cʰⁱu / Cʰⁱc,
     Pr⁻ = Cᵘⁿu / Cᵘⁿc,
-    Prᶜ = Cᶜu / Cᶜc,
+    # Prᶜ = Cᶜu / Cᶜc,
     Sc₀ = Cˡᵒu / Cˡᵒe,
     Sc∞ = Cʰⁱu / Cʰⁱe,
     Sc⁻ = Cᵘⁿu / Cᵘⁿe,
-    Scᶜ = Cᶜu / Cᶜe,
+    # Scᶜ = Cᶜu / Cᶜe,
     Ri★ = Cˡᵒu / (Cˡᵒc + CˡᵒD),
     ϰvk = Cˡᵒu * Cˢ,
 )
@@ -66,6 +74,12 @@ for name in keys(all_parameters)
 end
 
 grid_parameters = [(size=128, z=(-256, 0))]
+
+grid_colors = [
+    (:royalblue1, 0.8),
+    (:darkred, 0.8),
+    (:black, 0.8),
+]
 
 suite_parameters = [
     (name = "6_hour_suite",  resolution="1m", stop_time=6hours),
@@ -95,6 +109,16 @@ Ngrids  = length(grid_parameters)
 Nsuites = length(suite_parameters)
 
 suite_names = [suite_parameters[s].name for s = 1:length(suite_parameters)]
+
+titles = [
+    "Free convection",
+    "Weak wind, strong cooling",
+    "Mid wind, mid cooling",
+    "Strong wind, weak cooling",
+    "Strong wind",
+    "Strong wind, no rotating",
+    "Strong wind and sunny",
+]
 
 for (s, suite) in enumerate(suite_names)
 
@@ -217,6 +241,9 @@ for (s, suite) in enumerate(suite_names)
     end
 
     display(fig)
+
+    figpath = joinpath(figdir, suite * ".png")
+    save(figpath, fig)
 
     # save("$(name)_$(suite)_assessment_$(suffix)_conservative.pdf", fig)
 end

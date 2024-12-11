@@ -4,8 +4,10 @@ using Oceananigans.TurbulenceClosures: CATKEVerticalDiffusivity
 using Printf
 using JLD2
 using CairoMakie
+using MathTeXEngine
 
-set_theme!(Theme(fontsize=24, linewidth=4, alpha=0.6))
+fonts = (; regular=texfont())
+set_theme!(Theme(fontsize=24, linewidth=4, alpha=0.6; fonts))
 
 d = 4
 dash = Linestyle([0.0, d, 1.6d, 2.6d])
