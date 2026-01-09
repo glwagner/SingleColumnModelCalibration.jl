@@ -6,7 +6,10 @@ Calibration of models for convective- and wind-driven mixing in the ocean surfac
 
 To calibrate a closure in Oceananigans, take the following steps:
 
-1. Download LES profile data. LES profiles can be found here: https://www.dropbox.com/scl/fo/gpxz01em3kmjcwuoafhnm/ABdBWTxkqSTbEycw9z2cbhc?rlkey=py5x1i7qvcmcjya0cue23k9tz&e=1&dl=0
+1. Download LES profile data. LES profiles can be found here:
+
+https://www.dropbox.com/scl/fo/q35w0vrvow2fxf8vsupkn/h?rlkey=sc2ifb5kvt44mu4164kp56qjn&st=z9u7tfco&dl=0
+
 This data must be copied into `data/profiles`. This can be done by copy/pasting the following lines from the root directory of the repo:
 
 ```bash
